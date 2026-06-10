@@ -18,13 +18,14 @@ No database install needed — the default `dev` profile uses an embedded H2 dat
 .\mvnw.cmd spring-boot:run
 ```
 
-The API starts on http://localhost:8080. Smoke test:
+The API starts on http://localhost:8081 (8080 is taken by Apache on the dev machine).
+Smoke test:
 
 ```
-curl http://localhost:8080/api/v1/health
+curl http://localhost:8081/api/v1/health
 ```
 
-H2 web console (dev only): http://localhost:8080/h2-console
+H2 web console (dev only): http://localhost:8081/h2-console
 (JDBC URL `jdbc:h2:file:./data/bjjflow-dev`, user `sa`, empty password)
 
 ## Running against PostgreSQL

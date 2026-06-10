@@ -7,7 +7,8 @@ spring:
     default: dev
 
 server:
-  port: 8080
+  # 8081 because Apache (httpd) occupies 8080 on the dev machine
+  port: 8081
 
 ---
 # --- dev profile: embedded H2 in PostgreSQL compatibility mode ---
