@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: bjj-flow-backend
+  profiles:
+    # Default to dev (embedded H2) so the app runs without a local PostgreSQL install.
+    # Run with -Dspring-boot.run.profiles=postgres once PostgreSQL is available.
+    default: dev
+
+server:
+  port: 8080
+
+---
+# --- dev profile: embedded H2 in PostgreSQL compatibility mode ---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:file:./data/bjjflow-dev;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  flyway:
+    # Enable when the first migration (V1) is added under db/migration
+    enabled: false
+
+---
+# --- postgres profile: real PostgreSQL (local install or docker-compose) ---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bjjflow
+    username: bjjflow
+    password: bjjflow
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: false
