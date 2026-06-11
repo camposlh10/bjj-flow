@@ -2,6 +2,7 @@ package com.bjjflow.backend.users;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,6 +42,20 @@ public class User {
 
     @Column(name = "height_cm")
     private Integer heightCm;
+
+    @Column(name = "current_streak")
+    private Integer currentStreak = 0;
+
+    @Column(name = "longest_streak")
+    private Integer longestStreak = 0;
+
+    @Column(name = "last_check_in_date")
+    private LocalDate lastCheckInDate;
+
+    @Column(name = "weekly_goal")
+    private Integer weeklyGoal = 3;
+
+    private String city;
 
     @Column(name = "created_at")
     private Instant createdAt;
