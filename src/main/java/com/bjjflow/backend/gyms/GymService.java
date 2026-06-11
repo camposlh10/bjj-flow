@@ -61,6 +61,33 @@ public class GymService {
         return toGymDto(gym, GymRole.MEMBER);
     }
 
+    @Transactional
+    public void leaveGym(Long userId) {
+        GymMember member = gymMemberRepository.findFirstByUserId(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
+        gymMemberRepository.delete(member);
+    }
+
+    // TEMP testing aid: lets a user flip their own role to exercise member vs
+    // instructor/owner features with a single account. Remove (or gate behind a
+    // dev profile) before production — real promotions go through an owner.
+    @Transactional
+    public GymDto setMyRole(Long userId, String roleName) {
+        GymMember member = gymMemberRepository.findFirstByUserId(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
+        GymRole role;
+        try {
+            role = GymRole.valueOf(roleName.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_ROLE", "Unknown role");
+        }
+        member.setRole(role);
+        gymMemberRepository.save(member);
+        Gym gym = gymRepository.findById(member.getGymId())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "GYM_NOT_FOUND", "Gym not found"));
+        return toGymDto(gym, role);
+    }
+
     @Transactional(readOnly = true)
     public Optional<GymDto> getMyGym(Long userId) {
         return gymMemberRepository.findFirstByUserId(userId)

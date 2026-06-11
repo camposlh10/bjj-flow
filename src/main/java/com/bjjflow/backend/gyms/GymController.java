@@ -15,6 +15,7 @@ import com.bjjflow.backend.gyms.GymDtos.GymDto;
 import com.bjjflow.backend.gyms.GymDtos.GymSuggestionDto;
 import com.bjjflow.backend.gyms.GymDtos.JoinGymRequest;
 import com.bjjflow.backend.gyms.GymDtos.MemberDto;
+import com.bjjflow.backend.gyms.GymDtos.SetRoleRequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,18 @@ public class GymController {
     @PostMapping("/join")
     public GymDto join(Authentication auth, @Valid @RequestBody JoinGymRequest request) {
         return gymService.joinByCode(userId(auth), request.inviteCode());
+    }
+
+    @PostMapping("/leave")
+    public ResponseEntity<Void> leave(Authentication auth) {
+        gymService.leaveGym(userId(auth));
+        return ResponseEntity.noContent().build();
+    }
+
+    // TEMP testing aid — see GymService.setMyRole
+    @PostMapping("/me/role")
+    public GymDto setRole(Authentication auth, @Valid @RequestBody SetRoleRequest request) {
+        return gymService.setMyRole(userId(auth), request.role());
     }
 
     @GetMapping("/me")

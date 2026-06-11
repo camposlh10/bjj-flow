@@ -16,6 +16,9 @@ public class GymDtos {
     public record JoinGymRequest(@NotBlank @Size(max = 12) String inviteCode) {
     }
 
+    public record SetRoleRequest(@NotBlank String role) {
+    }
+
     public record BeltSummary(String slug, String namePt, String colorHex, int stripes) {
     }
 

@@ -116,4 +116,56 @@ class GymFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").isNotEmpty());
     }
+
+    @Test
+    void roleSwitchAndLeave() throws Exception {
+        String user = register("troca@bjjflow.com", "adult-purple");
+
+        mockMvc.perform(post("/api/v1/gyms")
+                .header("Authorization", "Bearer " + user)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name": "Academia Troca"}
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("OWNER"));
+
+        // flip to MEMBER -> invite code hidden
+        mockMvc.perform(post("/api/v1/gyms/me/role")
+                .header("Authorization", "Bearer " + user)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"role": "MEMBER"}
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("MEMBER"))
+                .andExpect(jsonPath("$.inviteCode").doesNotExist());
+
+        // flip to INSTRUCTOR -> invite code visible again
+        mockMvc.perform(post("/api/v1/gyms/me/role")
+                .header("Authorization", "Bearer " + user)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"role": "INSTRUCTOR"}
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("INSTRUCTOR"))
+                .andExpect(jsonPath("$.inviteCode").isNotEmpty());
+
+        // invalid role rejected
+        mockMvc.perform(post("/api/v1/gyms/me/role")
+                .header("Authorization", "Bearer " + user)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"role": "KING"}
+                        """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_ROLE"));
+
+        // leave -> no longer in a gym
+        mockMvc.perform(post("/api/v1/gyms/leave").header("Authorization", "Bearer " + user))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/v1/gyms/me").header("Authorization", "Bearer " + user))
+                .andExpect(status().isNoContent());
+    }
 }
