@@ -4,6 +4,8 @@ import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,6 +31,9 @@ public class GymMember {
 
     @Column(name = "user_id")
     private Long userId;
+
+    @Enumerated(EnumType.STRING)
+    private GymRole role = GymRole.MEMBER;
 
     @Column(name = "joined_at")
     private Instant joinedAt;

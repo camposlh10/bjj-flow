@@ -9,7 +9,10 @@ public interface GymMemberRepository extends JpaRepository<GymMember, Long> {
 
     Optional<GymMember> findByGymIdAndUserId(Long gymId, Long userId);
 
-    List<GymMember> findAllByUserId(Long userId);
+    // One primary gym per user, so a user has at most one membership.
+    Optional<GymMember> findFirstByUserId(Long userId);
+
+    List<GymMember> findAllByGymId(Long gymId);
 
     long countByGymId(Long gymId);
 }

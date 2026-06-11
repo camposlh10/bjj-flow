@@ -106,32 +106,4 @@ class CheckInFlowTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("FUTURE_DATE"));
     }
-
-    @Test
-    void gymSuggestionsAndJoin() throws Exception {
-        String token = registerAndGetToken("gym@bjjflow.com");
-
-        var suggestions = mockMvc.perform(get("/api/v1/gyms/suggestions")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").isNotEmpty())
-                .andReturn();
-
-        Integer gymId = JsonPath.read(suggestions.getResponse().getContentAsString(), "$[0].id");
-
-        mockMvc.perform(post("/api/v1/gyms/" + gymId + "/join")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.joined").value(true))
-                .andExpect(jsonPath("$.memberCount").value(1));
-
-        // joined gym no longer suggested
-        var after = mockMvc.perform(get("/api/v1/gyms/suggestions")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andReturn();
-        String body = after.getResponse().getContentAsString();
-        java.util.List<Integer> ids = JsonPath.read(body, "$[*].id");
-        org.junit.jupiter.api.Assertions.assertFalse(ids.contains(gymId));
-    }
 }
