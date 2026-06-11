@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.bjjflow.backend.posts.PostDtos.CommentDto;
 import com.bjjflow.backend.posts.PostDtos.CreateCommentRequest;
@@ -19,6 +21,7 @@ import com.bjjflow.backend.posts.PostDtos.LikeResponse;
 import com.bjjflow.backend.posts.PostDtos.PinRequest;
 import com.bjjflow.backend.posts.PostDtos.PostDto;
 import com.bjjflow.backend.posts.PostDtos.ShareResponse;
+import com.bjjflow.backend.posts.PostDtos.UploadResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +44,17 @@ public class PostController {
 
     @PostMapping
     public PostDto create(Authentication auth, @Valid @RequestBody CreatePostRequest request) {
-        return postService.createPost(userId(auth), request.content());
+        return postService.createPost(userId(auth), request.content(), request.media());
+    }
+
+    @GetMapping("/{id}")
+    public PostDto getPost(Authentication auth, @PathVariable Long id) {
+        return postService.getPost(userId(auth), id);
+    }
+
+    @PostMapping(value = "/media", consumes = "multipart/form-data")
+    public UploadResponse uploadMedia(Authentication auth, @RequestParam("file") MultipartFile file) {
+        return postService.uploadMedia(userId(auth), file);
     }
 
     @DeleteMapping("/{id}")

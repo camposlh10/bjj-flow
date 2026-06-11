@@ -1,10 +1,12 @@
 package com.bjjflow.backend.posts;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.bjjflow.backend.common.ApiException;
 import com.bjjflow.backend.gyms.GymDtos.BeltSummary;
@@ -14,8 +16,12 @@ import com.bjjflow.backend.gyms.GymRole;
 import com.bjjflow.backend.posts.PostDtos.AuthorDto;
 import com.bjjflow.backend.posts.PostDtos.CommentDto;
 import com.bjjflow.backend.posts.PostDtos.LikeResponse;
+import com.bjjflow.backend.posts.PostDtos.MediaDto;
+import com.bjjflow.backend.posts.PostDtos.MediaInput;
 import com.bjjflow.backend.posts.PostDtos.PostDto;
 import com.bjjflow.backend.posts.PostDtos.ShareResponse;
+import com.bjjflow.backend.posts.PostDtos.UploadResponse;
+import com.bjjflow.backend.storage.MediaStorage;
 import com.bjjflow.backend.users.User;
 import com.bjjflow.backend.users.UserBeltProgress;
 import com.bjjflow.backend.users.UserBeltProgressRepository;
@@ -30,20 +36,64 @@ public class PostService {
     private final GymPostRepository postRepository;
     private final GymPostLikeRepository likeRepository;
     private final GymPostCommentRepository commentRepository;
+    private final GymPostMediaRepository mediaRepository;
     private final GymMemberRepository gymMemberRepository;
     private final UserRepository userRepository;
     private final UserBeltProgressRepository beltProgressRepository;
+    private final MediaStorage mediaStorage;
 
     @Transactional
-    public PostDto createPost(Long userId, String content) {
+    public UploadResponse uploadMedia(Long userId, MultipartFile file) {
+        requireMembership(userId);
+        if (file == null || file.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "EMPTY_FILE", "No file uploaded");
+        }
+        String contentType = file.getContentType();
+        MediaType type;
+        if (contentType != null && contentType.startsWith("image/")) {
+            type = MediaType.IMAGE;
+        } else if (contentType != null && contentType.startsWith("video/")) {
+            type = MediaType.VIDEO;
+        } else {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "UNSUPPORTED_MEDIA",
+                    "Only images and videos are allowed");
+        }
+        byte[] bytes;
+        try {
+            bytes = file.getBytes();
+        } catch (IOException e) {
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "UPLOAD_FAILED", "Could not read upload");
+        }
+        String key = mediaStorage.store(bytes, contentType, file.getOriginalFilename());
+        return new UploadResponse(key, mediaStorage.urlFor(key), type.name());
+    }
+
+    @Transactional
+    public PostDto createPost(Long userId, String content, List<MediaInput> media) {
+        // Any gym member can post. A per-gym "instructors only" setting comes later.
         GymMember membership = requireMembership(userId);
-        requireStaff(membership);
+
+        String text = content == null ? "" : content.trim();
+        List<MediaInput> attachments = media == null ? List.of() : media;
+        if (text.isEmpty() && attachments.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "EMPTY_POST", "A post needs text or media");
+        }
 
         GymPost post = new GymPost();
         post.setGymId(membership.getGymId());
         post.setAuthorUserId(userId);
-        post.setContent(content.trim());
+        post.setContent(text);
         post = postRepository.save(post);
+
+        int position = 0;
+        for (MediaInput input : attachments) {
+            GymPostMedia m = new GymPostMedia();
+            m.setPostId(post.getId());
+            m.setStorageKey(input.key());
+            m.setMediaType(parseMediaType(input.type()));
+            m.setPosition(position++);
+            mediaRepository.save(m);
+        }
         return toPostDto(post, userId);
     }
 
@@ -53,6 +103,12 @@ public class PostService {
         return postRepository.findAllByGymIdOrderByPinnedDescCreatedAtDesc(membership.getGymId()).stream()
                 .map(p -> toPostDto(p, userId))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PostDto getPost(Long userId, Long postId) {
+        GymMember membership = requireMembership(userId);
+        return toPostDto(postInGym(postId, membership.getGymId()), userId);
     }
 
     @Transactional
@@ -127,6 +183,7 @@ public class PostService {
         }
         commentRepository.deleteByPostId(post.getId());
         likeRepository.deleteByPostId(post.getId());
+        mediaRepository.deleteByPostId(post.getId());
         postRepository.delete(post);
     }
 
@@ -137,8 +194,7 @@ public class PostService {
 
     private void requireStaff(GymMember membership) {
         if (membership.getRole() == GymRole.MEMBER) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "NOT_STAFF",
-                    "Only instructors can do this");
+            throw new ApiException(HttpStatus.FORBIDDEN, "NOT_STAFF", "Only instructors can do this");
         }
     }
 
@@ -146,17 +202,28 @@ public class PostService {
         GymPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "POST_NOT_FOUND", "Post not found"));
         if (!post.getGymId().equals(gymId)) {
-            // Don't reveal posts from other gyms
             throw new ApiException(HttpStatus.NOT_FOUND, "POST_NOT_FOUND", "Post not found");
         }
         return post;
     }
 
+    private MediaType parseMediaType(String type) {
+        try {
+            return MediaType.valueOf(type.trim().toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_MEDIA_TYPE", "Unknown media type");
+        }
+    }
+
     private PostDto toPostDto(GymPost post, Long requesterId) {
+        List<MediaDto> media = mediaRepository.findAllByPostIdOrderByPositionAsc(post.getId()).stream()
+                .map(m -> new MediaDto(mediaStorage.urlFor(m.getStorageKey()), m.getMediaType().name()))
+                .toList();
         return new PostDto(
                 post.getId(),
                 authorDto(post.getAuthorUserId(), post.getGymId()),
                 post.getContent(),
+                media,
                 Boolean.TRUE.equals(post.getPinned()),
                 likeRepository.countByPostId(post.getId()),
                 commentRepository.countByPostId(post.getId()),

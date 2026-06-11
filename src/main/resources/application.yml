@@ -5,6 +5,10 @@ spring:
     # Default to dev (embedded H2) so the app runs without a local PostgreSQL install.
     # Run with -Dspring-boot.run.profiles=postgres once PostgreSQL is available.
     default: dev
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 60MB
 
 server:
   # 8081 because Apache (httpd) occupies 8080 on the dev machine
@@ -16,6 +20,10 @@ app:
     secret: ${APP_JWT_SECRET:dev-only-secret-change-me-0123456789abcdef0123456789abcdef}
     access-ttl-minutes: 60
     refresh-ttl-days: 30
+  media:
+    # provider: local | (s3 / azure later). Swap LocalMediaStorage for a cloud impl.
+    provider: local
+    local-dir: ./data/media
 
 ---
 # --- dev profile: embedded H2 in PostgreSQL compatibility mode ---
