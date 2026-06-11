@@ -18,6 +18,7 @@ import com.jayway.jsonpath.JsonPath;
 @SpringBootTest
 @AutoConfigureMockMvc
 @org.springframework.test.context.ActiveProfiles("test")
+@org.springframework.transaction.annotation.Transactional
 class AuthFlowTest {
 
     @Autowired
