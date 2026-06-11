@@ -20,6 +20,7 @@ import com.bjjflow.backend.posts.PostDtos.CreatePostRequest;
 import com.bjjflow.backend.posts.PostDtos.LikeResponse;
 import com.bjjflow.backend.posts.PostDtos.PinRequest;
 import com.bjjflow.backend.posts.PostDtos.PostDto;
+import com.bjjflow.backend.posts.PostDtos.SaveResponse;
 import com.bjjflow.backend.posts.PostDtos.ShareResponse;
 import com.bjjflow.backend.posts.PostDtos.UploadResponse;
 
@@ -40,6 +41,11 @@ public class PostController {
     @GetMapping
     public List<PostDto> feed(Authentication auth) {
         return postService.feed(userId(auth));
+    }
+
+    @GetMapping("/saved")
+    public List<PostDto> saved(Authentication auth) {
+        return postService.savedPosts(userId(auth));
     }
 
     @PostMapping
@@ -70,6 +76,11 @@ public class PostController {
     @PostMapping("/{id}/share")
     public ShareResponse share(Authentication auth, @PathVariable Long id) {
         return postService.share(userId(auth), id);
+    }
+
+    @PostMapping("/{id}/save")
+    public SaveResponse save(Authentication auth, @PathVariable Long id) {
+        return postService.toggleSave(userId(auth), id);
     }
 
     @PutMapping("/{id}/pin")

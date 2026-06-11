@@ -19,6 +19,7 @@ import com.bjjflow.backend.posts.PostDtos.LikeResponse;
 import com.bjjflow.backend.posts.PostDtos.MediaDto;
 import com.bjjflow.backend.posts.PostDtos.MediaInput;
 import com.bjjflow.backend.posts.PostDtos.PostDto;
+import com.bjjflow.backend.posts.PostDtos.SaveResponse;
 import com.bjjflow.backend.posts.PostDtos.ShareResponse;
 import com.bjjflow.backend.posts.PostDtos.UploadResponse;
 import com.bjjflow.backend.storage.MediaStorage;
@@ -37,6 +38,7 @@ public class PostService {
     private final GymPostLikeRepository likeRepository;
     private final GymPostCommentRepository commentRepository;
     private final GymPostMediaRepository mediaRepository;
+    private final GymPostSaveRepository saveRepository;
     private final GymMemberRepository gymMemberRepository;
     private final UserRepository userRepository;
     private final UserBeltProgressRepository beltProgressRepository;
@@ -139,6 +141,34 @@ public class PostService {
     }
 
     @Transactional
+    public SaveResponse toggleSave(Long userId, Long postId) {
+        GymMember membership = requireMembership(userId);
+        GymPost post = postInGym(postId, membership.getGymId());
+        boolean saved;
+        if (saveRepository.existsByPostIdAndUserId(post.getId(), userId)) {
+            saveRepository.deleteByPostIdAndUserId(post.getId(), userId);
+            saved = false;
+        } else {
+            GymPostSave save = new GymPostSave();
+            save.setPostId(post.getId());
+            save.setUserId(userId);
+            saveRepository.save(save);
+            saved = true;
+        }
+        return new SaveResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PostDto> savedPosts(Long userId) {
+        GymMember membership = requireMembership(userId);
+        return saveRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(s -> postRepository.findById(s.getPostId()).orElse(null))
+                .filter(p -> p != null && p.getGymId().equals(membership.getGymId()))
+                .map(p -> toPostDto(p, userId))
+                .toList();
+    }
+
+    @Transactional
     public CommentDto addComment(Long userId, Long postId, String content) {
         GymMember membership = requireMembership(userId);
         GymPost post = postInGym(postId, membership.getGymId());
@@ -184,6 +214,7 @@ public class PostService {
         commentRepository.deleteByPostId(post.getId());
         likeRepository.deleteByPostId(post.getId());
         mediaRepository.deleteByPostId(post.getId());
+        saveRepository.deleteByPostId(post.getId());
         postRepository.delete(post);
     }
 
@@ -229,6 +260,7 @@ public class PostService {
                 commentRepository.countByPostId(post.getId()),
                 post.getShareCount(),
                 likeRepository.existsByPostIdAndUserId(post.getId(), requesterId),
+                saveRepository.existsByPostIdAndUserId(post.getId(), requesterId),
                 post.getCreatedAt());
     }
 

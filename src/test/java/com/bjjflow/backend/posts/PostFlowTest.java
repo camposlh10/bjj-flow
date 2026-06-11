@@ -197,4 +197,28 @@ class PostFlowTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA"));
     }
+
+    @Test
+    void saveAndListSavedPosts() throws Exception {
+        String user = register("salvar@bjjflow.com", "adult-blue");
+        createGymGetCode(user);
+        long p1 = createPost(user, "Post para salvar");
+
+        // save -> savedByMe true and appears in /saved
+        mockMvc.perform(post("/api/v1/gyms/posts/" + p1 + "/save").header("Authorization", bearer(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.saved").value(true));
+        mockMvc.perform(get("/api/v1/gyms/posts/" + p1).header("Authorization", bearer(user)))
+                .andExpect(jsonPath("$.savedByMe").value(true));
+        mockMvc.perform(get("/api/v1/gyms/posts/saved").header("Authorization", bearer(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value((int) p1));
+
+        // unsave -> gone from /saved
+        mockMvc.perform(post("/api/v1/gyms/posts/" + p1 + "/save").header("Authorization", bearer(user)))
+                .andExpect(jsonPath("$.saved").value(false));
+        mockMvc.perform(get("/api/v1/gyms/posts/saved").header("Authorization", bearer(user)))
+                .andExpect(jsonPath("$.length()").value(0));
+    }
 }

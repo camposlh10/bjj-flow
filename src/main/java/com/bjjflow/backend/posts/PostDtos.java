@@ -26,6 +26,7 @@ public class PostDtos {
             long commentCount,
             int shareCount,
             boolean likedByMe,
+            boolean savedByMe,
             Instant createdAt) {
     }
 
@@ -51,6 +52,9 @@ public class PostDtos {
     }
 
     public record ShareResponse(int shareCount) {
+    }
+
+    public record SaveResponse(boolean saved) {
     }
 
     public record UploadResponse(String key, String url, String type) {
