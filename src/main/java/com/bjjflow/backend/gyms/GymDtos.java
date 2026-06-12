@@ -34,7 +34,14 @@ public class GymDtos {
             String inviteCode) {
     }
 
-    public record MemberDto(Long userId, String displayName, String role, BeltSummary belt) {
+    public record MemberDto(Long userId, String displayName, String role, BeltSummary belt,
+            /** verified class attendances since the last promotion (graduation counter) */
+            long classesAttended) {
+    }
+
+    public record PromoteRequest(
+            @NotBlank String beltSlug,
+            @jakarta.validation.constraints.Min(0) @jakarta.validation.constraints.Max(6) Integer stripes) {
     }
 
     public record GymSuggestionDto(Long id, String name, String city, long memberCount) {

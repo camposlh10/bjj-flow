@@ -10,6 +10,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bjjflow.backend.belts.BeltPromotion;
+import com.bjjflow.backend.belts.BeltPromotionRepository;
+import com.bjjflow.backend.belts.BeltRank;
+import com.bjjflow.backend.belts.BeltRankRepository;
+import com.bjjflow.backend.classes.ClassAttendanceRepository;
 import com.bjjflow.backend.common.ApiException;
 import com.bjjflow.backend.gyms.GymDtos.BeltSummary;
 import com.bjjflow.backend.gyms.GymDtos.GymDto;
@@ -34,6 +39,9 @@ public class GymService {
     private final GymMemberRepository gymMemberRepository;
     private final UserRepository userRepository;
     private final UserBeltProgressRepository beltProgressRepository;
+    private final BeltRankRepository beltRankRepository;
+    private final BeltPromotionRepository beltPromotionRepository;
+    private final ClassAttendanceRepository classAttendanceRepository;
 
     @Transactional
     public GymDto createGym(Long userId, String name, String city, String description) {
@@ -101,11 +109,51 @@ public class GymService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
 
         return gymMemberRepository.findAllByGymId(mine.getGymId()).stream()
-                .map(this::toMemberDto)
+                .map(m -> toMemberDto(m, mine.getGymId()))
                 .sorted(Comparator
                         .comparingInt((MemberDto m) -> rolePriority(m.role()))
                         .thenComparing(MemberDto::displayName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
+    }
+
+    @Transactional
+    public MemberDto promoteMember(Long callerId, Long targetUserId, String beltSlug, Integer stripes) {
+        GymMember caller = gymMemberRepository.findFirstByUserId(callerId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
+        if (caller.getRole() == GymRole.MEMBER) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "NOT_STAFF", "Only instructors can promote");
+        }
+        GymMember target = gymMemberRepository.findByGymIdAndUserId(caller.getGymId(), targetUserId)
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "NOT_A_MEMBER",
+                        "That user is not in this gym"));
+
+        BeltRank rank = beltRankRepository.findBySlug(beltSlug)
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "INVALID_BELT", "Unknown belt"));
+        int newStripes = stripes == null ? 0 : stripes;
+        if (newStripes > rank.getMaxStripes()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_STRIPES",
+                    "This belt allows at most " + rank.getMaxStripes() + " stripes");
+        }
+
+        UserBeltProgress progress = beltProgressRepository.findByUserId(targetUserId)
+                .orElseGet(() -> {
+                    UserBeltProgress p = new UserBeltProgress();
+                    p.setUserId(targetUserId);
+                    return p;
+                });
+        progress.setBeltRank(rank);
+        progress.setStripes(newStripes);
+        beltProgressRepository.save(progress);
+
+        BeltPromotion promotion = new BeltPromotion();
+        promotion.setUserId(targetUserId);
+        promotion.setGymId(caller.getGymId());
+        promotion.setBeltRankId(rank.getId());
+        promotion.setStripes(newStripes);
+        promotion.setPromotedByUserId(callerId);
+        beltPromotionRepository.save(promotion);
+
+        return toMemberDto(target, caller.getGymId());
     }
 
     @Transactional(readOnly = true)
@@ -156,14 +204,20 @@ public class GymService {
                 staff ? gym.getInviteCode() : null);
     }
 
-    private MemberDto toMemberDto(GymMember member) {
+    private MemberDto toMemberDto(GymMember member, Long gymId) {
         String displayName = userRepository.findById(member.getUserId())
                 .map(User::getDisplayName)
                 .orElse("—");
         BeltSummary belt = beltProgressRepository.findByUserId(member.getUserId())
                 .map(this::toBeltSummary)
                 .orElse(null);
-        return new MemberDto(member.getUserId(), displayName, member.getRole().name(), belt);
+        // Graduation counter: verified class attendances since the last promotion
+        java.time.Instant since = beltPromotionRepository
+                .findFirstByUserIdOrderByCreatedAtDesc(member.getUserId())
+                .map(BeltPromotion::getCreatedAt)
+                .orElse(java.time.Instant.EPOCH);
+        long attended = classAttendanceRepository.countForUserInGymSince(gymId, member.getUserId(), since);
+        return new MemberDto(member.getUserId(), displayName, member.getRole().name(), belt, attended);
     }
 
     private BeltSummary toBeltSummary(UserBeltProgress progress) {

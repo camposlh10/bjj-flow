@@ -15,7 +15,9 @@ import com.bjjflow.backend.gyms.GymDtos.GymDto;
 import com.bjjflow.backend.gyms.GymDtos.GymSuggestionDto;
 import com.bjjflow.backend.gyms.GymDtos.JoinGymRequest;
 import com.bjjflow.backend.gyms.GymDtos.MemberDto;
+import com.bjjflow.backend.gyms.GymDtos.PromoteRequest;
 import com.bjjflow.backend.gyms.GymDtos.SetRoleRequest;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +65,12 @@ public class GymController {
     @GetMapping("/me/members")
     public List<MemberDto> members(Authentication auth) {
         return gymService.listMembers(userId(auth));
+    }
+
+    @PostMapping("/me/members/{targetUserId}/promote")
+    public MemberDto promote(Authentication auth, @PathVariable Long targetUserId,
+            @Valid @RequestBody PromoteRequest request) {
+        return gymService.promoteMember(userId(auth), targetUserId, request.beltSlug(), request.stripes());
     }
 
     @GetMapping("/suggestions")
