@@ -73,6 +73,27 @@ public class GymController {
         return gymService.promoteMember(userId(auth), targetUserId, request.beltSlug(), request.stripes());
     }
 
+    @org.springframework.web.bind.annotation.PutMapping("/me")
+    public GymDto update(Authentication auth, @Valid @RequestBody GymDtos.UpdateGymRequest request) {
+        return gymService.updateGym(userId(auth), request);
+    }
+
+    @PostMapping("/me/photos")
+    public GymDtos.GymPhotoDto addPhoto(Authentication auth,
+            @Valid @RequestBody GymDtos.AddPhotoRequest request) {
+        return gymService.addPhoto(userId(auth), request.key());
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/me/photos/{photoId}")
+    public void deletePhoto(Authentication auth, @PathVariable Long photoId) {
+        gymService.deletePhoto(userId(auth), photoId);
+    }
+
+    @GetMapping("/ranking")
+    public List<GymDtos.RankingEntryDto> ranking(Authentication auth) {
+        return gymService.ranking(userId(auth));
+    }
+
     @GetMapping("/suggestions")
     public List<GymSuggestionDto> suggestions(Authentication auth) {
         return gymService.suggestions(userId(auth));

@@ -149,6 +149,66 @@ class ClassFlowTest {
                 .andExpect(jsonPath("$.length()").value(1));
     }
 
+    @Test
+    void reservationConvertsToPresenceOnCheckIn() throws Exception {
+        String[] owner = register("reservadono@bjjflow.com", "adult-black", 35);
+        JsonPath.read(mockMvc.perform(post("/api/v1/gyms")
+                .header("Authorization", auth(owner[0]))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Academia Reserva\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), "$.inviteCode");
+
+        int dow = LocalDate.now().getDayOfWeek().getValue();
+        String today = LocalDate.now().toString();
+        long classId = createClass(owner[0], dow, "00:30", "23:30", "GI", "ALL", "Fundamentos");
+
+        // reserve today's class -> RESERVED, not yet checked in
+        mockMvc.perform(post("/api/v1/gyms/classes/" + classId + "/reserve")
+                .header("Authorization", auth(owner[0]))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"date\": \"%s\"}".formatted(today)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reserved").value(true))
+                .andExpect(jsonPath("$.checkedIn").value(false))
+                .andExpect(jsonPath("$.attendeeCount").value(1));
+        mockMvc.perform(get("/api/v1/gyms/classes/" + classId + "/attendees")
+                .header("Authorization", auth(owner[0])).param("date", today))
+                .andExpect(jsonPath("$[0].status").value("RESERVED"));
+
+        // a reservation alone doesn't touch the streak
+        mockMvc.perform(get("/api/v1/users/me/stats").header("Authorization", auth(owner[0])))
+                .andExpect(jsonPath("$.checkedInToday").value(false));
+
+        // toggle cancels the reservation
+        mockMvc.perform(post("/api/v1/gyms/classes/" + classId + "/reserve")
+                .header("Authorization", auth(owner[0]))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"date\": \"%s\"}".formatted(today)))
+                .andExpect(jsonPath("$.reserved").value(false))
+                .andExpect(jsonPath("$.attendeeCount").value(0));
+
+        // reserve again, then check in -> the same row becomes PRESENT and streak counts
+        mockMvc.perform(post("/api/v1/gyms/classes/" + classId + "/reserve")
+                .header("Authorization", auth(owner[0]))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"date\": \"%s\"}".formatted(today)))
+                .andExpect(jsonPath("$.reserved").value(true));
+        mockMvc.perform(post("/api/v1/gyms/classes/" + classId + "/checkin")
+                .header("Authorization", auth(owner[0]))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"date\": \"%s\"}".formatted(today)))
+                .andExpect(jsonPath("$.checkedIn").value(true))
+                .andExpect(jsonPath("$.reserved").value(false))
+                .andExpect(jsonPath("$.attendeeCount").value(1));
+        mockMvc.perform(get("/api/v1/users/me/stats").header("Authorization", auth(owner[0])))
+                .andExpect(jsonPath("$.checkedInToday").value(true))
+                .andExpect(jsonPath("$.currentStreak").value(1));
+
+        // past date rejected
+        mockMvc.perform(post("/api/v1/gyms/classes/" + classId + "/reserve")
+                .header("Authorization", auth(owner[0]))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"date\": \"%s\"}".formatted(LocalDate.now().minusDays(1))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_DATE"));
+    }
+
     private long createClass(String token, int dow, String start, String end, String type, String restriction,
             String name) throws Exception {
         String json = mockMvc.perform(post("/api/v1/gyms/classes")

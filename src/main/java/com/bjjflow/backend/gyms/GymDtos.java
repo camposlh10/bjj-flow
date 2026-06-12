@@ -22,6 +22,9 @@ public class GymDtos {
     public record BeltSummary(String slug, String namePt, String colorHex, int stripes) {
     }
 
+    public record GymPhotoDto(Long id, String url) {
+    }
+
     public record GymDto(
             Long id,
             String name,
@@ -31,7 +34,31 @@ public class GymDtos {
             String role,
             Integer graduationTarget,
             /** only present for owner/instructor, so staff can share it */
-            String inviteCode) {
+            String inviteCode,
+            String phone,
+            String email,
+            String website,
+            String address,
+            String logoUrl,
+            List<GymPhotoDto> photos) {
+    }
+
+    public record UpdateGymRequest(
+            @NotBlank @Size(max = 150) String name,
+            @Size(max = 100) String city,
+            @Size(max = 500) String description,
+            @Size(max = 30) String phone,
+            @Size(max = 255) String email,
+            @Size(max = 255) String website,
+            @Size(max = 255) String address,
+            @Size(max = 300) String logoKey) {
+    }
+
+    public record AddPhotoRequest(@NotBlank String key) {
+    }
+
+    public record RankingEntryDto(int position, Long userId, String displayName,
+            BeltSummary belt, long classes) {
     }
 
     public record MemberDto(Long userId, String displayName, String role, BeltSummary belt,

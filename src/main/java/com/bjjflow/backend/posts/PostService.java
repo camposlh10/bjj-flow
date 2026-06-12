@@ -1,7 +1,14 @@
 package com.bjjflow.backend.posts;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -102,9 +109,9 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostDto> feed(Long userId) {
         GymMember membership = requireMembership(userId);
-        return postRepository.findAllByGymIdOrderByPinnedDescCreatedAtDesc(membership.getGymId()).stream()
-                .map(p -> toPostDto(p, userId))
-                .toList();
+        return buildPostDtos(
+                postRepository.findAllByGymIdOrderByPinnedDescCreatedAtDesc(membership.getGymId()),
+                userId, membership.getGymId());
     }
 
     @Transactional(readOnly = true)
@@ -161,11 +168,21 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostDto> savedPosts(Long userId) {
         GymMember membership = requireMembership(userId);
-        return saveRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(s -> postRepository.findById(s.getPostId()).orElse(null))
-                .filter(p -> p != null && p.getGymId().equals(membership.getGymId()))
-                .map(p -> toPostDto(p, userId))
+        List<Long> savedIds = saveRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(GymPostSave::getPostId)
                 .toList();
+        if (savedIds.isEmpty()) {
+            return List.of();
+        }
+        // one batched fetch, then restore the saved-at ordering
+        Map<Long, GymPost> byId = new HashMap<>();
+        for (GymPost p : postRepository.findAllById(savedIds)) {
+            if (p.getGymId().equals(membership.getGymId())) {
+                byId.put(p.getId(), p);
+            }
+        }
+        List<GymPost> ordered = savedIds.stream().map(byId::get).filter(p -> p != null).toList();
+        return buildPostDtos(ordered, userId, membership.getGymId());
     }
 
     @Transactional
@@ -177,16 +194,21 @@ public class PostService {
         comment.setUserId(userId);
         comment.setContent(content.trim());
         comment = commentRepository.save(comment);
-        return new CommentDto(comment.getId(), authorDto(userId, membership.getGymId()),
-                comment.getContent(), comment.getCreatedAt());
+        AuthorDto author = authorMap(membership.getGymId(), Set.of(userId))
+                .getOrDefault(userId, fallbackAuthor(userId));
+        return new CommentDto(comment.getId(), author, comment.getContent(), comment.getCreatedAt());
     }
 
     @Transactional(readOnly = true)
     public List<CommentDto> listComments(Long userId, Long postId) {
         GymMember membership = requireMembership(userId);
         GymPost post = postInGym(postId, membership.getGymId());
-        return commentRepository.findAllByPostIdOrderByCreatedAtAsc(post.getId()).stream()
-                .map(c -> new CommentDto(c.getId(), authorDto(c.getUserId(), membership.getGymId()),
+        List<GymPostComment> comments = commentRepository.findAllByPostIdOrderByCreatedAtAsc(post.getId());
+        Map<Long, AuthorDto> authors = authorMap(membership.getGymId(),
+                comments.stream().map(GymPostComment::getUserId).collect(Collectors.toSet()));
+        return comments.stream()
+                .map(c -> new CommentDto(c.getId(),
+                        authors.getOrDefault(c.getUserId(), fallbackAuthor(c.getUserId())),
                         c.getContent(), c.getCreatedAt()))
                 .toList();
     }
@@ -246,33 +268,83 @@ public class PostService {
         }
     }
 
-    private PostDto toPostDto(GymPost post, Long requesterId) {
-        List<MediaDto> media = mediaRepository.findAllByPostIdOrderByPositionAsc(post.getId()).stream()
-                .map(m -> new MediaDto(mediaStorage.urlFor(m.getStorageKey()), m.getMediaType().name()))
-                .toList();
-        return new PostDto(
-                post.getId(),
-                authorDto(post.getAuthorUserId(), post.getGymId()),
-                post.getContent(),
-                media,
-                Boolean.TRUE.equals(post.getPinned()),
-                likeRepository.countByPostId(post.getId()),
-                commentRepository.countByPostId(post.getId()),
-                post.getShareCount(),
-                likeRepository.existsByPostIdAndUserId(post.getId(), requesterId),
-                saveRepository.existsByPostIdAndUserId(post.getId(), requesterId),
-                post.getCreatedAt());
+    /**
+     * Builds DTOs for a list of posts with a fixed number of queries (media,
+     * like counts, comment counts, my likes/saves, authors), instead of ~7
+     * queries per post.
+     */
+    private List<PostDto> buildPostDtos(List<GymPost> posts, Long requesterId, Long gymId) {
+        if (posts.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = posts.stream().map(GymPost::getId).toList();
+
+        Map<Long, List<MediaDto>> media = new HashMap<>();
+        for (GymPostMedia m : mediaRepository.findAllByPostIdInOrderByPositionAsc(ids)) {
+            media.computeIfAbsent(m.getPostId(), k -> new ArrayList<>())
+                    .add(new MediaDto(mediaStorage.urlFor(m.getStorageKey()), m.getMediaType().name()));
+        }
+        Map<Long, Long> likeCounts = new HashMap<>();
+        for (Object[] row : likeRepository.countByPostIds(ids)) {
+            likeCounts.put((Long) row[0], (Long) row[1]);
+        }
+        Map<Long, Long> commentCounts = new HashMap<>();
+        for (Object[] row : commentRepository.countByPostIds(ids)) {
+            commentCounts.put((Long) row[0], (Long) row[1]);
+        }
+        Set<Long> liked = new HashSet<>(likeRepository.likedPostIds(requesterId, ids));
+        Set<Long> saved = new HashSet<>(saveRepository.savedPostIds(requesterId, ids));
+        Map<Long, AuthorDto> authors = authorMap(gymId,
+                posts.stream().map(GymPost::getAuthorUserId).collect(Collectors.toSet()));
+
+        List<PostDto> out = new ArrayList<>(posts.size());
+        for (GymPost post : posts) {
+            out.add(new PostDto(
+                    post.getId(),
+                    authors.getOrDefault(post.getAuthorUserId(), fallbackAuthor(post.getAuthorUserId())),
+                    post.getContent(),
+                    media.getOrDefault(post.getId(), List.of()),
+                    Boolean.TRUE.equals(post.getPinned()),
+                    likeCounts.getOrDefault(post.getId(), 0L),
+                    commentCounts.getOrDefault(post.getId(), 0L),
+                    post.getShareCount(),
+                    liked.contains(post.getId()),
+                    saved.contains(post.getId()),
+                    post.getCreatedAt()));
+        }
+        return out;
     }
 
-    private AuthorDto authorDto(Long userId, Long gymId) {
-        String displayName = userRepository.findById(userId).map(User::getDisplayName).orElse("—");
-        String role = gymMemberRepository.findByGymIdAndUserId(gymId, userId)
-                .map(m -> m.getRole().name())
-                .orElse(GymRole.MEMBER.name());
-        BeltSummary belt = beltProgressRepository.findByUserId(userId)
-                .map(this::toBeltSummary)
-                .orElse(null);
-        return new AuthorDto(userId, displayName, role, belt);
+    private PostDto toPostDto(GymPost post, Long requesterId) {
+        return buildPostDtos(List.of(post), requesterId, post.getGymId()).get(0);
+    }
+
+    private Map<Long, AuthorDto> authorMap(Long gymId, Collection<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, String> names = new HashMap<>();
+        for (User u : userRepository.findAllById(userIds)) {
+            names.put(u.getId(), u.getDisplayName());
+        }
+        Map<Long, BeltSummary> belts = new HashMap<>();
+        for (UserBeltProgress p : beltProgressRepository.findAllByUserIdIn(userIds)) {
+            belts.put(p.getUserId(), toBeltSummary(p));
+        }
+        Map<Long, String> roles = new HashMap<>();
+        for (GymMember m : gymMemberRepository.findAllByGymId(gymId)) {
+            roles.put(m.getUserId(), m.getRole().name());
+        }
+        Map<Long, AuthorDto> out = new HashMap<>();
+        for (Long id : userIds) {
+            out.put(id, new AuthorDto(id, names.getOrDefault(id, "—"),
+                    roles.getOrDefault(id, GymRole.MEMBER.name()), belts.get(id)));
+        }
+        return out;
+    }
+
+    private AuthorDto fallbackAuthor(Long userId) {
+        return new AuthorDto(userId, "—", GymRole.MEMBER.name(), null);
     }
 
     private BeltSummary toBeltSummary(UserBeltProgress progress) {

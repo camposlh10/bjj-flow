@@ -6,8 +6,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -110,6 +112,17 @@ public class ClassService {
         List<GymClass> classes = classRepository
                 .findAllByGymIdAndActiveTrueOrderByDayOfWeekAscStartTimeAsc(membership.getGymId());
 
+        // Batched lookups: O(1) queries for the whole range instead of two per
+        // class-day occurrence (my attendance rows + per-occurrence counts).
+        Map<String, String> myStatus = new HashMap<>();
+        for (ClassAttendance a : attendanceRepository.findAllByUserIdAndClassDateBetween(userId, from, to)) {
+            myStatus.put(a.getGymClassId() + "|" + a.getClassDate(), a.getStatus());
+        }
+        Map<String, Long> counts = new HashMap<>();
+        for (Object[] row : attendanceRepository.countsBetween(from, to)) {
+            counts.put(row[0] + "|" + row[1], (Long) row[2]);
+        }
+
         List<AgendaOccurrenceDto> out = new ArrayList<>();
         for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
             int dow = d.getDayOfWeek().getValue();
@@ -117,20 +130,38 @@ public class ClassService {
                 if (gc.getDayOfWeek() != dow) {
                     continue;
                 }
-                boolean eligible = eligible(gc, user.getAge(), beltSlug);
-                boolean checkedIn = attendanceRepository
-                        .existsByGymClassIdAndClassDateAndUserId(gc.getId(), d, userId);
-                boolean canCheckIn = eligible && !checkedIn && withinWindow(gc, d);
-                out.add(new AgendaOccurrenceDto(
-                        gc.getId(), gc.getName(), instructorName(gc.getInstructorUserId()),
-                        gc.getSessionType().name(), gc.getStartTime().format(HM), gc.getEndTime().format(HM),
-                        d, restrictionLabel(gc), eligible, checkedIn, canCheckIn,
-                        attendanceRepository.countByGymClassIdAndClassDate(gc.getId(), d)));
+                String key = gc.getId() + "|" + d;
+                out.add(buildOccurrence(gc, d, user.getAge(), beltSlug,
+                        myStatus.get(key), counts.getOrDefault(key, 0L)));
             }
         }
         out.sort(Comparator.comparing(AgendaOccurrenceDto::date)
                 .thenComparing(AgendaOccurrenceDto::startTime));
         return out;
+    }
+
+    @Transactional
+    public AgendaOccurrenceDto reserve(Long userId, Long classId, LocalDate date) {
+        GymMember membership = requireMembership(userId);
+        GymClass gc = classInGym(classId, membership.getGymId());
+        User user = userRepository.findById(userId).orElseThrow();
+
+        if (!eligible(gc, user.getAge(), beltSlugOf(userId))) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "NOT_ELIGIBLE", "You can't attend this class");
+        }
+        if (date.isBefore(LocalDate.now())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_DATE", "Cannot reserve a past class");
+        }
+        var existing = attendanceRepository.findByGymClassIdAndClassDateAndUserId(gc.getId(), date, userId);
+        if (existing.isPresent()) {
+            // Toggling an existing reservation cancels it; PRESENT stays untouched.
+            if ("RESERVED".equals(existing.get().getStatus())) {
+                attendanceRepository.delete(existing.get());
+            }
+        } else {
+            createAttendance(gc.getId(), date, userId, userId, "RESERVED");
+        }
+        return occurrence(gc, date, userId, user.getAge(), beltSlugOf(userId));
     }
 
     @Transactional
@@ -146,8 +177,18 @@ public class ClassService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "CHECKIN_NOT_OPEN",
                     "Check-in is not open for this class");
         }
-        if (!attendanceRepository.existsByGymClassIdAndClassDateAndUserId(gc.getId(), date, userId)) {
-            createAttendance(gc.getId(), date, userId, userId);
+        var existing = attendanceRepository.findByGymClassIdAndClassDateAndUserId(gc.getId(), date, userId);
+        if (existing.isPresent()) {
+            ClassAttendance a = existing.get();
+            if (!"PRESENT".equals(a.getStatus())) {
+                // A reservation converts into verified attendance on check-in
+                a.setStatus("PRESENT");
+                a.setMarkedByUserId(userId);
+                attendanceRepository.save(a);
+                checkInService.ensureDailyCheckIn(userId, date);
+            }
+        } else {
+            createAttendance(gc.getId(), date, userId, userId, "PRESENT");
             checkInService.ensureDailyCheckIn(userId, date);
         }
         return occurrence(gc, date, userId, user.getAge(), beltSlugOf(userId));
@@ -158,8 +199,11 @@ public class ClassService {
         GymMember membership = requireMembership(userId);
         GymClass gc = classInGym(classId, membership.getGymId());
         return attendanceRepository.findAllByGymClassIdAndClassDate(gc.getId(), date).stream()
-                .map(a -> new AttendeeDto(a.getUserId(), displayName(a.getUserId()), beltSummary(a.getUserId())))
-                .sorted(Comparator.comparing(AttendeeDto::displayName, String.CASE_INSENSITIVE_ORDER))
+                .map(a -> new AttendeeDto(a.getUserId(), displayName(a.getUserId()),
+                        beltSummary(a.getUserId()), a.getStatus()))
+                .sorted(Comparator
+                        .comparing((AttendeeDto a) -> "PRESENT".equals(a.status()) ? 0 : 1)
+                        .thenComparing(AttendeeDto::displayName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
@@ -168,6 +212,7 @@ public class ClassService {
         GymMember membership = requireStaff(userId);
         GymClass gc = classInGym(classId, membership.getGymId());
         Set<Long> present = attendanceRepository.findAllByGymClassIdAndClassDate(gc.getId(), date).stream()
+                .filter(a -> "PRESENT".equals(a.getStatus()))
                 .map(ClassAttendance::getUserId).collect(Collectors.toSet());
         return gymMemberRepository.findAllByGymId(membership.getGymId()).stream()
                 .map(m -> new RosterEntryDto(m.getUserId(), displayName(m.getUserId()),
@@ -184,8 +229,18 @@ public class ClassService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "NOT_A_MEMBER", "That user is not in this gym");
         }
         if (present) {
-            if (!attendanceRepository.existsByGymClassIdAndClassDateAndUserId(gc.getId(), date, targetUserId)) {
-                createAttendance(gc.getId(), date, targetUserId, userId);
+            var existing = attendanceRepository
+                    .findByGymClassIdAndClassDateAndUserId(gc.getId(), date, targetUserId);
+            if (existing.isPresent()) {
+                ClassAttendance a = existing.get();
+                if (!"PRESENT".equals(a.getStatus())) {
+                    a.setStatus("PRESENT");
+                    a.setMarkedByUserId(userId);
+                    attendanceRepository.save(a);
+                    checkInService.ensureDailyCheckIn(targetUserId, date);
+                }
+            } else {
+                createAttendance(gc.getId(), date, targetUserId, userId, "PRESENT");
                 checkInService.ensureDailyCheckIn(targetUserId, date);
             }
         } else {
@@ -196,21 +251,32 @@ public class ClassService {
     // --- helpers ---
 
     private AgendaOccurrenceDto occurrence(GymClass gc, LocalDate date, Long userId, Integer age, String beltSlug) {
-        boolean eligible = eligible(gc, age, beltSlug);
-        boolean checkedIn = attendanceRepository.existsByGymClassIdAndClassDateAndUserId(gc.getId(), date, userId);
-        return new AgendaOccurrenceDto(gc.getId(), gc.getName(), instructorName(gc.getInstructorUserId()),
-                gc.getSessionType().name(), gc.getStartTime().format(HM), gc.getEndTime().format(HM),
-                date, restrictionLabel(gc), eligible, checkedIn,
-                eligible && !checkedIn && withinWindow(gc, date),
+        String status = attendanceRepository
+                .findByGymClassIdAndClassDateAndUserId(gc.getId(), date, userId)
+                .map(ClassAttendance::getStatus)
+                .orElse(null);
+        return buildOccurrence(gc, date, age, beltSlug, status,
                 attendanceRepository.countByGymClassIdAndClassDate(gc.getId(), date));
     }
 
-    private void createAttendance(Long classId, LocalDate date, Long userId, Long markedBy) {
+    private AgendaOccurrenceDto buildOccurrence(GymClass gc, LocalDate date, Integer age, String beltSlug,
+            String myStatus, long attendeeCount) {
+        boolean eligible = eligible(gc, age, beltSlug);
+        boolean checkedIn = "PRESENT".equals(myStatus);
+        boolean reserved = "RESERVED".equals(myStatus);
+        boolean canCheckIn = eligible && !checkedIn && withinWindow(gc, date);
+        boolean canReserve = eligible && !checkedIn && !reserved && date.isAfter(LocalDate.now());
+        return new AgendaOccurrenceDto(gc.getId(), gc.getName(), instructorName(gc.getInstructorUserId()),
+                gc.getSessionType().name(), gc.getStartTime().format(HM), gc.getEndTime().format(HM),
+                date, restrictionLabel(gc), eligible, checkedIn, canCheckIn, reserved, canReserve, attendeeCount);
+    }
+
+    private void createAttendance(Long classId, LocalDate date, Long userId, Long markedBy, String status) {
         ClassAttendance a = new ClassAttendance();
         a.setGymClassId(classId);
         a.setClassDate(date);
         a.setUserId(userId);
-        a.setStatus("PRESENT");
+        a.setStatus(status);
         a.setMarkedByUserId(markedBy);
         attendanceRepository.save(a);
     }

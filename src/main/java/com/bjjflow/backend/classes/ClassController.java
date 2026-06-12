@@ -64,6 +64,12 @@ public class ClassController {
         return classService.checkIn(userId(auth), id, request.date());
     }
 
+    @PostMapping("/{id}/reserve")
+    public AgendaOccurrenceDto reserve(Authentication auth, @PathVariable Long id,
+            @Valid @RequestBody ClassDtos.ReserveRequest request) {
+        return classService.reserve(userId(auth), id, request.date());
+    }
+
     @GetMapping("/{id}/attendees")
     public List<AttendeeDto> attendees(Authentication auth, @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {

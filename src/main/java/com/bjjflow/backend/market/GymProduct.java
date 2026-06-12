@@ -1,4 +1,4 @@
-package com.bjjflow.backend.gyms;
+package com.bjjflow.backend.market;
 
 import java.time.Instant;
 
@@ -14,46 +14,38 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "gyms")
+@Table(name = "gym_products")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Gym {
+public class GymProduct {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    @Column(name = "gym_id")
+    private Long gymId;
 
-    private String city;
+    private String name;
 
     private String description;
 
-    @Column(name = "invite_code")
-    private String inviteCode;
+    @Column(name = "price_cents")
+    private Integer priceCents;
 
-    @Column(name = "graduation_target")
-    private Integer graduationTarget = 40;
+    @Column(name = "image_key")
+    private String imageKey;
 
-    @Column(name = "logo_key")
-    private String logoKey;
+    private String link;
 
-    private String phone;
-
-    private String email;
-
-    private String website;
-
-    private String address;
+    private Boolean active = true;
 
     @Column(name = "created_at")
     private Instant createdAt;
 
     @PrePersist
     void onCreate() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
+        createdAt = Instant.now();
     }
 }

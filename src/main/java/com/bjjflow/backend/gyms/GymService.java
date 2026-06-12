@@ -42,6 +42,8 @@ public class GymService {
     private final BeltRankRepository beltRankRepository;
     private final BeltPromotionRepository beltPromotionRepository;
     private final ClassAttendanceRepository classAttendanceRepository;
+    private final GymPhotoRepository gymPhotoRepository;
+    private final com.bjjflow.backend.storage.MediaStorage mediaStorage;
 
     @Transactional
     public GymDto createGym(Long userId, String name, String city, String description) {
@@ -108,12 +110,55 @@ public class GymService {
         GymMember mine = gymMemberRepository.findFirstByUserId(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
 
-        return gymMemberRepository.findAllByGymId(mine.getGymId()).stream()
-                .map(m -> toMemberDto(m, mine.getGymId()))
+        // Batched: a fixed number of queries regardless of member count
+        // (was O(N) queries — user, belt, promotion and attendance per member).
+        List<GymMember> members = gymMemberRepository.findAllByGymId(mine.getGymId());
+        List<Long> ids = members.stream().map(GymMember::getUserId).toList();
+        java.util.Map<Long, String> names = batchNames(ids);
+        java.util.Map<Long, BeltSummary> belts = batchBelts(ids);
+        java.util.Map<Long, java.time.Instant> lastPromos = batchLastPromotions(ids);
+        java.util.Map<Long, Long> attended = new java.util.HashMap<>();
+        for (Object[] row : classAttendanceRepository.attendanceTimesForGym(mine.getGymId())) {
+            Long uid = (Long) row[0];
+            java.time.Instant at = (java.time.Instant) row[1];
+            if (at.isAfter(lastPromos.getOrDefault(uid, java.time.Instant.EPOCH))) {
+                attended.merge(uid, 1L, Long::sum);
+            }
+        }
+
+        return members.stream()
+                .map(m -> new MemberDto(m.getUserId(), names.getOrDefault(m.getUserId(), "—"),
+                        m.getRole().name(), belts.get(m.getUserId()),
+                        attended.getOrDefault(m.getUserId(), 0L)))
                 .sorted(Comparator
                         .comparingInt((MemberDto m) -> rolePriority(m.role()))
                         .thenComparing(MemberDto::displayName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
+    }
+
+    private java.util.Map<Long, String> batchNames(List<Long> ids) {
+        java.util.Map<Long, String> map = new java.util.HashMap<>();
+        for (User u : userRepository.findAllById(ids)) {
+            map.put(u.getId(), u.getDisplayName());
+        }
+        return map;
+    }
+
+    private java.util.Map<Long, BeltSummary> batchBelts(List<Long> ids) {
+        java.util.Map<Long, BeltSummary> map = new java.util.HashMap<>();
+        for (UserBeltProgress p : beltProgressRepository.findAllByUserIdIn(ids)) {
+            map.put(p.getUserId(), toBeltSummary(p));
+        }
+        return map;
+    }
+
+    private java.util.Map<Long, java.time.Instant> batchLastPromotions(List<Long> ids) {
+        // rows come ordered by createdAt desc; keep only the newest per user
+        java.util.Map<Long, java.time.Instant> map = new java.util.HashMap<>();
+        for (BeltPromotion p : beltPromotionRepository.findAllByUserIdInOrderByCreatedAtDesc(ids)) {
+            map.putIfAbsent(p.getUserId(), p.getCreatedAt());
+        }
+        return map;
     }
 
     @Transactional
@@ -193,6 +238,10 @@ public class GymService {
 
     private GymDto toGymDto(Gym gym, GymRole role) {
         boolean staff = role == GymRole.OWNER || role == GymRole.INSTRUCTOR;
+        List<GymDtos.GymPhotoDto> photos = gymPhotoRepository.findAllByGymIdOrderByPositionAsc(gym.getId())
+                .stream()
+                .map(p -> new GymDtos.GymPhotoDto(p.getId(), mediaStorage.urlFor(p.getStorageKey())))
+                .toList();
         return new GymDto(
                 gym.getId(),
                 gym.getName(),
@@ -201,7 +250,99 @@ public class GymService {
                 gymMemberRepository.countByGymId(gym.getId()),
                 role.name(),
                 gym.getGraduationTarget(),
-                staff ? gym.getInviteCode() : null);
+                staff ? gym.getInviteCode() : null,
+                gym.getPhone(),
+                gym.getEmail(),
+                gym.getWebsite(),
+                gym.getAddress(),
+                gym.getLogoKey() == null ? null : mediaStorage.urlFor(gym.getLogoKey()),
+                photos);
+    }
+
+    @Transactional
+    public GymDto updateGym(Long userId, GymDtos.UpdateGymRequest req) {
+        GymMember membership = requireOwner(userId);
+        Gym gym = gymRepository.findById(membership.getGymId()).orElseThrow();
+        gym.setName(req.name().trim());
+        gym.setCity(blankToNull(req.city()));
+        gym.setDescription(blankToNull(req.description()));
+        gym.setPhone(blankToNull(req.phone()));
+        gym.setEmail(blankToNull(req.email()));
+        gym.setWebsite(blankToNull(req.website()));
+        gym.setAddress(blankToNull(req.address()));
+        if (req.logoKey() != null && !req.logoKey().isBlank()) {
+            gym.setLogoKey(req.logoKey());
+        }
+        gymRepository.save(gym);
+        return toGymDto(gym, membership.getRole());
+    }
+
+    @Transactional
+    public GymDtos.GymPhotoDto addPhoto(Long userId, String key) {
+        GymMember membership = requireOwner(userId);
+        GymPhoto photo = new GymPhoto();
+        photo.setGymId(membership.getGymId());
+        photo.setStorageKey(key);
+        photo.setPosition((int) gymPhotoRepository.countByGymId(membership.getGymId()));
+        photo = gymPhotoRepository.save(photo);
+        return new GymDtos.GymPhotoDto(photo.getId(), mediaStorage.urlFor(photo.getStorageKey()));
+    }
+
+    @Transactional
+    public void deletePhoto(Long userId, Long photoId) {
+        GymMember membership = requireOwner(userId);
+        GymPhoto photo = gymPhotoRepository.findById(photoId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "PHOTO_NOT_FOUND", "Photo not found"));
+        if (!photo.getGymId().equals(membership.getGymId())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "PHOTO_NOT_FOUND", "Photo not found");
+        }
+        gymPhotoRepository.delete(photo);
+    }
+
+    /**
+     * Gym leaderboard by verified class attendance only (deliberately decoupled
+     * from the home-screen streak data). All-time PRESENT count per member.
+     */
+    @Transactional(readOnly = true)
+    public List<GymDtos.RankingEntryDto> ranking(Long userId) {
+        GymMember mine = gymMemberRepository.findFirstByUserId(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
+        List<GymMember> members = gymMemberRepository.findAllByGymId(mine.getGymId());
+        List<Long> ids = members.stream().map(GymMember::getUserId).toList();
+
+        java.util.Map<Long, String> names = batchNames(ids);
+        java.util.Map<Long, BeltSummary> belts = batchBelts(ids);
+        java.util.Map<Long, Long> counts = new java.util.HashMap<>();
+        for (Object[] row : classAttendanceRepository.attendanceTimesForGym(mine.getGymId())) {
+            counts.merge((Long) row[0], 1L, Long::sum);
+        }
+
+        List<GymDtos.RankingEntryDto> ranked = new java.util.ArrayList<>();
+        members.stream()
+                .sorted(Comparator
+                        .comparingLong((GymMember m) -> counts.getOrDefault(m.getUserId(), 0L)).reversed()
+                        .thenComparing(m -> names.getOrDefault(m.getUserId(), ""),
+                                String.CASE_INSENSITIVE_ORDER))
+                .forEach(m -> ranked.add(new GymDtos.RankingEntryDto(
+                        ranked.size() + 1,
+                        m.getUserId(),
+                        names.getOrDefault(m.getUserId(), "—"),
+                        belts.get(m.getUserId()),
+                        counts.getOrDefault(m.getUserId(), 0L))));
+        return ranked;
+    }
+
+    private GymMember requireOwner(Long userId) {
+        GymMember m = gymMemberRepository.findFirstByUserId(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
+        if (m.getRole() != GymRole.OWNER) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "NOT_OWNER", "Only the gym owner can do this");
+        }
+        return m;
+    }
+
+    private String blankToNull(String v) {
+        return v == null || v.isBlank() ? null : v.trim();
     }
 
     private MemberDto toMemberDto(GymMember member, Long gymId) {

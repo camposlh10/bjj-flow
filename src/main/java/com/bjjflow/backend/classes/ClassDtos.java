@@ -48,10 +48,15 @@ public class ClassDtos {
             boolean eligible,
             boolean checkedIn,
             boolean canCheckIn,
+            boolean reserved,
+            boolean canReserve,
             long attendeeCount) {
     }
 
-    public record AttendeeDto(Long userId, String displayName, BeltSummary belt) {
+    public record AttendeeDto(Long userId, String displayName, BeltSummary belt, String status) {
+    }
+
+    public record ReserveRequest(@NotNull LocalDate date) {
     }
 
     public record RosterEntryDto(Long userId, String displayName, BeltSummary belt, boolean present) {
