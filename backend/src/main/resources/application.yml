@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: bjj-flow-backend
+  profiles:
+    # Default to dev (embedded H2) so the app runs without a local PostgreSQL install.
+    # Run with -Dspring-boot.run.profiles=postgres once PostgreSQL is available.
+    default: dev
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 60MB
+
+server:
+  # 8081 because Apache (httpd) occupies 8080 on the dev machine
+  port: 8081
+
+app:
+  jwt:
+    # Dev-only secret; override via APP_JWT_SECRET env var in any real deployment
+    secret: ${APP_JWT_SECRET:dev-only-secret-change-me-0123456789abcdef0123456789abcdef}
+    access-ttl-minutes: 60
+    refresh-ttl-days: 30
+  media:
+    # provider: local | (s3 / azure later). Swap LocalMediaStorage for a cloud impl.
+    provider: local
+    local-dir: ./data/media
+
+---
+# --- dev profile: embedded H2 in PostgreSQL compatibility mode ---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:file:./data/bjjflow-dev;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+---
+# --- postgres profile: real PostgreSQL (local install or docker-compose) ---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bjjflow
+    username: bjjflow
+    password: bjjflow
+  jpa:
+    hibernate:
+      ddl-auto: validate
