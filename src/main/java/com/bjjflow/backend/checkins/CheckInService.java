@@ -49,6 +49,24 @@ public class CheckInService {
                 checkIn.getDurationMinutes(), checkIn.getNotes());
     }
 
+    /**
+     * Ensures the user has a check-in for the given date (so attending a class
+     * keeps the daily streak), without creating a duplicate when they already
+     * logged that day. Used by the Agenda class check-in / attendance flow.
+     */
+    @Transactional
+    public void ensureDailyCheckIn(Long userId, LocalDate date) {
+        if (checkInRepository.existsByUserIdAndCheckDate(userId, date)) {
+            return;
+        }
+        CheckIn checkIn = new CheckIn();
+        checkIn.setUserId(userId);
+        checkIn.setCheckDate(date);
+        checkIn.setSessionType("CLASS");
+        checkInRepository.save(checkIn);
+        updateStreak(userId, date);
+    }
+
     private void updateStreak(Long userId, LocalDate date) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "USER_NOT_FOUND", "User not found"));
