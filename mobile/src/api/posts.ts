@@ -72,7 +72,9 @@ export async function uploadMedia(file: {
   const form = new FormData();
   // React Native's FormData accepts a {uri, name, type} object for files.
   form.append('file', { uri: file.uri, name: file.name, type: file.type } as unknown as Blob);
-  const { data } = await api.post<UploadedMedia>('/gyms/posts/media', form, {
+  // General media endpoint (no gym membership required) — works for profile
+  // avatar/photos/certificate as well as gym uploads.
+  const { data } = await api.post<UploadedMedia>('/media', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;

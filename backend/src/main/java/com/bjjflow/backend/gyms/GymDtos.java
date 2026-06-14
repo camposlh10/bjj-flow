@@ -46,7 +46,11 @@ public class GymDtos {
             String facebook,
             String whatsapp,
             String youtube,
-            String googlePlaceId) {
+            String googlePlaceId,
+            List<MedalDto> medals,
+            java.time.Instant createdAt,
+            /** present when approved (public) or for the owner to see pending status; null otherwise */
+            VerificationDto verification) {
     }
 
     public record UpdateGymRequest(
@@ -86,5 +90,63 @@ public class GymDtos {
     }
 
     public record MembersResponse(List<MemberDto> members) {
+    }
+
+    public record ReviewDto(Long id, Long userId, String displayName, int rating, String comment, java.time.Instant createdAt) {
+    }
+
+    public record ReviewSummaryDto(double average, long count, Integer myRating, String myComment) {
+    }
+
+    public record ReviewsDto(ReviewSummaryDto summary, List<ReviewDto> reviews) {
+    }
+
+    public record UpsertReviewRequest(
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(5) int rating,
+            @Size(max = 1000) String comment) {
+    }
+
+    public record MedalDto(Long id, String competition, String tier, int count) {
+    }
+
+    public record MedalInput(
+            @NotBlank @Size(max = 100) String competition,
+            @NotBlank @Size(max = 20) String tier,
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(9999) int count) {
+    }
+
+    public record UpdateMedalsRequest(
+            @jakarta.validation.constraints.Size(max = 50) @jakarta.validation.Valid List<MedalInput> medals) {
+    }
+
+    public record VerificationDto(
+            String status,
+            String cnpj,
+            String certificateUrl,
+            List<String> establishmentUrls,
+            String reviewNotes) {
+    }
+
+    public record SubmitVerificationRequest(
+            @NotBlank @Size(max = 20) String cnpj,
+            @NotBlank @Size(max = 300) String certificateKey,
+            @jakarta.validation.constraints.NotEmpty @Size(max = 10) List<@NotBlank @Size(max = 300) String> establishmentKeys) {
+    }
+
+    public record AdminDecisionRequest(boolean approve, @Size(max = 1000) String notes) {
+    }
+
+    public record VerificationAdminDto(
+            Long id,
+            Long gymId,
+            String gymName,
+            String status,
+            String cnpj,
+            String certificateUrl,
+            List<String> establishmentUrls,
+            Double aiConfidence,
+            String aiSummary,
+            String reviewNotes,
+            java.time.Instant createdAt) {
     }
 }

@@ -1,5 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -16,10 +18,33 @@ import {
 import { ActivityIndicator, Button, Text, TextInput } from 'react-native-paper';
 
 import { apiErrorMessage } from '../../api/auth';
-import { Gym, addGymPhoto, deleteGymPhoto, getMyGym, updateGym } from '../../api/gyms';
+import {
+  Gym,
+  MedalInput,
+  MedalTier,
+  addGymPhoto,
+  deleteGymPhoto,
+  getMyGym,
+  toggleGymVerified,
+  updateGym,
+  updateGymMedals,
+} from '../../api/gyms';
 import { resolveMediaUrl, uploadMedia } from '../../api/posts';
+import MedalVisual from '../../components/MedalVisual';
+import { COMPETITIONS } from '../../constants/competitions';
 import { t } from '../../i18n';
+import { GymStackParamList } from '../../navigation/GymNavigator';
 import { palette } from '../../theme/theme';
+
+type Nav = NativeStackNavigationProp<GymStackParamList>;
+
+const TIERS: { key: MedalTier; color: string }[] = [
+  { key: 'GOLD', color: '#F5C518' },
+  { key: 'SILVER', color: '#C7CED6' },
+  { key: 'BRONZE', color: '#CD7F32' },
+];
+
+type MedalEntry = { count: number; tier: MedalTier };
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -63,6 +88,7 @@ export default function EditGymScreen({ navigation }: { navigation: { goBack: ()
 function EditForm({ gym, goBack }: { gym: Gym; goBack: () => void }) {
   const queryClient = useQueryClient();
   const headerHeight = useHeaderHeight();
+  const navigation = useNavigation<Nav>();
 
   const [name, setName] = useState(gym.name);
   const [city, setCity] = useState(gym.city ?? '');
@@ -71,6 +97,18 @@ function EditForm({ gym, goBack }: { gym: Gym; goBack: () => void }) {
   const [email, setEmail] = useState(gym.email ?? '');
   const [website, setWebsite] = useState(gym.website ?? '');
   const [bio, setBio] = useState(gym.description ?? '');
+  const [instagram, setInstagram] = useState(gym.instagram ?? '');
+  const [facebook, setFacebook] = useState(gym.facebook ?? '');
+  const [whatsapp, setWhatsapp] = useState(gym.whatsapp ?? '');
+  const [youtube, setYoutube] = useState(gym.youtube ?? '');
+  // Medals keyed by catalog label, e.g. { IBJJF: { count: 3, tier: 'GOLD' } }.
+  const [medalMap, setMedalMap] = useState<Record<string, MedalEntry>>(() => {
+    const map: Record<string, MedalEntry> = {};
+    gym.medals.forEach((m) => {
+      map[m.competition] = { count: m.count, tier: m.tier };
+    });
+    return map;
+  });
   const [logo, setLogo] = useState<{ key?: string; uri: string } | null>(
     gym.logoUrl ? { uri: resolveMediaUrl(gym.logoUrl) } : null,
   );
@@ -80,8 +118,8 @@ function EditForm({ gym, goBack }: { gym: Gym; goBack: () => void }) {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['myGym'] });
 
   const save = useMutation({
-    mutationFn: () =>
-      updateGym({
+    mutationFn: async () => {
+      await updateGym({
         name: name.trim(),
         city: city.trim() || undefined,
         address: address.trim() || undefined,
@@ -90,13 +128,33 @@ function EditForm({ gym, goBack }: { gym: Gym; goBack: () => void }) {
         website: website.trim() || undefined,
         description: bio.trim() || undefined,
         logoKey: logo?.key,
-      }),
+        instagram: instagram.trim() || undefined,
+        facebook: facebook.trim() || undefined,
+        whatsapp: whatsapp.trim() || undefined,
+        youtube: youtube.trim() || undefined,
+      });
+      const medals: MedalInput[] = Object.entries(medalMap)
+        .filter(([, e]) => e.count > 0)
+        .map(([competition, e]) => ({ competition, tier: e.tier, count: e.count }));
+      await updateGymMedals(medals);
+    },
     onSuccess: () => {
       invalidate();
       Alert.alert(t('gymProfile.edit.saved'));
       goBack();
     },
     onError: (e) => setError(apiErrorMessage(e)),
+  });
+
+  const entryFor = (label: string): MedalEntry => medalMap[label] ?? { count: 0, tier: 'GOLD' };
+  const setCount = (label: string, count: number) =>
+    setMedalMap((prev) => ({ ...prev, [label]: { tier: prev[label]?.tier ?? 'GOLD', count: Math.max(0, count) } }));
+  const setTier = (label: string, tier: MedalTier) =>
+    setMedalMap((prev) => ({ ...prev, [label]: { count: prev[label]?.count ?? 0, tier } }));
+
+  const toggleVerified = useMutation({
+    mutationFn: toggleGymVerified,
+    onSuccess: invalidate,
   });
 
   const addPhoto = useMutation({
@@ -161,6 +219,85 @@ function EditForm({ gym, goBack }: { gym: Gym; goBack: () => void }) {
         <TextInput mode="outlined" label={t('gymProfile.edit.email')} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" style={styles.input} />
         <TextInput mode="outlined" label={t('gymProfile.edit.website')} value={website} onChangeText={setWebsite} autoCapitalize="none" style={styles.input} />
         <TextInput mode="outlined" label={t('gymProfile.edit.bio')} value={bio} onChangeText={setBio} multiline numberOfLines={3} style={styles.input} />
+
+        <View style={styles.verifiedRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionTitle}>{t('gymProfile.edit.verified')}</Text>
+            <Text style={styles.verifiedStatus}>
+              {gym.verification ? t(`verify.status.${gym.verification.status}`) : t('verify.status.none')}
+            </Text>
+          </View>
+          <Button
+            mode="outlined"
+            compact
+            loading={toggleVerified.isPending}
+            disabled={toggleVerified.isPending}
+            onPress={() => toggleVerified.mutate()}>
+            {t('gymProfile.edit.verified.toggle')}
+          </Button>
+        </View>
+        <Button
+          mode="contained"
+          icon="shield-check"
+          onPress={() => navigation.navigate('GymVerification')}
+          style={styles.verifyBtn}
+          contentStyle={styles.verifyContent}>
+          {gym.verification ? t('verify.resend') : t('verify.cta')}
+        </Button>
+
+        <Text style={styles.sectionTitle}>{t('gymProfile.edit.social')}</Text>
+        <TextInput mode="outlined" label={t('gymProfile.edit.instagram')} value={instagram} onChangeText={setInstagram} autoCapitalize="none" style={styles.input} />
+        <TextInput mode="outlined" label={t('gymProfile.edit.facebook')} value={facebook} onChangeText={setFacebook} autoCapitalize="none" style={styles.input} />
+        <TextInput mode="outlined" label={t('gymProfile.edit.whatsapp')} value={whatsapp} onChangeText={setWhatsapp} keyboardType="phone-pad" style={styles.input} />
+        <TextInput mode="outlined" label={t('gymProfile.edit.youtube')} value={youtube} onChangeText={setYoutube} autoCapitalize="none" style={styles.input} />
+
+        <Text style={styles.sectionTitle}>{t('gymProfile.edit.medals')}</Text>
+        <Text style={styles.medalsHint}>{t('gymProfile.edit.medals.hint')}</Text>
+        <View style={styles.medalGrid}>
+          {COMPETITIONS.map((comp) => {
+            const entry = entryFor(comp.label);
+            const active = entry.count > 0;
+            return (
+              <View key={comp.key} style={[styles.medalCard, active && styles.medalCardActive]}>
+                <MedalVisual competition={comp.label} tier={entry.tier} count={entry.count} size={50} />
+                <Text style={styles.medalCardLabel} numberOfLines={1}>
+                  {comp.label}
+                </Text>
+                <View style={styles.counter}>
+                  <Pressable
+                    onPress={() => setCount(comp.label, entry.count - 1)}
+                    hitSlop={6}
+                    style={styles.counterBtn}>
+                    <MaterialCommunityIcons name="minus" size={15} color={palette.textPrimary} />
+                  </Pressable>
+                  <Text style={styles.counterValue}>{entry.count}</Text>
+                  <Pressable
+                    onPress={() => setCount(comp.label, entry.count + 1)}
+                    hitSlop={6}
+                    style={styles.counterBtn}>
+                    <MaterialCommunityIcons name="plus" size={15} color={palette.textPrimary} />
+                  </Pressable>
+                </View>
+                {active && (
+                  <View style={styles.tierDots}>
+                    {TIERS.map((tier) => (
+                      <Pressable
+                        key={tier.key}
+                        onPress={() => setTier(comp.label, tier.key)}
+                        hitSlop={6}
+                        style={[
+                          styles.tierDot,
+                          { backgroundColor: tier.color },
+                          entry.tier === tier.key && styles.tierDotOn,
+                        ]}
+                      />
+                    ))}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
 
         <Text style={styles.sectionTitle}>{t('gymProfile.photos')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.gallery}>
@@ -228,6 +365,44 @@ const styles = StyleSheet.create({
   logoHint: { color: palette.textSecondary, fontSize: 11, marginTop: 8 },
   input: { marginBottom: 12 },
   sectionTitle: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold', marginTop: 4, marginBottom: 10 },
+  verifiedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: palette.surface,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  verifiedStatus: { color: palette.textSecondary, fontSize: 12, marginTop: -6 },
+  verifyBtn: { marginTop: -4, marginBottom: 16 },
+  verifyContent: { paddingVertical: 4 },
+  medalsHint: { color: palette.textSecondary, fontSize: 12, marginTop: -6, marginBottom: 12, lineHeight: 17 },
+  medalGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12, marginBottom: 16 },
+  medalCard: {
+    width: '48%',
+    alignItems: 'center',
+    backgroundColor: palette.surface,
+    borderRadius: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  medalCardActive: { borderColor: palette.outline },
+  medalCardLabel: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold', marginTop: 6, marginBottom: 8 },
+  counter: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  counterBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: palette.surfaceVariant,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  counterValue: { color: palette.textPrimary, fontSize: 15, fontWeight: 'bold', minWidth: 18, textAlign: 'center' },
+  tierDots: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  tierDot: { width: 16, height: 16, borderRadius: 8, opacity: 0.4 },
+  tierDotOn: { opacity: 1, borderWidth: 2, borderColor: palette.textPrimary },
   gallery: { marginBottom: 16 },
   photoWrap: { marginRight: 8 },
   photo: { width: 110, height: 80, borderRadius: 10, backgroundColor: palette.surfaceVariant },

@@ -31,6 +31,7 @@ public class AuthService {
     private final BeltRankRepository beltRankRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final com.bjjflow.backend.common.AdminAccess adminAccess;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -108,6 +109,7 @@ public class AuthService {
                     progress.getStripes());
         }
         return new UserDto(user.getId(), user.getEmail(), user.getDisplayName(), user.getAge(),
-                user.getWeightKg(), user.getHeightCm(), belt);
+                user.getWeightKg(), user.getHeightCm(), belt, adminAccess.isAdminEmail(user.getEmail()),
+                Boolean.TRUE.equals(user.getPro()));
     }
 }

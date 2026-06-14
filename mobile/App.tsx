@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import ErrorBoundary from './src/components/ErrorBoundary';
 import RootNavigator from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store/authStore';
 import { navigationTheme, paperTheme } from './src/theme/theme';
@@ -23,7 +24,9 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <PaperProvider theme={paperTheme}>
           <NavigationContainer theme={navigationTheme}>
-            <RootNavigator />
+            <ErrorBoundary>
+              <RootNavigator />
+            </ErrorBoundary>
             <StatusBar style="light" />
           </NavigationContainer>
         </PaperProvider>

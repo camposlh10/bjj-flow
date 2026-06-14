@@ -1,15 +1,14 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import * as Haptics from 'expo-haptics';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { createQuickCheckIn } from '../api/checkins';
+import CheckInSheet from '../components/CheckInSheet';
 import { t } from '../i18n';
 import ComunidadeScreen from '../screens/ComunidadeScreen';
 import HomeScreen from '../screens/HomeScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 import GymNavigator from './GymNavigator';
+import ProfileNavigator from './ProfileNavigator';
 import { palette } from '../theme/theme';
 
 export type AppTabsParamList = {
@@ -27,17 +26,10 @@ function EmptyScreen() {
 }
 
 export default function AppTabs() {
-  const queryClient = useQueryClient();
-
-  const checkIn = useMutation({
-    mutationFn: createQuickCheckIn,
-    onSuccess: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
-    },
-  });
+  const [checkInOpen, setCheckInOpen] = useState(false);
 
   return (
+    <>
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
@@ -74,7 +66,7 @@ export default function AppTabs() {
           tabBarButton: () => (
             <View style={styles.centerWrap}>
               <Pressable
-                onPress={() => checkIn.mutate()}
+                onPress={() => setCheckInOpen(true)}
                 style={({ pressed }) => [styles.centerButton, pressed && styles.centerPressed]}
                 accessibilityLabel={t('home.checkin.button')}>
                 <MaterialCommunityIcons name="plus" size={26} color="#FFFFFF" />
@@ -95,7 +87,7 @@ export default function AppTabs() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileNavigator}
         options={{
           tabBarLabel: t('tabs.profile'),
           tabBarIcon: ({ color, size }) => (
@@ -104,6 +96,8 @@ export default function AppTabs() {
         }}
       />
     </Tab.Navigator>
+    <CheckInSheet visible={checkInOpen} onClose={() => setCheckInOpen(false)} />
+    </>
   );
 }
 

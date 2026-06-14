@@ -51,6 +51,19 @@ public class LocalMediaStorage implements MediaStorage {
         return "/media/" + key;
     }
 
+    @Override
+    public byte[] read(String key) {
+        Path target = baseDir.resolve(key).normalize();
+        if (!target.startsWith(baseDir)) {
+            throw new IllegalArgumentException("Resolved path escapes the media directory");
+        }
+        try {
+            return Files.readAllBytes(target);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not read media " + key, e);
+        }
+    }
+
     private String extensionFor(String contentType, String originalFilename) {
         if (contentType != null) {
             switch (contentType.toLowerCase()) {

@@ -17,6 +17,8 @@ export type User = {
   weightKg: number | null;
   heightCm: number | null;
   belt: Belt | null;
+  admin?: boolean;
+  pro?: boolean;
 };
 
 export type OnboardingAnswers = {

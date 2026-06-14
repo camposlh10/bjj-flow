@@ -104,4 +104,19 @@ public class GymController {
     public List<GymSuggestionDto> suggestions(Authentication auth) {
         return gymService.suggestions(userId(auth));
     }
+
+    @GetMapping("/me/reviews")
+    public GymDtos.ReviewsDto reviews(Authentication auth) {
+        return gymService.listReviews(userId(auth));
+    }
+
+    @PostMapping("/me/reviews")
+    public GymDtos.ReviewsDto upsertReview(Authentication auth, @Valid @RequestBody GymDtos.UpsertReviewRequest request) {
+        return gymService.upsertReview(userId(auth), request.rating(), request.comment());
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/me/medals")
+    public GymDto updateMedals(Authentication auth, @Valid @RequestBody GymDtos.UpdateMedalsRequest request) {
+        return gymService.replaceMedals(userId(auth), request.medals());
+    }
 }

@@ -21,6 +21,17 @@ export function formatShortDateTime(iso: string): string {
   return `${d.getDate()} ${MONTHS_PT[d.getMonth()]}${year}, ${hh}:${mm}`;
 }
 
+const MONTHS_FULL_PT = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+];
+
+/** Mês e ano por extenso: "outubro de 2026". */
+export function formatMonthYear(iso: string): string {
+  const d = new Date(iso);
+  return `${MONTHS_FULL_PT[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 /** Cabeçalho de dia na agenda: "Hoje · Qua, 11 jun", "Amanhã · ...", "Qui, 12 jun". */

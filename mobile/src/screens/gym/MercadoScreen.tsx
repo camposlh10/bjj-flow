@@ -82,7 +82,7 @@ export default function MercadoScreen({ gym }: { gym: Gym }) {
           delayLongPress={400}>
           <View style={styles.imageBox}>
             {item.imageUrl ? (
-              <Image source={{ uri: resolveMediaUrl(item.imageUrl) }} style={styles.image} resizeMode="cover" />
+              <Image source={{ uri: resolveMediaUrl(item.imageUrl) }} style={styles.image} resizeMode="contain" />
             ) : (
               <MaterialCommunityIcons name="tshirt-crew" size={32} color={palette.outline} />
             )}
@@ -127,7 +127,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   imageBox: {
-    height: 110,
+    width: '100%',
+    aspectRatio: 1,
     borderRadius: 10,
     backgroundColor: palette.surfaceVariant,
     alignItems: 'center',

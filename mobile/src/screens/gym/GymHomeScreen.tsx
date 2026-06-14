@@ -190,9 +190,14 @@ function GymView({ gym }: { gym: Gym }) {
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <Text variant="titleMedium" style={styles.gymName}>
-              {gym.name}
-            </Text>
+            <View style={styles.gymNameRow}>
+              <Text variant="titleMedium" style={styles.gymName}>
+                {gym.name}
+              </Text>
+              {gym.verified && (
+                <MaterialCommunityIcons name="check-decagram" size={16} color={palette.verified} />
+              )}
+            </View>
             <Text style={styles.gymMeta}>
               {gym.memberCount} {t('home.suggestions.members')}
             </Text>
@@ -429,6 +434,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   gymAvatarText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  gymNameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   gymName: { color: palette.textPrimary, fontWeight: 'bold' },
   gymMeta: { color: palette.textSecondary, fontSize: 12 },
   roleChip: {
@@ -462,28 +468,28 @@ const styles = StyleSheet.create({
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
+    gap: 14,
+    paddingVertical: 14,
     borderBottomWidth: 0.5,
     borderBottomColor: palette.surfaceVariant,
   },
   memberAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: palette.surfaceVariant,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  memberAvatarText: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 12 },
-  memberName: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold' },
-  memberRoleInline: { color: palette.primary, fontSize: 10, fontWeight: 'normal' },
-  memberBeltRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  memberBelt: { width: 44 },
-  memberBeltLabel: { color: palette.textSecondary, fontSize: 10 },
+  memberAvatarText: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 15 },
+  memberName: { color: palette.textPrimary, fontSize: 15, fontWeight: 'bold' },
+  memberRoleInline: { color: palette.primary, fontSize: 11, fontWeight: 'normal' },
+  memberBeltRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
+  memberBelt: { width: 56 },
+  memberBeltLabel: { color: palette.textSecondary, fontSize: 11 },
   memberProgressTrack: {
-    width: 52,
-    height: 5,
+    width: 64,
+    height: 6,
     borderRadius: 999,
     backgroundColor: palette.surfaceVariant,
     overflow: 'hidden',

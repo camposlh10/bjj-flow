@@ -43,6 +43,10 @@ public class GymService {
     private final BeltPromotionRepository beltPromotionRepository;
     private final ClassAttendanceRepository classAttendanceRepository;
     private final GymPhotoRepository gymPhotoRepository;
+    private final GymReviewRepository gymReviewRepository;
+    private final GymMedalRepository gymMedalRepository;
+    private final GymVerificationRepository gymVerificationRepository;
+    private final GymVerificationMediaRepository gymVerificationMediaRepository;
     private final com.bjjflow.backend.storage.MediaStorage mediaStorage;
 
     @Transactional
@@ -242,6 +246,11 @@ public class GymService {
                 .stream()
                 .map(p -> new GymDtos.GymPhotoDto(p.getId(), mediaStorage.urlFor(p.getStorageKey())))
                 .toList();
+        List<GymDtos.MedalDto> medals = gymMedalRepository.findAllByGymIdOrderByPositionAsc(gym.getId())
+                .stream()
+                .map(m -> new GymDtos.MedalDto(m.getId(), m.getCompetition(), m.getTier(),
+                        m.getCount() == null ? 1 : m.getCount()))
+                .toList();
         return new GymDto(
                 gym.getId(),
                 gym.getName(),
@@ -262,7 +271,44 @@ public class GymService {
                 gym.getFacebook(),
                 gym.getWhatsapp(),
                 gym.getYoutube(),
-                gym.getGooglePlaceId());
+                gym.getGooglePlaceId(),
+                medals,
+                gym.getCreatedAt(),
+                buildVerificationDto(gym.getId(), role));
+    }
+
+    /**
+     * Public when approved (so the certificate is a credibility signal); the
+     * owner additionally sees pending/rejected status + review notes. Hidden
+     * from everyone else while not approved.
+     */
+    private GymDtos.VerificationDto buildVerificationDto(Long gymId, GymRole role) {
+        GymVerification v = gymVerificationRepository.findByGymId(gymId).orElse(null);
+        if (v == null) {
+            return null;
+        }
+        boolean approved = "APPROVED".equals(v.getStatus());
+        boolean owner = role == GymRole.OWNER;
+        if (!approved && !owner) {
+            return null;
+        }
+        List<GymVerificationMedia> media = gymVerificationMediaRepository
+                .findAllByVerificationIdOrderByPositionAsc(v.getId());
+        String certUrl = media.stream()
+                .filter(m -> "CERTIFICATE".equals(m.getKind()))
+                .findFirst()
+                .map(m -> mediaStorage.urlFor(m.getStorageKey()))
+                .orElse(null);
+        List<String> estUrls = media.stream()
+                .filter(m -> "ESTABLISHMENT".equals(m.getKind()))
+                .map(m -> mediaStorage.urlFor(m.getStorageKey()))
+                .toList();
+        return new GymDtos.VerificationDto(
+                v.getStatus(),
+                Cnpj.format(v.getCnpj()),
+                certUrl,
+                estUrls,
+                owner ? v.getReviewNotes() : null);
     }
 
     @Transactional
@@ -296,6 +342,36 @@ public class GymService {
         Gym gym = gymRepository.findById(membership.getGymId()).orElseThrow();
         gym.setVerified(!Boolean.TRUE.equals(gym.getVerified()));
         gymRepository.save(gym);
+        return toGymDto(gym, membership.getRole());
+    }
+
+    private static final java.util.Set<String> MEDAL_TIERS = java.util.Set.of("GOLD", "SILVER", "BRONZE");
+
+    // Replaces the gym's full medal showcase in one shot — the editor sends the
+    // whole list, so we wipe and re-insert rather than diffing.
+    @Transactional
+    public GymDto replaceMedals(Long userId, List<GymDtos.MedalInput> medals) {
+        GymMember membership = requireOwner(userId);
+        Long gymId = membership.getGymId();
+        gymMedalRepository.deleteByGymId(gymId);
+
+        List<GymDtos.MedalInput> input = medals == null ? List.of() : medals;
+        int position = 0;
+        for (GymDtos.MedalInput m : input) {
+            String tier = m.tier() == null ? "" : m.tier().trim().toUpperCase(Locale.ROOT);
+            if (!MEDAL_TIERS.contains(tier)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_TIER",
+                        "Medal tier must be GOLD, SILVER or BRONZE");
+            }
+            GymMedal medal = new GymMedal();
+            medal.setGymId(gymId);
+            medal.setCompetition(m.competition().trim());
+            medal.setTier(tier);
+            medal.setCount(m.count());
+            medal.setPosition(position++);
+            gymMedalRepository.save(medal);
+        }
+        Gym gym = gymRepository.findById(gymId).orElseThrow();
         return toGymDto(gym, membership.getRole());
     }
 
@@ -352,6 +428,52 @@ public class GymService {
                         belts.get(m.getUserId()),
                         counts.getOrDefault(m.getUserId(), 0L))));
         return ranked;
+    }
+
+    @Transactional(readOnly = true)
+    public GymDtos.ReviewsDto listReviews(Long userId) {
+        GymMember mine = gymMemberRepository.findFirstByUserId(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
+        return buildReviewsDto(mine.getGymId(), userId);
+    }
+
+    @Transactional
+    public GymDtos.ReviewsDto upsertReview(Long userId, int rating, String comment) {
+        GymMember mine = gymMemberRepository.findFirstByUserId(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NO_GYM", "You are not in a gym"));
+        GymReview review = gymReviewRepository.findByGymIdAndUserId(mine.getGymId(), userId)
+                .orElseGet(() -> {
+                    GymReview r = new GymReview();
+                    r.setGymId(mine.getGymId());
+                    r.setUserId(userId);
+                    return r;
+                });
+        review.setRating(rating);
+        review.setComment(blankToNull(comment));
+        gymReviewRepository.save(review);
+        return buildReviewsDto(mine.getGymId(), userId);
+    }
+
+    private GymDtos.ReviewsDto buildReviewsDto(Long gymId, Long userId) {
+        List<GymReview> reviews = gymReviewRepository.findAllByGymIdOrderByCreatedAtDesc(gymId);
+        java.util.Map<Long, String> names = batchNames(reviews.stream().map(GymReview::getUserId).toList());
+
+        long count = reviews.size();
+        double average = count == 0 ? 0 : reviews.stream().mapToInt(GymReview::getRating).average().orElse(0);
+
+        GymReview mine = reviews.stream().filter(r -> r.getUserId().equals(userId)).findFirst().orElse(null);
+
+        List<GymDtos.ReviewDto> reviewDtos = reviews.stream()
+                .map(r -> new GymDtos.ReviewDto(r.getId(), r.getUserId(),
+                        names.getOrDefault(r.getUserId(), "—"), r.getRating(), r.getComment(), r.getCreatedAt()))
+                .toList();
+
+        GymDtos.ReviewSummaryDto summary = new GymDtos.ReviewSummaryDto(
+                average, count,
+                mine == null ? null : mine.getRating(),
+                mine == null ? null : mine.getComment());
+
+        return new GymDtos.ReviewsDto(summary, reviewDtos);
     }
 
     private GymMember requireOwner(Long userId) {

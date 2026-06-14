@@ -10,6 +10,8 @@ export type Stats = {
   checkedInToday: boolean;
   /** segunda → domingo */
   weekDays: boolean[];
+  /** semanas distintas com ao menos um treino */
+  activeWeeks: number;
 };
 
 /** Data local do aparelho em YYYY-MM-DD (sem efeitos de fuso do servidor). */
@@ -26,6 +28,21 @@ export async function getStats(): Promise<Stats> {
 }
 
 export async function createQuickCheckIn(): Promise<void> {
-  // Check-in de um toque: duração padrão de 60min (edição detalhada vem depois)
+  // Check-in de um toque: duração padrão de 60min
   await api.post('/checkins', { date: todayLocalDate(), durationMinutes: 60 });
+}
+
+export type CheckInSubmission = { submission: string; direction: 'HIT' | 'CONCEDED'; count: number };
+
+export type CreateCheckInPayload = {
+  date: string;
+  sessionType?: string;
+  durationMinutes?: number;
+  notes?: string;
+  submissions?: CheckInSubmission[];
+};
+
+/** Detailed check-in (session type, duration, submissions landed/conceded, notes). */
+export async function createCheckIn(payload: CreateCheckInPayload): Promise<void> {
+  await api.post('/checkins', payload);
 }

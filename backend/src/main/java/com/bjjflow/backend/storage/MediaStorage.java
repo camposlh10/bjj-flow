@@ -20,4 +20,7 @@ public interface MediaStorage {
      * URL for cloud providers.
      */
     String urlFor(String key);
+
+    /** Reads the raw bytes back (used to hand images to the AI verifier). */
+    byte[] read(String key);
 }

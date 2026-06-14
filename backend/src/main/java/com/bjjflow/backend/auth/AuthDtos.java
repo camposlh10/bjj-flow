@@ -36,7 +36,7 @@ public class AuthDtos {
     }
 
     public record UserDto(Long id, String email, String displayName, Integer age,
-            BigDecimal weightKg, Integer heightCm, BeltDto belt) {
+            BigDecimal weightKg, Integer heightCm, BeltDto belt, boolean admin, boolean pro) {
     }
 
     public record AuthResponse(String accessToken, String refreshToken, UserDto user) {

@@ -11,6 +11,8 @@ export const palette = {
   textPrimary: '#F4F4F5',
   textSecondary: '#A1A1AA',
   outline: '#3F3F46',
+  verified: '#3897F0',
+  pro: '#F5C518',
 };
 
 export const paperTheme = {

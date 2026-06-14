@@ -20,4 +20,12 @@ public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
 
     @Query("select count(distinct c.checkDate) from CheckIn c where c.userId = :userId and c.checkDate between :from and :to")
     long countDistinctDays(@Param("userId") Long userId, @Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    @Query("select min(c.checkDate) from CheckIn c where c.userId = :userId")
+    LocalDate minCheckDate(@Param("userId") Long userId);
+
+    @Query("select distinct c.checkDate from CheckIn c where c.userId = :userId")
+    List<LocalDate> distinctCheckDates(@Param("userId") Long userId);
+
+    long countByUserIdAndCheckDateGreaterThanEqual(Long userId, LocalDate date);
 }

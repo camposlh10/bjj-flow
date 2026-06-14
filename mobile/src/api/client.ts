@@ -7,7 +7,10 @@ import { useAuthStore } from '../store/authStore';
 // so a physical device or emulator can reach the backend on the same machine.
 const metroHost = Constants.expoConfig?.hostUri?.split(':')[0];
 
-export const API_BASE_URL = `http://${metroHost ?? 'localhost'}:8081/api/v1`;
+// Backend runs on 8090 (8080 = Apache, 8081 = Expo Metro). Must match server.port
+// in the backend's application.yml — sharing Metro's 8081 made API calls hit the
+// bundler and return HTML, crashing every data-driven screen.
+export const API_BASE_URL = `http://${metroHost ?? 'localhost'}:8090/api/v1`;
 // Origin without the /api/v1 suffix — used to resolve relative media URLs (/media/...).
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1$/, '');
 

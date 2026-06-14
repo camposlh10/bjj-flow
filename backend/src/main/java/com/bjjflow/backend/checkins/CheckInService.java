@@ -13,6 +13,11 @@ import com.bjjflow.backend.checkins.CheckInDtos.CheckInDto;
 import com.bjjflow.backend.checkins.CheckInDtos.CreateCheckInRequest;
 import com.bjjflow.backend.checkins.CheckInDtos.StatsResponse;
 import com.bjjflow.backend.common.ApiException;
+import com.bjjflow.backend.events.UserEventService;
+import com.bjjflow.backend.gyms.GymMember;
+import com.bjjflow.backend.gyms.GymMemberRepository;
+import com.bjjflow.backend.submissions.SubmissionLog;
+import com.bjjflow.backend.submissions.SubmissionLogRepository;
 import com.bjjflow.backend.users.User;
 import com.bjjflow.backend.users.UserRepository;
 
@@ -24,6 +29,9 @@ public class CheckInService {
 
     private final CheckInRepository checkInRepository;
     private final UserRepository userRepository;
+    private final GymMemberRepository gymMemberRepository;
+    private final UserEventService userEventService;
+    private final SubmissionLogRepository submissionLogRepository;
 
     @Transactional
     public CheckInDto create(Long userId, CreateCheckInRequest request) {
@@ -43,10 +51,42 @@ public class CheckInService {
         checkIn.setNotes(request.notes());
         checkIn = checkInRepository.save(checkIn);
 
-        updateStreak(userId, request.date());
+        saveSubmissions(userId, checkIn.getId(), request.date(), request.submissions());
+
+        int streak = updateStreak(userId, request.date());
+        emitProgress(userId, request.date(), streak);
 
         return new CheckInDto(checkIn.getId(), checkIn.getCheckDate(), checkIn.getSessionType(),
                 checkIn.getDurationMinutes(), checkIn.getNotes());
+    }
+
+    private void saveSubmissions(Long userId, Long checkInId, LocalDate date,
+            List<CheckInDtos.SubmissionInput> submissions) {
+        if (submissions == null || submissions.isEmpty()) {
+            return;
+        }
+        for (CheckInDtos.SubmissionInput s : submissions) {
+            String direction = s.direction() == null ? "" : s.direction().trim().toUpperCase();
+            if (!direction.equals("HIT") && !direction.equals("CONCEDED")) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_DIRECTION",
+                        "Submission direction must be HIT or CONCEDED");
+            }
+            SubmissionLog log = new SubmissionLog();
+            log.setUserId(userId);
+            log.setCheckInId(checkInId);
+            log.setSubmission(s.submission().trim());
+            log.setDirection(direction);
+            log.setQty(s.count());
+            log.setOccurredAt(date);
+            submissionLogRepository.save(log);
+        }
+    }
+
+    /** Idempotently records any milestone/first-training/streak events this check-in crossed. */
+    private void emitProgress(Long userId, LocalDate date, int streak) {
+        Long gymId = gymMemberRepository.findFirstByUserId(userId).map(GymMember::getGymId).orElse(null);
+        long total = checkInRepository.countByUserId(userId);
+        userEventService.recordTrainingProgress(userId, gymId, date, total, streak);
     }
 
     /**
@@ -64,17 +104,18 @@ public class CheckInService {
         checkIn.setCheckDate(date);
         checkIn.setSessionType("CLASS");
         checkInRepository.save(checkIn);
-        updateStreak(userId, date);
+        int streak = updateStreak(userId, date);
+        emitProgress(userId, date, streak);
     }
 
-    private void updateStreak(Long userId, LocalDate date) {
+    private int updateStreak(Long userId, LocalDate date) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "USER_NOT_FOUND", "User not found"));
         LocalDate last = user.getLastCheckInDate();
 
         // Back-dated check-ins don't move the streak; same-day repeats count once
         if (last != null && !date.isAfter(last)) {
-            return;
+            return user.getCurrentStreak();
         }
         long gap = last == null ? Long.MAX_VALUE : ChronoUnit.DAYS.between(last, date);
         int current = gap == 1 ? user.getCurrentStreak() + 1 : 1;
@@ -82,6 +123,7 @@ public class CheckInService {
         user.setLongestStreak(Math.max(user.getLongestStreak(), current));
         user.setLastCheckInDate(date);
         userRepository.save(user);
+        return current;
     }
 
     @Transactional(readOnly = true)
@@ -121,6 +163,17 @@ public class CheckInService {
                 user.getWeeklyGoal(),
                 (int) checkInRepository.countDistinctDays(userId, monday, sunday),
                 checkInRepository.existsByUserIdAndCheckDate(userId, today),
-                weekDays);
+                weekDays,
+                activeWeeks(userId));
+    }
+
+    /** Distinct ISO weeks containing at least one check-in (portable; computed in Java). */
+    private long activeWeeks(Long userId) {
+        return checkInRepository.distinctCheckDates(userId).stream()
+                .map(d -> d.get(java.time.temporal.IsoFields.WEEK_BASED_YEAR) * 100
+                        + d.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR))
+                .distinct()
+                .count();
     }
 }
+

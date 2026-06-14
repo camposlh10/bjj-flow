@@ -1,5 +1,8 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
+import Animated, { Easing, useAnimatedProps, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 
 import { RankingEntry, getRanking } from '../../api/gyms';
@@ -14,6 +17,32 @@ const PODIUM: Record<number, { bg: string; fg: string }> = {
   2: { bg: '#9CA3AF', fg: '#1F2937' },
   3: { bg: '#B45309', fg: '#FEF3C7' },
 };
+
+const GOLD_GRADIENT = ['#FFD700', '#FFF6CC', '#FACC15', '#B8860B', '#FFD700'] as const;
+
+const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
+
+function FirstPlaceRing({ children }: { children: React.ReactNode }) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withRepeat(withTiming(1, { duration: 4000, easing: Easing.linear }), -1, false);
+  }, [progress]);
+
+  const animatedProps = useAnimatedProps(() => {
+    const angle = progress.value * Math.PI * 2;
+    return {
+      start: { x: 0.5 + 0.5 * Math.cos(angle), y: 0.5 + 0.5 * Math.sin(angle) },
+      end: { x: 0.5 - 0.5 * Math.cos(angle), y: 0.5 - 0.5 * Math.sin(angle) },
+    };
+  });
+
+  return (
+    <AnimatedGradient colors={GOLD_GRADIENT} animatedProps={animatedProps} style={styles.firstRing}>
+      <View style={styles.firstRingInner}>{children}</View>
+    </AnimatedGradient>
+  );
+}
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -50,8 +79,8 @@ export default function RankingScreen() {
       renderItem={({ item }: { item: RankingEntry }) => {
         const podium = PODIUM[item.position];
         const isMe = item.userId === myUserId;
-        return (
-          <View style={[styles.row, isMe && styles.rowMe]}>
+        const content = (
+          <View style={[styles.rowContent, isMe && styles.rowMe, item.position === 1 && styles.rowContentFirst]}>
             {podium ? (
               <View style={[styles.posBadge, { backgroundColor: podium.bg }]}>
                 <Text style={[styles.posBadgeText, { color: podium.fg }]}>{item.position}</Text>
@@ -74,7 +103,7 @@ export default function RankingScreen() {
                     color={item.belt.colorHex}
                     rankBarColor={rankBarColorFor(item.belt.slug)}
                     stripes={item.belt.stripes}
-                    height={8}
+                    height={10}
                   />
                 </View>
               )}
@@ -86,6 +115,11 @@ export default function RankingScreen() {
             </Text>
           </View>
         );
+
+        if (item.position === 1) {
+          return <FirstPlaceRing>{content}</FirstPlaceRing>;
+        }
+        return content;
       }}
     />
   );
@@ -96,14 +130,18 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 24 },
   title: { color: palette.textSecondary, fontSize: 11, marginBottom: 10 },
   empty: { color: palette.textSecondary, textAlign: 'center', paddingVertical: 24 },
-  row: {
+  rowContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    gap: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     borderBottomWidth: 0.5,
     borderBottomColor: '#1A1A20',
+  },
+  rowContentFirst: {
+    borderBottomWidth: 0,
+    borderRadius: 14,
   },
   rowMe: {
     backgroundColor: palette.surface,
@@ -112,27 +150,33 @@ const styles = StyleSheet.create({
     borderColor: palette.primary,
     borderBottomWidth: 0.5,
   },
-  pos: { width: 24, textAlign: 'center', color: palette.textSecondary, fontSize: 12 },
+  firstRing: { borderRadius: 16, padding: 2, marginVertical: 6 },
+  firstRingInner: {
+    borderRadius: 14,
+    backgroundColor: palette.background,
+    overflow: 'hidden',
+  },
+  pos: { width: 32, textAlign: 'center', color: palette.textSecondary, fontSize: 14 },
   posBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  posBadgeText: { fontSize: 12, fontWeight: 'bold' },
+  posBadgeText: { fontSize: 14, fontWeight: 'bold' },
   avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: palette.surfaceVariant,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarMe: { backgroundColor: palette.primary },
-  avatarText: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 10 },
+  avatarText: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 13 },
   avatarTextMe: { color: '#fff' },
-  name: { color: palette.textPrimary, fontSize: 12, fontWeight: 'bold' },
-  beltMini: { width: 38, marginTop: 4 },
-  classes: { color: palette.textPrimary, fontSize: 12, fontWeight: 'bold' },
+  name: { color: palette.textPrimary, fontSize: 14, fontWeight: 'bold' },
+  beltMini: { width: 48, marginTop: 5 },
+  classes: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold' },
 });

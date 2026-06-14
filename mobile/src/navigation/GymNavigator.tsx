@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AgendaOccurrence } from '../api/classes';
 import { t } from '../i18n';
+import AdminVerificationsScreen from '../screens/gym/AdminVerificationsScreen';
 import AttendanceScreen from '../screens/gym/AttendanceScreen';
 import ClassDetailScreen from '../screens/gym/ClassDetailScreen';
 import CreateClassScreen from '../screens/gym/CreateClassScreen';
@@ -11,9 +12,12 @@ import CreateProductScreen from '../screens/gym/CreateProductScreen';
 import EditGymScreen from '../screens/gym/EditGymScreen';
 import GymHomeScreen from '../screens/gym/GymHomeScreen';
 import GymProfileScreen from '../screens/gym/GymProfileScreen';
+import GymVerificationScreen from '../screens/gym/GymVerificationScreen';
 import JoinGymScreen from '../screens/gym/JoinGymScreen';
-import MemberProfileScreen from '../screens/gym/MemberProfileScreen';
 import PostDetailScreen from '../screens/gym/PostDetailScreen';
+import EditUserProfileScreen from '../screens/EditUserProfileScreen';
+import SubmissionsScreen from '../screens/SubmissionsScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
 import SavedPostsScreen from '../screens/gym/SavedPostsScreen';
 import { palette } from '../theme/theme';
 
@@ -28,9 +32,13 @@ export type GymStackParamList = {
   ClassDetail: { occurrence: AgendaOccurrence };
   Attendance: { classId: number; date: string; title: string };
   MemberProfile: { userId: number };
+  EditUserProfile: undefined;
+  Submissions: { userId?: number } | undefined;
   CreateProduct: undefined;
   GymProfile: undefined;
   EditGym: undefined;
+  GymVerification: undefined;
+  AdminVerifications: undefined;
 };
 
 const Stack = createNativeStackNavigator<GymStackParamList>();
@@ -75,8 +83,18 @@ export default function GymNavigator() {
       />
       <Stack.Screen
         name="MemberProfile"
-        component={MemberProfileScreen}
+        component={UserProfileScreen}
         options={{ title: t('member.profile.title') }}
+      />
+      <Stack.Screen
+        name="EditUserProfile"
+        component={EditUserProfileScreen}
+        options={{ title: t('profile.edit.title') }}
+      />
+      <Stack.Screen
+        name="Submissions"
+        component={SubmissionsScreen}
+        options={{ title: t('submissions.title') }}
       />
       <Stack.Screen
         name="CreateProduct"
@@ -92,6 +110,16 @@ export default function GymNavigator() {
         name="EditGym"
         component={EditGymScreen}
         options={{ title: t('gymProfile.edit.title') }}
+      />
+      <Stack.Screen
+        name="GymVerification"
+        component={GymVerificationScreen}
+        options={{ title: t('verify.title') }}
+      />
+      <Stack.Screen
+        name="AdminVerifications"
+        component={AdminVerificationsScreen}
+        options={{ title: t('admin.verifications.title') }}
       />
     </Stack.Navigator>
   );

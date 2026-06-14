@@ -11,4 +11,8 @@ public interface BeltPromotionRepository extends JpaRepository<BeltPromotion, Lo
     Optional<BeltPromotion> findFirstByUserIdOrderByCreatedAtDesc(Long userId);
 
     List<BeltPromotion> findAllByUserIdInOrderByCreatedAtDesc(Collection<Long> userIds);
+
+    List<BeltPromotion> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<BeltPromotion> findTop20ByGymIdOrderByCreatedAtDesc(Long gymId);
 }

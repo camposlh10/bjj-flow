@@ -57,6 +57,19 @@ public class User {
 
     private String city;
 
+    private Boolean pro = false;
+
+    @Column(name = "avatar_key")
+    private String avatarKey;
+
+    private String bio;
+
+    @Column(name = "certificate_key")
+    private String certificateKey;
+
+    @Column(name = "accent_color")
+    private String accentColor;
+
     @Column(name = "created_at")
     private Instant createdAt;
 
