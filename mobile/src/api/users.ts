@@ -1,0 +1,113 @@
+import { Journey } from './activity';
+import { MedalInput, MedalTier } from './gyms';
+import { api } from './client';
+
+export type ProfileBelt = {
+  slug: string;
+  name: string;
+  namePt: string;
+  colorHex: string;
+  stripes: number;
+};
+
+export type ProfileGym = {
+  id: number;
+  name: string;
+  city: string | null;
+  verified: boolean;
+  role: 'OWNER' | 'INSTRUCTOR' | 'MEMBER';
+  logoUrl: string | null;
+  memberCount: number;
+  ratingAverage: number;
+  ratingCount: number;
+};
+
+export type ProfilePhoto = { id: number; url: string };
+
+export type ProfileMetrics = {
+  trainings: number;
+  currentStreak: number;
+  longestStreak: number;
+  activeWeeks: number;
+};
+
+export type ProfileMedal = {
+  id: number;
+  competition: string;
+  tier: MedalTier;
+  count: number;
+};
+
+export type UserProfile = {
+  id: number;
+  displayName: string;
+  pro: boolean;
+  bio: string | null;
+  city: string | null;
+  avatarUrl: string | null;
+  certificateUrl: string | null;
+  accentColor: string | null;
+  joinedAt: string;
+  belt: ProfileBelt | null;
+  gym: ProfileGym | null;
+  metrics: ProfileMetrics;
+  medals: ProfileMedal[];
+  photos: ProfilePhoto[];
+  followers: number;
+  following: number;
+  isFollowing: boolean;
+  isMe: boolean;
+};
+
+export async function getUserProfile(id: number): Promise<UserProfile> {
+  const { data } = await api.get<UserProfile>(`/users/${id}/profile`);
+  return data;
+}
+
+export async function getUserJourney(id: number): Promise<Journey> {
+  const { data } = await api.get<Journey>(`/users/${id}/journey`);
+  return data;
+}
+
+export async function followUser(id: number): Promise<UserProfile> {
+  const { data } = await api.post<UserProfile>(`/users/${id}/follow`);
+  return data;
+}
+
+export async function unfollowUser(id: number): Promise<UserProfile> {
+  const { data } = await api.delete<UserProfile>(`/users/${id}/follow`);
+  return data;
+}
+
+export type UpdateProfilePayload = {
+  bio?: string;
+  avatarKey?: string;
+  certificateKey?: string;
+  accentColor?: string;
+};
+
+export async function updateMyProfile(payload: UpdateProfilePayload): Promise<UserProfile> {
+  const { data } = await api.put<UserProfile>('/users/me/profile', payload);
+  return data;
+}
+
+export async function addMyPhoto(key: string): Promise<UserProfile> {
+  const { data } = await api.post<UserProfile>('/users/me/photos', { key });
+  return data;
+}
+
+export async function deleteMyPhoto(photoId: number): Promise<UserProfile> {
+  const { data } = await api.delete<UserProfile>(`/users/me/photos/${photoId}`);
+  return data;
+}
+
+export async function updateMyMedals(medals: MedalInput[]): Promise<UserProfile> {
+  const { data } = await api.put<UserProfile>('/users/me/medals', { medals });
+  return data;
+}
+
+/** TEMP — preview the PRO badge before subscriptions exist. */
+export async function togglePro(): Promise<UserProfile> {
+  const { data } = await api.post<UserProfile>('/users/me/pro');
+  return data;
+}
