@@ -28,6 +28,7 @@ public class ProfileDtos {
 
     public record UserProfileDto(
             Long id,
+            String username,
             String displayName,
             boolean pro,
             String bio,
@@ -35,6 +36,7 @@ public class ProfileDtos {
             String avatarUrl,
             String certificateUrl,
             String accentColor,
+            String bannerUrl,
             Instant joinedAt,
             BeltDto belt,
             GymSummaryDto gym,
@@ -51,6 +53,8 @@ public class ProfileDtos {
             @Size(max = 500) String bio,
             @Size(max = 300) String avatarKey,
             @Size(max = 300) String certificateKey,
-            @Size(max = 9) String accentColor) {
+            @Size(max = 9) String accentColor,
+            @Size(max = 300) String bannerKey,
+            @Size(max = 30) String username) {
     }
 }

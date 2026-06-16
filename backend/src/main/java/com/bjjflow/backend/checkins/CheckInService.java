@@ -49,6 +49,8 @@ public class CheckInService {
         checkIn.setSessionType(request.sessionType());
         checkIn.setDurationMinutes(request.durationMinutes());
         checkIn.setNotes(request.notes());
+        checkIn.setVisibility(normalizeVisibility(request.visibility()));
+        checkIn.setPhotoKey(blankToNull(request.photoKey()));
         checkIn = checkInRepository.save(checkIn);
 
         saveSubmissions(userId, checkIn.getId(), request.date(), request.submissions());
@@ -58,6 +60,15 @@ public class CheckInService {
 
         return new CheckInDto(checkIn.getId(), checkIn.getCheckDate(), checkIn.getSessionType(),
                 checkIn.getDurationMinutes(), checkIn.getNotes());
+    }
+
+    /** Defaults to PRIVATE; only an explicit "PUBLIC" shares the session to the feed. */
+    private String normalizeVisibility(String visibility) {
+        return "PUBLIC".equalsIgnoreCase(visibility == null ? "" : visibility.trim()) ? "PUBLIC" : "PRIVATE";
+    }
+
+    private String blankToNull(String v) {
+        return v == null || v.isBlank() ? null : v.trim();
     }
 
     private void saveSubmissions(Long userId, Long checkInId, LocalDate date,

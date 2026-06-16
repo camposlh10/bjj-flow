@@ -19,6 +19,7 @@ import com.bjjflow.backend.users.User;
 import com.bjjflow.backend.users.UserBeltProgress;
 import com.bjjflow.backend.users.UserBeltProgressRepository;
 import com.bjjflow.backend.users.UserRepository;
+import com.bjjflow.backend.users.Usernames;
 
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +50,7 @@ public class AuthService {
         user.setAge(request.age());
         user.setWeightKg(request.weightKg());
         user.setHeightCm(request.heightCm());
+        user.setUsername(generateUsername(request.displayName()));
         user = userRepository.save(user);
 
         UserBeltProgress progress = new UserBeltProgress();
@@ -94,6 +96,22 @@ public class AuthService {
         return beltProgressRepository.findByUserId(userId).orElse(null);
     }
 
+    /** A friendly unique @handle from the display name; appends a counter on collision. */
+    private String generateUsername(String displayName) {
+        String base = Usernames.sanitize(displayName);
+        if (base.length() < 3) {
+            base = "user";
+        }
+        String candidate = base;
+        int n = 1;
+        while (userRepository.existsByUsernameIgnoreCase(candidate)) {
+            String suffix = String.valueOf(n++);
+            int room = Usernames.MAX_LENGTH - suffix.length();
+            candidate = (base.length() > room ? base.substring(0, room) : base) + suffix;
+        }
+        return candidate;
+    }
+
     private AuthResponse buildAuthResponse(User user, UserBeltProgress progress) {
         return new AuthResponse(
                 jwtService.createAccessToken(user.getId()),
@@ -108,7 +126,7 @@ public class AuthService {
             belt = new BeltDto(rank.getSlug(), rank.getName(), rank.getNamePt(), rank.getColorHex(),
                     progress.getStripes());
         }
-        return new UserDto(user.getId(), user.getEmail(), user.getDisplayName(), user.getAge(),
+        return new UserDto(user.getId(), user.getEmail(), user.getUsername(), user.getDisplayName(), user.getAge(),
                 user.getWeightKg(), user.getHeightCm(), belt, adminAccess.isAdminEmail(user.getEmail()),
                 Boolean.TRUE.equals(user.getPro()));
     }

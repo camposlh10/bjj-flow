@@ -1,7 +1,6 @@
-package com.bjjflow.backend.checkins;
+package com.bjjflow.backend.feed;
 
 import java.time.Instant;
-import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,38 +14,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "check_ins")
+@Table(name = "check_in_likes")
 @Getter
 @Setter
 @NoArgsConstructor
-public class CheckIn {
+public class CheckInLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "check_in_id")
+    private Long checkInId;
+
     @Column(name = "user_id")
     private Long userId;
-
-    @Column(name = "check_date")
-    private LocalDate checkDate;
-
-    @Column(name = "session_type")
-    private String sessionType;
-
-    @Column(name = "duration_minutes")
-    private Integer durationMinutes;
-
-    private String notes;
-
-    /** PUBLIC (shown on the global Comunidade feed) or PRIVATE (default). */
-    private String visibility = "PRIVATE";
-
-    @Column(name = "photo_key")
-    private String photoKey;
-
-    @Column(name = "share_count")
-    private Integer shareCount = 0;
 
     @Column(name = "created_at")
     private Instant createdAt;

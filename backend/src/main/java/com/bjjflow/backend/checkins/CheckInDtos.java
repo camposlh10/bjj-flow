@@ -21,6 +21,8 @@ public class CheckInDtos {
             @Size(max = 20) String sessionType,
             @Min(5) @Max(600) Integer durationMinutes,
             @Size(max = 500) String notes,
+            @Size(max = 10) String visibility,
+            @Size(max = 255) String photoKey,
             @Size(max = 100) @jakarta.validation.Valid List<SubmissionInput> submissions) {
     }
 

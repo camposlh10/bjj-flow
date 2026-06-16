@@ -74,6 +74,7 @@ public class ProfileService {
 
         return new UserProfileDto(
                 user.getId(),
+                user.getUsername(),
                 user.getDisplayName(),
                 Boolean.TRUE.equals(user.getPro()),
                 user.getBio(),
@@ -81,6 +82,7 @@ public class ProfileService {
                 user.getAvatarKey() == null ? null : mediaStorage.urlFor(user.getAvatarKey()),
                 user.getCertificateKey() == null ? null : mediaStorage.urlFor(user.getCertificateKey()),
                 user.getAccentColor(),
+                user.getBannerKey() == null ? null : mediaStorage.urlFor(user.getBannerKey()),
                 user.getCreatedAt(),
                 belt,
                 gym,
@@ -135,6 +137,23 @@ public class ProfileService {
         }
         if (req.accentColor() != null && !req.accentColor().isBlank()) {
             u.setAccentColor(req.accentColor().trim());
+        }
+        if (req.bannerKey() != null) {
+            // Empty string clears the banner (back to the gradient default).
+            u.setBannerKey(req.bannerKey().isBlank() ? null : req.bannerKey().trim());
+        }
+        if (req.username() != null && !req.username().isBlank()) {
+            String uname = req.username().trim().toLowerCase(Locale.ROOT);
+            if (!Usernames.isValid(uname)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_USERNAME",
+                        "Username must be 3-30 chars: letters, numbers or underscore");
+            }
+            userRepository.findByUsernameIgnoreCase(uname)
+                    .filter(other -> !other.getId().equals(userId))
+                    .ifPresent(other -> {
+                        throw new ApiException(HttpStatus.CONFLICT, "USERNAME_TAKEN", "Username is already taken");
+                    });
+            u.setUsername(uname);
         }
         userRepository.save(u);
         return profile(userId, userId);

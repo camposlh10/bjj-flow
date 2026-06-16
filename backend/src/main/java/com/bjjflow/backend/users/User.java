@@ -35,6 +35,8 @@ public class User {
     @Column(name = "display_name")
     private String displayName;
 
+    private String username;
+
     private Integer age;
 
     @Column(name = "weight_kg", precision = 5, scale = 2)
@@ -69,6 +71,9 @@ public class User {
 
     @Column(name = "accent_color")
     private String accentColor;
+
+    @Column(name = "banner_key")
+    private String bannerKey;
 
     @Column(name = "created_at")
     private Instant createdAt;
