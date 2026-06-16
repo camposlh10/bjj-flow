@@ -3,11 +3,12 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 
 import { todayLocalDate } from '../api/checkins';
 import { SubmissionDirection, getUserSubmissions } from '../api/submissions';
 import CheckInSheet from '../components/CheckInSheet';
+import Skeleton from '../components/Skeleton';
 import SubmissionRadar from '../components/SubmissionRadar';
 import { SUBMISSIONS, submissionStyle } from '../constants/submissions';
 import { t } from '../i18n';
@@ -75,7 +76,10 @@ export default function SubmissionsScreen() {
 
         {stats.isLoading ? (
           <View style={styles.loading}>
-            <ActivityIndicator />
+            <Skeleton width={220} height={220} radius={110} style={{ alignSelf: 'center' }} />
+            <Skeleton height={14} style={{ marginTop: 20 }} />
+            <Skeleton width="70%" height={14} style={{ marginTop: 10 }} />
+            <Skeleton width="85%" height={14} style={{ marginTop: 10 }} />
           </View>
         ) : (
           <>

@@ -12,6 +12,7 @@ export type Belt = {
 export type User = {
   id: number;
   email: string;
+  username?: string;
   displayName: string;
   age: number | null;
   weightKg: number | null;

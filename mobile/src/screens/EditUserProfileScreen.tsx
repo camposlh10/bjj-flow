@@ -89,8 +89,13 @@ function Form({ profile }: { profile: UserProfile }) {
   const me = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
+  const [username, setUsername] = useState(profile.username ?? '');
   const [bio, setBio] = useState(profile.bio ?? '');
   const [avatar, setAvatar] = useState<Pic | null>(profile.avatarUrl ? { uri: resolveMediaUrl(profile.avatarUrl) } : null);
+  const [banner, setBanner] = useState<Pic | null>(profile.bannerUrl ? { uri: resolveMediaUrl(profile.bannerUrl) } : null);
+  // Tracks whether the user changed/removed the banner so save knows to send a
+  // new key, an empty string (clear → gradient), or leave it untouched.
+  const [bannerTouched, setBannerTouched] = useState(false);
   const [cert, setCert] = useState<Pic | null>(
     profile.certificateUrl ? { uri: resolveMediaUrl(profile.certificateUrl) } : null,
   );
@@ -118,6 +123,8 @@ function Form({ profile }: { profile: UserProfile }) {
         avatarKey: avatar?.key,
         certificateKey: cert?.key,
         accentColor: accent,
+        bannerKey: bannerTouched ? (banner?.key ?? '') : undefined,
+        username: username.trim().toLowerCase() || undefined,
       });
       const medals: MedalInput[] = Object.entries(medalMap)
         .filter(([, e]) => e.count > 0)
@@ -175,12 +182,50 @@ function Form({ profile }: { profile: UserProfile }) {
     }
   };
 
+  const pickBanner = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const picked = await pickAndUpload();
+      if (picked) {
+        setBanner(picked);
+        setBannerTouched(true);
+      }
+    } catch (e) {
+      setError(apiErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeBanner = () => {
+    setBanner(null);
+    setBannerTouched(true);
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={headerHeight}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* Banner / thumbnail */}
+        <Text style={styles.sectionTitle}>{t('profile.edit.banner')}</Text>
+        {banner ? (
+          <View style={styles.bannerWrap}>
+            <Image source={{ uri: banner.uri }} style={styles.bannerImg} resizeMode="cover" />
+            <Pressable style={styles.bannerRemove} onPress={removeBanner} hitSlop={8}>
+              <MaterialCommunityIcons name="close" size={16} color="#fff" />
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable style={styles.bannerAdd} onPress={pickBanner} disabled={busy}>
+            <MaterialCommunityIcons name="image-plus" size={22} color={palette.textSecondary} />
+            <Text style={styles.bannerAddText}>{t('profile.edit.banner.add')}</Text>
+          </Pressable>
+        )}
+        <Text style={styles.hint}>{t('profile.edit.banner.hint')}</Text>
+
         {/* Avatar */}
         <View style={styles.avatarRow}>
           <Pressable onPress={() => pick(setAvatar)} disabled={busy} style={styles.avatarPick}>
@@ -197,6 +242,19 @@ function Form({ profile }: { profile: UserProfile }) {
           </Pressable>
           <Text style={styles.hint}>{t('profile.edit.photo')}</Text>
         </View>
+
+        <TextInput
+          mode="outlined"
+          label={t('profile.edit.username')}
+          value={username}
+          onChangeText={(v) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+          autoCapitalize="none"
+          autoCorrect={false}
+          maxLength={30}
+          left={<TextInput.Affix text="@" />}
+          style={styles.input}
+        />
+        <Text style={styles.hint}>{t('profile.edit.username.hint')}</Text>
 
         <TextInput
           mode="outlined"
@@ -358,6 +416,31 @@ const styles = StyleSheet.create({
     borderColor: palette.background,
   },
   hint: { color: palette.textSecondary, fontSize: 11, marginTop: 8 },
+  bannerWrap: { borderRadius: 12, overflow: 'hidden' },
+  bannerImg: { width: '100%', height: 120, borderRadius: 12, backgroundColor: palette.surfaceVariant },
+  bannerRemove: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bannerAdd: {
+    height: 120,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: palette.outline,
+    borderStyle: 'dashed',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  bannerAddText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
   input: { marginBottom: 16 },
   sectionTitle: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold', marginTop: 4, marginBottom: 10 },
   proRow: {

@@ -22,6 +22,7 @@ export default function ProfileNavigator() {
         headerTintColor: palette.textPrimary,
         headerTitleStyle: { color: palette.textPrimary },
         contentStyle: { backgroundColor: palette.background },
+        animation: 'slide_from_right',
       }}>
       <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ title: t('tabs.profile') }} />
       <Stack.Screen

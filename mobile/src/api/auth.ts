@@ -59,6 +59,10 @@ export function apiErrorMessage(error: unknown): string {
         return t('errors.INVALID_TIME');
       case 'INVALID_STRIPES':
         return t('errors.INVALID_STRIPES');
+      case 'USERNAME_TAKEN':
+        return t('errors.USERNAME_TAKEN');
+      case 'INVALID_USERNAME':
+        return t('errors.INVALID_USERNAME');
     }
   }
   return t('errors.UNKNOWN');

@@ -14,11 +14,14 @@ export default function MilestoneBar({
   label,
   value,
   ladder,
+  color = palette.primary,
 }: {
   icon: IconName;
   label: string;
   value: number;
   ladder: number[];
+  /** Bar fill + icon tint; matches the profile Métricas ring colors. */
+  color?: string;
 }) {
   const next = nextMilestone(value, ladder);
   const progress = milestoneProgress(value, ladder);
@@ -26,13 +29,13 @@ export default function MilestoneBar({
     <View style={styles.row}>
       <View style={styles.head}>
         <View style={styles.labelWrap}>
-          <MaterialCommunityIcons name={icon} size={15} color={palette.textSecondary} />
+          <MaterialCommunityIcons name={icon} size={15} color={color} />
           <Text style={styles.label}>{label}</Text>
         </View>
         <Text style={styles.value}>{value}</Text>
       </View>
       <View style={styles.track}>
-        <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+        <View style={[styles.fill, { width: `${progress * 100}%`, backgroundColor: color }]} />
       </View>
       <Text style={styles.sub}>
         {next === null ? t('home.overview.maxed') : tf('home.overview.toGo', { n: next - value, m: next })}

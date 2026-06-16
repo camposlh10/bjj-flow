@@ -4,16 +4,19 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { ComponentProps, useState } from 'react';
-import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Text, TextInput } from 'react-native-paper';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { useState } from 'react';
+import { Alert, Image, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Text, TextInput } from 'react-native-paper';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ActivityItem, ActivityType, TimelineItem, getAcademyActivity, getJourney, logCompetition } from '../api/activity';
+import { TimelineItem, getJourney, logCompetition } from '../api/activity';
 import { Stats, createQuickCheckIn, getStats, todayLocalDate } from '../api/checkins';
 import { getMyGym } from '../api/gyms';
+import { resolveMediaUrl } from '../api/posts';
+import { getUserProfile } from '../api/users';
 import BeltVisual from '../components/BeltVisual';
+import Skeleton from '../components/Skeleton';
 import MilestoneBar from '../components/MilestoneBar';
 import { rankBarColorFor } from '../constants/belts';
 import { STREAK_MILESTONES, TRAINING_MILESTONES, WEEK_MILESTONES, nextMilestone } from '../constants/milestones';
@@ -21,13 +24,18 @@ import { t, tf } from '../i18n';
 import type { AppTabsParamList } from '../navigation/AppTabs';
 import { useAuthStore } from '../store/authStore';
 import { palette } from '../theme/theme';
-import { timeAgo } from '../utils/time';
 
 type Nav = BottomTabNavigationProp<AppTabsParamList>;
-type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 const WEEK_LETTERS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+// Mirrors the profile "Métricas" rings so the evolution bars read the same.
+const METRIC_COLORS = { streak: palette.primary, trainings: '#E0A82E', weeks: '#2DB6A3' };
+
+// Journey dots cycle this palette by index, so no color repeats within any 6
+// consecutive events; a color is only reused after the previous one scrolls past.
+const JOURNEY_DOT_COLORS = ['#E63946', '#E0A82E', '#2DB6A3', '#3E63DD', '#8E4EC6', '#F76808'];
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -38,34 +46,6 @@ function initialsOf(name: string): string {
 function eventDate(iso: string): string {
   const d = new Date(iso);
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-}
-
-const TYPE_ICON: Record<ActivityType, IconName> = {
-  BELT_PROMOTION: 'arrow-up-bold-circle',
-  NEW_MEMBER: 'account-plus',
-  ACADEMY_JOINED: 'town-hall',
-  FIRST_TRAINING: 'flag-checkered',
-  TRAINING_MILESTONE: 'medal',
-  STREAK_MILESTONE: 'fire',
-  COMPETITION_RESULT: 'trophy',
-};
-
-function activityText(item: ActivityItem): string {
-  const name = item.userName?.split(' ')[0] ?? '—';
-  switch (item.type) {
-    case 'BELT_PROMOTION':
-      return tf('home.community.BELT_PROMOTION', { name, belt: item.text ?? '' });
-    case 'TRAINING_MILESTONE':
-      return tf('home.community.TRAINING_MILESTONE', { name, n: item.value ?? 0 });
-    case 'STREAK_MILESTONE':
-      return tf('home.community.STREAK_MILESTONE', { name, n: item.value ?? 0 });
-    case 'COMPETITION_RESULT':
-      return tf('home.community.COMPETITION_RESULT', { name, text: item.text ?? '' });
-    case 'FIRST_TRAINING':
-      return tf('home.community.FIRST_TRAINING', { name });
-    default:
-      return tf('home.community.NEW_MEMBER', { name });
-  }
 }
 
 function timelineText(item: TimelineItem): string {
@@ -120,8 +100,13 @@ export default function HomeScreen() {
 
   const stats = useQuery({ queryKey: ['stats'], queryFn: getStats });
   const gym = useQuery({ queryKey: ['myGym'], queryFn: getMyGym });
-  const activity = useQuery({ queryKey: ['academyActivity'], queryFn: getAcademyActivity });
   const journey = useQuery({ queryKey: ['journey'], queryFn: getJourney });
+  const profile = useQuery({
+    queryKey: ['userProfile', user?.id ?? 0],
+    queryFn: () => getUserProfile(user!.id),
+    enabled: !!user?.id,
+  });
+  const avatarUrl = profile.data?.avatarUrl ? resolveMediaUrl(profile.data.avatarUrl) : null;
 
   const checkIn = useMutation({
     mutationFn: createQuickCheckIn,
@@ -129,18 +114,15 @@ export default function HomeScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       queryClient.invalidateQueries({ queryKey: ['stats'] });
       queryClient.invalidateQueries({ queryKey: ['journey'] });
-      queryClient.invalidateQueries({ queryKey: ['academyActivity'] });
     },
   });
 
   const s = stats.data;
   const todayIndex = (new Date().getDay() + 6) % 7;
-  const inGym = !!gym.data;
   // Defensive against older/partial backend payloads: never index undefined and
   // never .map something that isn't actually an array (a stale server can answer
   // these routes with a non-JSON body, which axios surfaces as a string).
   const weekDays = Array.isArray(s?.weekDays) ? s.weekDays : [];
-  const activityItems = Array.isArray(activity.data) ? activity.data : [];
   const timelineItems = Array.isArray(journey.data?.timeline) ? journey.data.timeline : [];
 
   return (
@@ -152,7 +134,6 @@ export default function HomeScreen() {
           refreshing={stats.isRefetching}
           onRefresh={() => {
             stats.refetch();
-            activity.refetch();
             journey.refetch();
           }}
           tintColor={palette.primary}
@@ -160,9 +141,15 @@ export default function HomeScreen() {
       }>
       {/* 1. Greeting */}
       <View style={styles.greeting}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initialsOf(user?.displayName ?? '')}</Text>
-        </View>
+        <Pressable onPress={() => navigation.navigate('Profile')} hitSlop={6}>
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initialsOf(user?.displayName ?? '')}</Text>
+            </View>
+          )}
+        </Pressable>
         <View style={{ flex: 1 }}>
           <Text variant="titleMedium" style={styles.name}>
             {t('home.greeting')}, {user?.displayName?.split(' ')[0] ?? ''}
@@ -187,8 +174,11 @@ export default function HomeScreen() {
       </View>
 
       {!s ? (
-        <View style={styles.loading}>
-          <ActivityIndicator />
+        <View style={{ gap: 14 }}>
+          <Skeleton height={150} radius={20} />
+          <Skeleton height={92} radius={16} />
+          <Skeleton height={130} radius={16} />
+          <Skeleton height={70} radius={16} />
         </View>
       ) : (
         <>
@@ -235,19 +225,8 @@ export default function HomeScreen() {
             </View>
           </LinearGradient>
 
-          {/* 3. Training Action Area */}
-          {s.checkedInToday ? (
-            <Animated.View entering={FadeIn.duration(300)} style={[styles.card, styles.doneCard]}>
-              <MaterialCommunityIcons name="check-circle" size={22} color={palette.primary} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{t('home.action.done.title')}</Text>
-                <Text style={styles.cardSub}>{actionNextNote(s)}</Text>
-              </View>
-              <Pressable onPress={() => checkIn.mutate()} hitSlop={6}>
-                <Text style={styles.againLink}>{t('home.action.again')}</Text>
-              </Pressable>
-            </Animated.View>
-          ) : (
+          {/* 3. Training Action Area — hidden once today's check-in is done; returns next day */}
+          {!s.checkedInToday && (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{t('home.action.title')}</Text>
               <Text style={styles.cardSub}>{t('home.action.subtitle')}</Text>
@@ -267,9 +246,9 @@ export default function HomeScreen() {
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>{t('home.overview.title')}</Text>
             <View style={{ gap: 16, marginTop: 12 }}>
-              <MilestoneBar icon="dumbbell" label={t('home.overview.trainings')} value={s.totalCheckIns} ladder={TRAINING_MILESTONES} />
-              <MilestoneBar icon="fire" label={t('home.overview.streak')} value={s.longestStreak} ladder={STREAK_MILESTONES} />
-              <MilestoneBar icon="calendar-check" label={t('home.overview.weeks')} value={s.activeWeeks ?? 0} ladder={WEEK_MILESTONES} />
+              <MilestoneBar icon="dumbbell" label={t('home.overview.trainings')} value={s.totalCheckIns} ladder={TRAINING_MILESTONES} color={METRIC_COLORS.trainings} />
+              <MilestoneBar icon="fire" label={t('home.overview.streak')} value={s.longestStreak} ladder={STREAK_MILESTONES} color={METRIC_COLORS.streak} />
+              <MilestoneBar icon="calendar-check" label={t('home.overview.weeks')} value={s.activeWeeks ?? 0} ladder={WEEK_MILESTONES} color={METRIC_COLORS.weeks} />
             </View>
           </View>
 
@@ -281,33 +260,6 @@ export default function HomeScreen() {
               <Text style={styles.goalText}>{nextGoal(s)}</Text>
             </View>
           </View>
-
-          {/* 6. Community Preview */}
-          {inGym && (
-            <View>
-              <View style={styles.sectionHead}>
-                <Text style={styles.sectionTitle}>{t('home.community.title')}</Text>
-                <Pressable onPress={() => navigation.navigate('Comunidade')} hitSlop={6}>
-                  <Text style={styles.link}>{t('home.community.seeAll')}</Text>
-                </Pressable>
-              </View>
-              <View style={styles.card}>
-                {activityItems.length === 0 ? (
-                  <Text style={styles.cardSub}>{t('home.community.empty')}</Text>
-                ) : (
-                  activityItems.slice(0, 4).map((item, i) => (
-                    <View key={i} style={[styles.activityRow, i > 0 && styles.activityDivider]}>
-                      <MaterialCommunityIcons name={TYPE_ICON[item.type]} size={18} color={palette.primary} />
-                      <Text style={styles.activityText} numberOfLines={2}>
-                        {activityText(item)}
-                      </Text>
-                      <Text style={styles.activityTime}>{timeAgo(item.occurredAt)}</Text>
-                    </View>
-                  ))
-                )}
-              </View>
-            </View>
-          )}
 
           {/* Journey Timeline */}
           <View>
@@ -322,16 +274,18 @@ export default function HomeScreen() {
                 <Text style={styles.cardSub}>{t('home.timeline.empty')}</Text>
               ) : (
                 timelineItems.slice(0, 6).map((item, i, arr) => (
-                  <View key={i} style={styles.timelineRow}>
+                  <Animated.View key={i} entering={FadeInDown.duration(260).delay(i * 50)} style={styles.timelineRow}>
                     <View style={styles.timelineRail}>
-                      <View style={styles.timelineDot} />
+                      <View
+                        style={[styles.timelineDot, { backgroundColor: JOURNEY_DOT_COLORS[i % JOURNEY_DOT_COLORS.length] }]}
+                      />
                       {i < arr.length - 1 && <View style={styles.timelineLine} />}
                     </View>
                     <View style={styles.timelineBody}>
                       <Text style={styles.timelineTitle}>{timelineText(item)}</Text>
                       <Text style={styles.timelineDate}>{eventDate(item.occurredAt)}</Text>
                     </View>
-                  </View>
+                  </Animated.View>
                 ))
               )}
             </View>
@@ -344,18 +298,10 @@ export default function HomeScreen() {
         onClose={() => setCompOpen(false)}
         onSaved={() => {
           queryClient.invalidateQueries({ queryKey: ['journey'] });
-          queryClient.invalidateQueries({ queryKey: ['academyActivity'] });
         }}
       />
     </ScrollView>
   );
-}
-
-function actionNextNote(s: Stats): string {
-  const next = nextMilestone(s.totalCheckIns, TRAINING_MILESTONES);
-  if (next === null) return t('home.action.done.maxed');
-  const left = next - s.totalCheckIns;
-  return left === 1 ? t('home.action.done.next.one') : tf('home.action.done.next.many', { n: left });
 }
 
 function CompetitionModal({

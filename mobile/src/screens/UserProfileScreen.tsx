@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { ComponentProps, useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, IconButton, Text } from 'react-native-paper';
+import { Button, IconButton, Text } from 'react-native-paper';
 
 import { apiErrorMessage } from '../api/auth';
 import { TimelineItem } from '../api/activity';
@@ -23,6 +23,7 @@ import {
 import { submissionStyle } from '../constants/submissions';
 import BeltVisual, { formatStripes } from '../components/BeltVisual';
 import ImageLightbox from '../components/ImageLightbox';
+import Skeleton from '../components/Skeleton';
 import MedalVisual from '../components/MedalVisual';
 import MetricRing from '../components/MetricRing';
 import { ADULT_BELTS, KIDS_BELTS, beltBySlug, maxStripesFor, rankBarColorFor } from '../constants/belts';
@@ -145,8 +146,13 @@ export default function UserProfileScreen() {
 
   if (profile.isLoading || !profile.data) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator />
+      <View style={styles.skeletonWrap}>
+        <Skeleton height={110} radius={0} style={styles.skeletonBanner} />
+        <Skeleton width={84} height={84} radius={42} style={{ marginTop: 64 }} />
+        <Skeleton width="50%" height={20} style={{ marginTop: 14 }} />
+        <Skeleton width="35%" height={12} style={{ marginTop: 8 }} />
+        <Skeleton height={56} radius={14} style={{ marginTop: 24 }} />
+        <Skeleton height={120} radius={14} style={{ marginTop: 14 }} />
       </View>
     );
   }
@@ -182,7 +188,11 @@ export default function UserProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <LinearGradient colors={[`${accent}2E`, palette.background]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.banner} />
+      {p.bannerUrl ? (
+        <Image source={{ uri: resolveMediaUrl(p.bannerUrl) }} style={styles.banner} resizeMode="cover" />
+      ) : (
+        <LinearGradient colors={[`${accent}2E`, palette.background]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.banner} />
+      )}
 
       {/* Header */}
       <View style={styles.header}>
@@ -201,6 +211,7 @@ export default function UserProfileScreen() {
           </Text>
           {p.pro && <ProBadge />}
         </View>
+        {p.username ? <Text style={styles.handle}>@{p.username}</Text> : null}
         <View style={styles.subRow}>
           {p.belt && (
             <View style={styles.beltMini}>
@@ -234,7 +245,7 @@ export default function UserProfileScreen() {
             mode="outlined"
             icon="message-outline"
             style={styles.actionFlex}
-            onPress={() => Alert.alert(t('profile.message.soon'))}>
+            onPress={() => navigation.navigate('Conversation', { userId: p.id, title: p.displayName })}>
             {t('profile.message')}
           </Button>
         </View>
@@ -536,6 +547,8 @@ export default function UserProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
+  skeletonWrap: { flex: 1, backgroundColor: palette.background, paddingHorizontal: 20, alignItems: 'center' },
+  skeletonBanner: { position: 'absolute', top: 0, left: 0, right: 0 },
   content: { padding: 20, paddingBottom: 40 },
   muted: { color: palette.textSecondary, fontSize: 13 },
   banner: { position: 'absolute', top: 0, left: 0, right: 0, height: 110 },
@@ -555,6 +568,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   proText: { color: '#0D0D10', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  handle: { color: palette.textSecondary, fontSize: 12, marginTop: 3 },
   subRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
   beltMini: { width: 38 },
   since: { color: palette.textSecondary, fontSize: 12 },

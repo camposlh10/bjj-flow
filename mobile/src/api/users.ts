@@ -40,6 +40,7 @@ export type ProfileMedal = {
 
 export type UserProfile = {
   id: number;
+  username: string | null;
   displayName: string;
   pro: boolean;
   bio: string | null;
@@ -47,6 +48,7 @@ export type UserProfile = {
   avatarUrl: string | null;
   certificateUrl: string | null;
   accentColor: string | null;
+  bannerUrl: string | null;
   joinedAt: string;
   belt: ProfileBelt | null;
   gym: ProfileGym | null;
@@ -84,6 +86,9 @@ export type UpdateProfilePayload = {
   avatarKey?: string;
   certificateKey?: string;
   accentColor?: string;
+  /** Empty string clears the banner back to the gradient default. */
+  bannerKey?: string;
+  username?: string;
 };
 
 export async function updateMyProfile(payload: UpdateProfilePayload): Promise<UserProfile> {

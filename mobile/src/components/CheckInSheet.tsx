@@ -1,12 +1,26 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { Button, Text, TextInput } from 'react-native-paper';
 
 import { apiErrorMessage } from '../api/auth';
-import { CheckInSubmission, createCheckIn, todayLocalDate } from '../api/checkins';
+import { CheckInSubmission, Visibility, createCheckIn, todayLocalDate } from '../api/checkins';
+import { uploadMedia } from '../api/posts';
 import { SUBMISSIONS } from '../constants/submissions';
 import { t } from '../i18n';
 import { useAuthStore } from '../store/authStore';
@@ -30,6 +44,9 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
   const [hit, setHit] = useState<Record<string, number>>({});
   const [conceded, setConceded] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
+  const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
+  const [photo, setPhoto] = useState<{ key: string; uri: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const reset = () => {
     setSessionType('GI');
@@ -38,6 +55,32 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
     setHit({});
     setConceded({});
     setNotes('');
+    setVisibility('PUBLIC');
+    setPhoto(null);
+  };
+
+  const pickPhoto = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(t('mural.media.permission'));
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.7 });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    setUploading(true);
+    try {
+      const uploaded = await uploadMedia({
+        uri: asset.uri,
+        name: asset.fileName ?? 'treino.jpg',
+        type: asset.mimeType ?? 'image/jpeg',
+      });
+      setPhoto({ key: uploaded.key, uri: asset.uri });
+    } catch (e) {
+      Alert.alert(apiErrorMessage(e));
+    } finally {
+      setUploading(false);
+    }
   };
 
   const save = useMutation({
@@ -51,6 +94,8 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
         sessionType,
         durationMinutes: duration,
         notes: notes.trim() || undefined,
+        visibility,
+        photoKey: photo?.key,
         submissions: submissions.length ? submissions : undefined,
       });
     },
@@ -58,7 +103,7 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       queryClient.invalidateQueries({ queryKey: ['stats'] });
       queryClient.invalidateQueries({ queryKey: ['journey'] });
-      queryClient.invalidateQueries({ queryKey: ['academyActivity'] });
+      queryClient.invalidateQueries({ queryKey: ['communityFeed'] });
       queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
       if (myId) queryClient.invalidateQueries({ queryKey: ['userProfile', myId] });
       reset();
@@ -79,11 +124,16 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => undefined}>
-          <View style={styles.handle} />
-          <Text style={styles.title}>{t('checkin.sheet.title')}</Text>
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+      <KeyboardAvoidingView style={styles.kav} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Pressable style={styles.backdrop} onPress={onClose}>
+          <Pressable style={styles.sheet} onPress={() => Keyboard.dismiss()}>
+            <View style={styles.handle} />
+            <Text style={styles.title}>{t('checkin.sheet.title')}</Text>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={styles.scroll}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag">
             {/* Session type */}
             <Text style={styles.label}>{t('checkin.sheet.type')}</Text>
             <View style={styles.chips}>
@@ -154,6 +204,51 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
               numberOfLines={2}
               style={styles.notes}
             />
+
+            {/* Training photo */}
+            <Text style={styles.label}>{t('checkin.sheet.photo')}</Text>
+            {photo ? (
+              <View style={styles.photoWrap}>
+                <Image source={{ uri: photo.uri }} style={styles.photo} />
+                <Pressable style={styles.photoRemove} onPress={() => setPhoto(null)} hitSlop={8}>
+                  <MaterialCommunityIcons name="close" size={16} color="#fff" />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable style={styles.photoAdd} onPress={pickPhoto} disabled={uploading}>
+                {uploading ? (
+                  <ActivityIndicator color={palette.primary} />
+                ) : (
+                  <>
+                    <MaterialCommunityIcons name="camera-plus-outline" size={22} color={palette.textSecondary} />
+                    <Text style={styles.photoAddText}>{t('checkin.sheet.photo.add')}</Text>
+                  </>
+                )}
+              </Pressable>
+            )}
+
+            {/* Visibility */}
+            <Text style={styles.label}>{t('checkin.sheet.visibility')}</Text>
+            <View style={styles.visToggle}>
+              {(['PUBLIC', 'PRIVATE'] as Visibility[]).map((v) => (
+                <Pressable
+                  key={v}
+                  style={[styles.segBtn, visibility === v && styles.segBtnOn]}
+                  onPress={() => setVisibility(v)}>
+                  <MaterialCommunityIcons
+                    name={v === 'PUBLIC' ? 'earth' : 'lock'}
+                    size={15}
+                    color={visibility === v ? palette.textPrimary : palette.textSecondary}
+                  />
+                  <Text style={[styles.segText, visibility === v && styles.segTextOn]}>
+                    {v === 'PUBLIC' ? t('checkin.sheet.visibility.public') : t('checkin.sheet.visibility.private')}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={styles.visHint}>
+              {visibility === 'PUBLIC' ? t('checkin.sheet.visibility.publicHint') : t('checkin.sheet.visibility.privateHint')}
+            </Text>
           </ScrollView>
 
           <Button
@@ -166,13 +261,15 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
             style={styles.save}>
             {t('checkin.sheet.save')}
           </Button>
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  kav: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: palette.surface,
@@ -192,7 +289,7 @@ const styles = StyleSheet.create({
   chipText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
   chipTextOn: { color: '#fff' },
   subToggle: { flexDirection: 'row', backgroundColor: palette.surfaceVariant, borderRadius: 10, padding: 3, marginTop: 14, marginBottom: 10 },
-  segBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center' },
+  segBtn: { flex: 1, flexDirection: 'row', gap: 6, paddingVertical: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   segBtnOn: { backgroundColor: palette.surface },
   segText: { color: palette.textSecondary, fontSize: 12, fontWeight: '600' },
   segTextOn: { color: palette.textPrimary },
@@ -211,6 +308,34 @@ const styles = StyleSheet.create({
   },
   stepNum: { color: palette.textPrimary, fontSize: 14, fontWeight: 'bold', minWidth: 18, textAlign: 'center' },
   notes: { marginTop: 14, backgroundColor: palette.surface },
+  photoWrap: { marginBottom: 6, borderRadius: 12, overflow: 'hidden' },
+  photo: { width: '100%', height: 170, borderRadius: 12 },
+  photoRemove: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoAdd: {
+    height: 88,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: palette.outline,
+    borderStyle: 'dashed',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  photoAddText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
+  visToggle: { flexDirection: 'row', backgroundColor: palette.surfaceVariant, borderRadius: 10, padding: 3, marginBottom: 6 },
+  visHint: { color: palette.textSecondary, fontSize: 11, marginBottom: 4 },
   save: { marginTop: 16 },
   saveContent: { paddingVertical: 6 },
 });

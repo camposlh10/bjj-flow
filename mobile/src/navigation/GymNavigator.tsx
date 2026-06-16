@@ -2,6 +2,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AgendaOccurrence } from '../api/classes';
 import { t } from '../i18n';
+import ConversationScreen from '../screens/ConversationScreen';
+import type { ConversationParams } from './ComunidadeNavigator';
 import AdminVerificationsScreen from '../screens/gym/AdminVerificationsScreen';
 import AttendanceScreen from '../screens/gym/AttendanceScreen';
 import ClassDetailScreen from '../screens/gym/ClassDetailScreen';
@@ -39,6 +41,7 @@ export type GymStackParamList = {
   EditGym: undefined;
   GymVerification: undefined;
   AdminVerifications: undefined;
+  Conversation: ConversationParams;
 };
 
 const Stack = createNativeStackNavigator<GymStackParamList>();
@@ -51,6 +54,7 @@ export default function GymNavigator() {
         headerTintColor: palette.textPrimary,
         headerTitleStyle: { color: palette.textPrimary },
         contentStyle: { backgroundColor: palette.background },
+        animation: 'slide_from_right',
       }}>
       <Stack.Screen name="GymHome" component={GymHomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CreateGym" component={CreateGymScreen} options={{ title: t('gym.create.title') }} />
@@ -120,6 +124,11 @@ export default function GymNavigator() {
         name="AdminVerifications"
         component={AdminVerificationsScreen}
         options={{ title: t('admin.verifications.title') }}
+      />
+      <Stack.Screen
+        name="Conversation"
+        component={ConversationScreen}
+        options={({ route }) => ({ title: route.params?.title ?? t('dm.title') })}
       />
     </Stack.Navigator>
   );

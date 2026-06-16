@@ -5,8 +5,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import CheckInSheet from '../components/CheckInSheet';
 import { t } from '../i18n';
-import ComunidadeScreen from '../screens/ComunidadeScreen';
 import HomeScreen from '../screens/HomeScreen';
+import ComunidadeNavigator from './ComunidadeNavigator';
 import GymNavigator from './GymNavigator';
 import ProfileNavigator from './ProfileNavigator';
 import { palette } from '../theme/theme';
@@ -50,7 +50,7 @@ export default function AppTabs() {
       />
       <Tab.Screen
         name="Comunidade"
-        component={ComunidadeScreen}
+        component={ComunidadeNavigator}
         options={{
           tabBarLabel: t('tabs.community'),
           tabBarIcon: ({ color, size }) => (

@@ -34,11 +34,17 @@ export async function createQuickCheckIn(): Promise<void> {
 
 export type CheckInSubmission = { submission: string; direction: 'HIT' | 'CONCEDED'; count: number };
 
+export type Visibility = 'PUBLIC' | 'PRIVATE';
+
 export type CreateCheckInPayload = {
   date: string;
   sessionType?: string;
   durationMinutes?: number;
   notes?: string;
+  /** PUBLIC shares the session to the global Comunidade feed; PRIVATE keeps it to the user. */
+  visibility?: Visibility;
+  /** Storage key of an uploaded training photo (from uploadMedia). */
+  photoKey?: string;
   submissions?: CheckInSubmission[];
 };
 
