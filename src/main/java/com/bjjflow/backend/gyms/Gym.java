@@ -47,6 +47,19 @@ public class Gym {
 
     private String address;
 
+    private Boolean verified = false;
+
+    private String instagram;
+
+    private String facebook;
+
+    private String whatsapp;
+
+    private String youtube;
+
+    @Column(name = "google_place_id")
+    private String googlePlaceId;
+
     @Column(name = "created_at")
     private Instant createdAt;
 

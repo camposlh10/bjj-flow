@@ -39,6 +39,15 @@ public class CheckIn {
 
     private String notes;
 
+    /** PUBLIC (shown on the global Comunidade feed) or PRIVATE (default). */
+    private String visibility = "PRIVATE";
+
+    @Column(name = "photo_key")
+    private String photoKey;
+
+    @Column(name = "share_count")
+    private Integer shareCount = 0;
+
     @Column(name = "created_at")
     private Instant createdAt;
 

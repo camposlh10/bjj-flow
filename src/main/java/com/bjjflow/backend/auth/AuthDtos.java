@@ -35,8 +35,8 @@ public class AuthDtos {
     public record BeltDto(String slug, String name, String namePt, String colorHex, Integer stripes) {
     }
 
-    public record UserDto(Long id, String email, String displayName, Integer age,
-            BigDecimal weightKg, Integer heightCm, BeltDto belt) {
+    public record UserDto(Long id, String email, String username, String displayName, Integer age,
+            BigDecimal weightKg, Integer heightCm, BeltDto belt, boolean admin, boolean pro) {
     }
 
     public record AuthResponse(String accessToken, String refreshToken, UserDto user) {

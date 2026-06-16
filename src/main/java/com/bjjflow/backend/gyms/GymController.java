@@ -78,6 +78,12 @@ public class GymController {
         return gymService.updateGym(userId(auth), request);
     }
 
+    // TEMP testing aid — see GymService.toggleVerified
+    @PostMapping("/me/verify")
+    public GymDto toggleVerified(Authentication auth) {
+        return gymService.toggleVerified(userId(auth));
+    }
+
     @PostMapping("/me/photos")
     public GymDtos.GymPhotoDto addPhoto(Authentication auth,
             @Valid @RequestBody GymDtos.AddPhotoRequest request) {
@@ -97,5 +103,20 @@ public class GymController {
     @GetMapping("/suggestions")
     public List<GymSuggestionDto> suggestions(Authentication auth) {
         return gymService.suggestions(userId(auth));
+    }
+
+    @GetMapping("/me/reviews")
+    public GymDtos.ReviewsDto reviews(Authentication auth) {
+        return gymService.listReviews(userId(auth));
+    }
+
+    @PostMapping("/me/reviews")
+    public GymDtos.ReviewsDto upsertReview(Authentication auth, @Valid @RequestBody GymDtos.UpsertReviewRequest request) {
+        return gymService.upsertReview(userId(auth), request.rating(), request.comment());
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/me/medals")
+    public GymDto updateMedals(Authentication auth, @Valid @RequestBody GymDtos.UpdateMedalsRequest request) {
+        return gymService.replaceMedals(userId(auth), request.medals());
     }
 }

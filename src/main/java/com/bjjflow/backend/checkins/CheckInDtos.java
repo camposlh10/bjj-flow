@@ -10,11 +10,20 @@ import jakarta.validation.constraints.Size;
 
 public class CheckInDtos {
 
+    public record SubmissionInput(
+            @jakarta.validation.constraints.NotBlank @Size(max = 40) String submission,
+            @jakarta.validation.constraints.NotBlank @Size(max = 10) String direction,
+            @Min(1) @Max(50) int count) {
+    }
+
     public record CreateCheckInRequest(
             @NotNull LocalDate date,
             @Size(max = 20) String sessionType,
             @Min(5) @Max(600) Integer durationMinutes,
-            @Size(max = 500) String notes) {
+            @Size(max = 500) String notes,
+            @Size(max = 10) String visibility,
+            @Size(max = 255) String photoKey,
+            @Size(max = 100) @jakarta.validation.Valid List<SubmissionInput> submissions) {
     }
 
     public record CheckInDto(Long id, LocalDate date, String sessionType, Integer durationMinutes, String notes) {
@@ -28,6 +37,7 @@ public class CheckInDtos {
             int weeklyGoal,
             int weeklyProgress,
             boolean checkedInToday,
-            List<Boolean> weekDays) {
+            List<Boolean> weekDays,
+            long activeWeeks) {
     }
 }

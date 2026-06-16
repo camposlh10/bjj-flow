@@ -35,6 +35,8 @@ public class User {
     @Column(name = "display_name")
     private String displayName;
 
+    private String username;
+
     private Integer age;
 
     @Column(name = "weight_kg", precision = 5, scale = 2)
@@ -56,6 +58,22 @@ public class User {
     private Integer weeklyGoal = 3;
 
     private String city;
+
+    private Boolean pro = false;
+
+    @Column(name = "avatar_key")
+    private String avatarKey;
+
+    private String bio;
+
+    @Column(name = "certificate_key")
+    private String certificateKey;
+
+    @Column(name = "accent_color")
+    private String accentColor;
+
+    @Column(name = "banner_key")
+    private String bannerKey;
 
     @Column(name = "created_at")
     private Instant createdAt;

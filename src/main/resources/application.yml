@@ -11,8 +11,10 @@ spring:
       max-request-size: 60MB
 
 server:
-  # 8081 because Apache (httpd) occupies 8080 on the dev machine
-  port: 8081
+  # 8090: Apache (httpd) occupies 8080 and Expo's Metro bundler owns 8081 on the
+  # dev machine — sharing 8081 made API calls silently hit Metro when Expo
+  # started first. Keep this in sync with API_BASE_URL in the mobile client.ts.
+  port: 8090
 
 app:
   jwt:
@@ -24,6 +26,14 @@ app:
     # provider: local | (s3 / azure later). Swap LocalMediaStorage for a cloud impl.
     provider: local
     local-dir: ./data/media
+  # Comma-separated emails allowed to approve/reject gym verifications.
+  admin-emails: ${APP_ADMIN_EMAILS:}
+
+# AI verification (gym certificate triage). When anthropic.api-key is UNSET the
+# app uses a stub that routes every submission to manual review. Set via env:
+#   ANTHROPIC_API_KEY=sk-ant-...   (optional ANTHROPIC_MODEL, default claude-sonnet-4-6)
+anthropic:
+  model: ${ANTHROPIC_MODEL:claude-sonnet-4-6}
 
 ---
 # --- dev profile: embedded H2 in PostgreSQL compatibility mode ---
