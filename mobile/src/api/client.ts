@@ -1,17 +1,13 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import Constants from 'expo-constants';
 
 import { useAuthStore } from '../store/authStore';
 
-// In Expo Go / dev builds, Metro's host is the dev machine's LAN IP — reuse it
-// so a physical device or emulator can reach the backend on the same machine.
-const metroHost = Constants.expoConfig?.hostUri?.split(':')[0];
-
-// Backend runs on 8090 (8080 = Apache, 8081 = Expo Metro). Must match server.port
-// in the backend's application.yml — sharing Metro's 8081 made API calls hit the
-// bundler and return HTML, crashing every data-driven screen.
-export const API_BASE_URL = `http://${metroHost ?? 'localhost'}:8090/api/v1`;
-// Origin without the /api/v1 suffix — used to resolve relative media URLs (/media/...).
+// Tunnel mode cannot reach a local backend through Expo's exp.direct host.
+// Override this with EXPO_PUBLIC_API_BASE_URL when testing another backend.
+export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ??
+  'https://bjj-flow-production.up.railway.app/api/v1';
+// Origin without the /api/v1 suffix - used to resolve relative media URLs (/media/...).
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1$/, '');
 
 export const api = axios.create({
