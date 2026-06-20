@@ -259,6 +259,7 @@ public class GymService {
                 gymMemberRepository.countByGymId(gym.getId()),
                 role.name(),
                 gym.getGraduationTarget(),
+                Boolean.TRUE.equals(gym.getInstructorsOnlyPosts()),
                 staff ? gym.getInviteCode() : null,
                 gym.getPhone(),
                 gym.getEmail(),
@@ -312,12 +313,32 @@ public class GymService {
     }
 
     @Transactional
+    public GymDto updateRules(Long userId, Integer graduationTarget, Boolean instructorsOnlyPosts) {
+        GymMember membership = requireOwner(userId);
+        Gym gym = gymRepository.findById(membership.getGymId()).orElseThrow();
+        if (graduationTarget != null) {
+            gym.setGraduationTarget(graduationTarget);
+        }
+        if (instructorsOnlyPosts != null) {
+            gym.setInstructorsOnlyPosts(instructorsOnlyPosts);
+        }
+        gymRepository.save(gym);
+        return toGymDto(gym, membership.getRole());
+    }
+
+    @Transactional
     public GymDto updateGym(Long userId, GymDtos.UpdateGymRequest req) {
         GymMember membership = requireOwner(userId);
         Gym gym = gymRepository.findById(membership.getGymId()).orElseThrow();
         gym.setName(req.name().trim());
         gym.setCity(blankToNull(req.city()));
         gym.setDescription(blankToNull(req.description()));
+        if (req.graduationTarget() != null) {
+            gym.setGraduationTarget(req.graduationTarget());
+        }
+        if (req.instructorsOnlyPosts() != null) {
+            gym.setInstructorsOnlyPosts(req.instructorsOnlyPosts());
+        }
         gym.setPhone(blankToNull(req.phone()));
         gym.setEmail(blankToNull(req.email()));
         gym.setWebsite(blankToNull(req.website()));

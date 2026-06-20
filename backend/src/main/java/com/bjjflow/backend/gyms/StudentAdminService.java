@@ -74,6 +74,11 @@ public class StudentAdminService {
                 classAttendanceRepository.lastAttendedInGym(gymId, studentUserId), membership.getJoinedAt());
 
         List<PromotionDto> history = promotionHistory(gymId, studentUserId);
+        List<StudentAdminDtos.AttendanceEntryDto> recentAttendance = classAttendanceRepository
+                .recentAttendanceInGym(gymId, studentUserId, org.springframework.data.domain.PageRequest.of(0, 20))
+                .stream()
+                .map(row -> new StudentAdminDtos.AttendanceEntryDto((java.time.LocalDate) row[0], (String) row[1]))
+                .toList();
 
         return new StudentAdminDto(
                 student.getId(),
@@ -85,7 +90,8 @@ public class StudentAdminService {
                 belt,
                 graduation,
                 attendance,
-                history);
+                history,
+                recentAttendance);
     }
 
     private List<PromotionDto> promotionHistory(Long gymId, Long studentUserId) {

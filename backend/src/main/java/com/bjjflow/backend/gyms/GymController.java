@@ -78,6 +78,12 @@ public class GymController {
         return gymService.updateGym(userId(auth), request);
     }
 
+    /** Owner-only: update just the gym rules (graduation target, instructors-only posting). */
+    @org.springframework.web.bind.annotation.PutMapping("/me/rules")
+    public GymDto updateRules(Authentication auth, @Valid @RequestBody GymDtos.UpdateRulesRequest request) {
+        return gymService.updateRules(userId(auth), request.graduationTarget(), request.instructorsOnlyPosts());
+    }
+
     // TEMP testing aid — see GymService.toggleVerified
     @PostMapping("/me/verify")
     public GymDto toggleVerified(Authentication auth) {

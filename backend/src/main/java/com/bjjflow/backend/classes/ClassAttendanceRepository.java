@@ -5,11 +5,21 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ClassAttendanceRepository extends JpaRepository<ClassAttendance, Long> {
+
+    /** Recent PRESENT classes (date + class name) of a student in a gym, newest first. */
+    @Query("""
+            select a.classDate, c.name from ClassAttendance a, GymClass c
+            where a.gymClassId = c.id and c.gymId = :gymId and a.status = 'PRESENT' and a.userId = :userId
+            order by a.classDate desc
+            """)
+    java.util.List<Object[]> recentAttendanceInGym(@Param("gymId") Long gymId, @Param("userId") Long userId,
+            Pageable pageable);
 
     boolean existsByGymClassIdAndClassDateAndUserId(Long gymClassId, LocalDate classDate, Long userId);
 

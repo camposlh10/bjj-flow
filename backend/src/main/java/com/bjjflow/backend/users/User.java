@@ -75,6 +75,9 @@ public class User {
     @Column(name = "banner_key")
     private String bannerKey;
 
+    @Column(name = "is_bot")
+    private Boolean bot = false;
+
     @Column(name = "created_at")
     private Instant createdAt;
 

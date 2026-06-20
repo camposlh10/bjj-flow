@@ -33,6 +33,7 @@ public class GymDtos {
             long memberCount,
             String role,
             Integer graduationTarget,
+            boolean instructorsOnlyPosts,
             /** only present for owner/instructor, so staff can share it */
             String inviteCode,
             String phone,
@@ -57,6 +58,8 @@ public class GymDtos {
             @NotBlank @Size(max = 150) String name,
             @Size(max = 100) String city,
             @Size(max = 500) String description,
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(500) Integer graduationTarget,
+            Boolean instructorsOnlyPosts,
             @Size(max = 30) String phone,
             @Size(max = 255) String email,
             @Size(max = 255) String website,
@@ -70,6 +73,11 @@ public class GymDtos {
     }
 
     public record AddPhotoRequest(@NotBlank String key) {
+    }
+
+    public record UpdateRulesRequest(
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(500) Integer graduationTarget,
+            Boolean instructorsOnlyPosts) {
     }
 
     public record RankingEntryDto(int position, Long userId, String displayName,

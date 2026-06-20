@@ -25,6 +25,10 @@ public class StudentAdminDtos {
     public record PromotionDto(String beltSlug, String beltNamePt, String colorHex, int stripes, Instant date) {
     }
 
+    /** One entry in the instructor's class-attendance log for a student. */
+    public record AttendanceEntryDto(LocalDate date, String className) {
+    }
+
     public record StudentAdminDto(
             Long userId,
             String username,
@@ -35,7 +39,8 @@ public class StudentAdminDtos {
             BeltDto belt,
             GraduationDto graduation,
             AttendanceDto attendance,
-            List<PromotionDto> history) {
+            List<PromotionDto> history,
+            List<AttendanceEntryDto> recentAttendance) {
     }
 
     public record NoteDto(Long id, String authorName, String content, Instant createdAt) {

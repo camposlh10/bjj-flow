@@ -14,6 +14,11 @@ public class ProfileDtos {
     public record MetricsDto(long trainings, int currentStreak, int longestStreak, long activeWeeks) {
     }
 
+    /** Compact user card for people-search results. */
+    public record SearchUserDto(Long id, String username, String displayName, String avatarUrl, boolean pro,
+            BeltDto belt) {
+    }
+
     public record GymSummaryDto(
             Long id,
             String name,

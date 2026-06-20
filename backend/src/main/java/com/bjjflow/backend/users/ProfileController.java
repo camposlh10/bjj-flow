@@ -10,10 +10,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
+import org.springframework.web.bind.annotation.RequestParam;
+
 import com.bjjflow.backend.events.EventDtos.JourneyDto;
 import com.bjjflow.backend.events.FeedService;
 import com.bjjflow.backend.gyms.GymDtos.AddPhotoRequest;
 import com.bjjflow.backend.gyms.GymDtos.UpdateMedalsRequest;
+import com.bjjflow.backend.users.ProfileDtos.SearchUserDto;
 import com.bjjflow.backend.users.ProfileDtos.UpdateProfileRequest;
 import com.bjjflow.backend.users.ProfileDtos.UserProfileDto;
 
@@ -30,6 +35,11 @@ public class ProfileController {
 
     private static Long userId(Authentication auth) {
         return Long.parseLong(auth.getName());
+    }
+
+    @GetMapping("/search")
+    public List<SearchUserDto> search(@RequestParam(name = "q", defaultValue = "") String q) {
+        return profileService.search(q);
     }
 
     @GetMapping("/{id}/profile")

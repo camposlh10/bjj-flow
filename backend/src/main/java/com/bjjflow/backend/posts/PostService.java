@@ -17,8 +17,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.bjjflow.backend.common.ApiException;
 import com.bjjflow.backend.gyms.GymDtos.BeltSummary;
+import com.bjjflow.backend.gyms.Gym;
 import com.bjjflow.backend.gyms.GymMember;
 import com.bjjflow.backend.gyms.GymMemberRepository;
+import com.bjjflow.backend.gyms.GymRepository;
 import com.bjjflow.backend.gyms.GymRole;
 import com.bjjflow.backend.posts.PostDtos.AuthorDto;
 import com.bjjflow.backend.posts.PostDtos.CommentDto;
@@ -47,6 +49,7 @@ public class PostService {
     private final GymPostMediaRepository mediaRepository;
     private final GymPostSaveRepository saveRepository;
     private final GymMemberRepository gymMemberRepository;
+    private final GymRepository gymRepository;
     private final UserRepository userRepository;
     private final UserBeltProgressRepository beltProgressRepository;
     private final MediaStorage mediaStorage;
@@ -79,8 +82,13 @@ public class PostService {
 
     @Transactional
     public PostDto createPost(Long userId, String content, List<MediaInput> media) {
-        // Any gym member can post. A per-gym "instructors only" setting comes later.
         GymMember membership = requireMembership(userId);
+        // Per-gym rule: when "instructors only" is on, members can't post to the Mural.
+        Gym gym = gymRepository.findById(membership.getGymId()).orElseThrow();
+        if (Boolean.TRUE.equals(gym.getInstructorsOnlyPosts()) && membership.getRole() == GymRole.MEMBER) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "INSTRUCTORS_ONLY",
+                    "Only instructors can post in this gym");
+        }
 
         String text = content == null ? "" : content.trim();
         List<MediaInput> attachments = media == null ? List.of() : media;

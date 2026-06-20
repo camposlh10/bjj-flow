@@ -36,6 +36,9 @@ public class Gym {
     @Column(name = "graduation_target")
     private Integer graduationTarget = 40;
 
+    @Column(name = "instructors_only_posts")
+    private Boolean instructorsOnlyPosts = false;
+
     @Column(name = "logo_key")
     private String logoKey;
 

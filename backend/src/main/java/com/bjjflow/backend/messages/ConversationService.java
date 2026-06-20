@@ -94,7 +94,41 @@ public class ConversationService {
             conv.setUserBLastReadAt(msg.getCreatedAt());
         }
         conversationRepository.save(conv);
+
+        // If the other participant is the test bot, it auto-replies so DMs are testable solo.
+        maybeBotReply(conv, me);
         return new MessageDto(msg.getId(), me, true, msg.getContent(), msg.getCreatedAt());
+    }
+
+    private void maybeBotReply(Conversation conv, Long sender) {
+        Long otherId = conv.getUserAId().equals(sender) ? conv.getUserBId() : conv.getUserAId();
+        userRepository.findById(otherId)
+                .filter(u -> Boolean.TRUE.equals(u.getBot()))
+                .ifPresent(bot -> {
+                    Message reply = new Message();
+                    reply.setConversationId(conv.getId());
+                    reply.setSenderId(bot.getId());
+                    reply.setContent(botReply());
+                    reply = messageRepository.save(reply);
+                    conv.setLastMessageAt(reply.getCreatedAt());
+                    if (conv.getUserAId().equals(bot.getId())) {
+                        conv.setUserALastReadAt(reply.getCreatedAt());
+                    } else {
+                        conv.setUserBLastReadAt(reply.getCreatedAt());
+                    }
+                    conversationRepository.save(conv);
+                });
+    }
+
+    private static final String[] BOT_REPLIES = {
+            "Oss! 🤖 Recebi sua mensagem. Bora treinar!",
+            "Fechou! Te vejo no tatame 🥋",
+            "Boa! Continua firme nos treinos 💪",
+            "Salve! Qualquer dúvida sobre BJJ, manda aí.",
+    };
+
+    private String botReply() {
+        return BOT_REPLIES[(int) (Math.random() * BOT_REPLIES.length)];
     }
 
     private Conversation requireMember(Long me, Long conversationId) {

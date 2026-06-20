@@ -25,8 +25,15 @@ import com.bjjflow.backend.social.Follow;
 import com.bjjflow.backend.social.FollowRepository;
 import com.bjjflow.backend.users.ProfileDtos.GymSummaryDto;
 import com.bjjflow.backend.users.ProfileDtos.MetricsDto;
+import com.bjjflow.backend.users.ProfileDtos.SearchUserDto;
 import com.bjjflow.backend.users.ProfileDtos.UpdateProfileRequest;
 import com.bjjflow.backend.users.ProfileDtos.UserProfileDto;
+
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.PageRequest;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,6 +53,33 @@ public class ProfileService {
     private final GymReviewRepository gymReviewRepository;
     private final CheckInRepository checkInRepository;
     private final com.bjjflow.backend.storage.MediaStorage mediaStorage;
+
+    @Transactional(readOnly = true)
+    public List<SearchUserDto> search(String query) {
+        String q = query == null ? "" : query.trim();
+        if (q.length() < 2) {
+            return List.of();
+        }
+        List<User> users = userRepository.search(q, PageRequest.of(0, 20));
+        if (users.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, BeltDto> belts = beltProgressRepository
+                .findAllByUserIdIn(users.stream().map(User::getId).toList()).stream()
+                .collect(Collectors.toMap(UserBeltProgress::getUserId, p -> {
+                    var r = p.getBeltRank();
+                    return new BeltDto(r.getSlug(), r.getName(), r.getNamePt(), r.getColorHex(), p.getStripes());
+                }, (a, b) -> a));
+        return users.stream()
+                .map(u -> new SearchUserDto(
+                        u.getId(),
+                        u.getUsername(),
+                        u.getDisplayName(),
+                        u.getAvatarKey() == null ? null : mediaStorage.urlFor(u.getAvatarKey()),
+                        Boolean.TRUE.equals(u.getPro()),
+                        belts.get(u.getId())))
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public UserProfileDto profile(Long viewerId, Long targetId) {
