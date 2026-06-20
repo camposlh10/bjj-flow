@@ -41,6 +41,13 @@ public interface ClassAttendanceRepository extends JpaRepository<ClassAttendance
 
     List<ClassAttendance> findAllByUserIdAndClassDateBetween(Long userId, LocalDate from, LocalDate to);
 
+    /** Most recent date the student was PRESENT in this gym (null if never). */
+    @Query("""
+            select max(a.classDate) from ClassAttendance a, GymClass c
+            where a.gymClassId = c.id and c.gymId = :gymId and a.status = 'PRESENT' and a.userId = :userId
+            """)
+    LocalDate lastAttendedInGym(@Param("gymId") Long gymId, @Param("userId") Long userId);
+
     @Query("""
             select a.gymClassId, a.classDate, count(a) from ClassAttendance a
             where a.classDate between :from and :to
