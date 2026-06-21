@@ -137,6 +137,10 @@ public class CheckInService {
         return current;
     }
 
+    private static int sumMinutes(List<CheckInDtos.CheckInDto> checkIns) {
+        return checkIns.stream().mapToInt(c -> c.durationMinutes() == null ? 0 : c.durationMinutes()).sum();
+    }
+
     @Transactional(readOnly = true)
     public List<CheckInDto> list(Long userId, LocalDate from, LocalDate to) {
         return checkInRepository.findAllByUserIdAndCheckDateBetweenOrderByCheckDateAsc(userId, from, to).stream()
@@ -166,6 +170,13 @@ public class CheckInService {
             weekDays.add(week.stream().anyMatch(c -> c.date().equals(day)));
         }
 
+        // Training load: minutes trained this week vs last week.
+        int weeklyMinutes = sumMinutes(week);
+        int lastWeekMinutes = sumMinutes(list(userId, monday.minusWeeks(1), sunday.minusWeeks(1)));
+        // BJJ MET ~10 → kcal ≈ MET × weightKg × hours.
+        Long weeklyCalories = user.getWeightKg() == null ? null
+                : Math.round(10.0 * user.getWeightKg().doubleValue() * (weeklyMinutes / 60.0));
+
         return new StatsResponse(
                 currentStreak,
                 user.getLongestStreak(),
@@ -175,7 +186,10 @@ public class CheckInService {
                 (int) checkInRepository.countDistinctDays(userId, monday, sunday),
                 checkInRepository.existsByUserIdAndCheckDate(userId, today),
                 weekDays,
-                activeWeeks(userId));
+                activeWeeks(userId),
+                weeklyMinutes,
+                lastWeekMinutes,
+                weeklyCalories);
     }
 
     /** Distinct ISO weeks containing at least one check-in (portable; computed in Java). */

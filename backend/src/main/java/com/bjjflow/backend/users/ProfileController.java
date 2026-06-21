@@ -18,9 +18,16 @@ import com.bjjflow.backend.events.EventDtos.JourneyDto;
 import com.bjjflow.backend.events.FeedService;
 import com.bjjflow.backend.gyms.GymDtos.AddPhotoRequest;
 import com.bjjflow.backend.gyms.GymDtos.UpdateMedalsRequest;
+import com.bjjflow.backend.users.ProfileDtos.ChangeEmailRequest;
+import com.bjjflow.backend.users.ProfileDtos.ChangePasswordRequest;
+import com.bjjflow.backend.users.ProfileDtos.FeedbackRequest;
 import com.bjjflow.backend.users.ProfileDtos.SearchUserDto;
+import com.bjjflow.backend.users.ProfileDtos.SettingsDto;
 import com.bjjflow.backend.users.ProfileDtos.UpdateProfileRequest;
+import com.bjjflow.backend.users.ProfileDtos.UpdateSettingsRequest;
 import com.bjjflow.backend.users.ProfileDtos.UserProfileDto;
+
+import org.springframework.http.ResponseEntity;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +83,33 @@ public class ProfileController {
     @PostMapping("/me/pro")
     public UserProfileDto togglePro(Authentication auth) {
         return profileService.togglePro(userId(auth));
+    }
+
+    @GetMapping("/me/settings")
+    public SettingsDto settings(Authentication auth) {
+        return profileService.settings(userId(auth));
+    }
+
+    @PutMapping("/me/settings")
+    public SettingsDto updateSettings(Authentication auth, @Valid @RequestBody UpdateSettingsRequest request) {
+        return profileService.updateSettings(userId(auth), request);
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changePassword(Authentication auth, @Valid @RequestBody ChangePasswordRequest request) {
+        profileService.changePassword(userId(auth), request.currentPassword(), request.newPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/me/email")
+    public SettingsDto changeEmail(Authentication auth, @Valid @RequestBody ChangeEmailRequest request) {
+        return profileService.changeEmail(userId(auth), request.password(), request.email());
+    }
+
+    @PostMapping("/me/feedback")
+    public ResponseEntity<Void> feedback(Authentication auth, @Valid @RequestBody FeedbackRequest request) {
+        profileService.submitFeedback(userId(auth), request.message());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/follow")

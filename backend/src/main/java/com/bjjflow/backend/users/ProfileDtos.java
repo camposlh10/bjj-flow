@@ -19,6 +19,27 @@ public class ProfileDtos {
             BeltDto belt) {
     }
 
+    public record SettingsDto(String email, String username, boolean pro, boolean privateAccount,
+            boolean notifyCommunity, boolean notifyMessages, boolean notifyPromotions) {
+    }
+
+    public record UpdateSettingsRequest(Boolean privateAccount, Boolean notifyCommunity, Boolean notifyMessages,
+            Boolean notifyPromotions) {
+    }
+
+    public record ChangePasswordRequest(
+            @jakarta.validation.constraints.NotBlank String currentPassword,
+            @jakarta.validation.constraints.NotBlank @Size(min = 8, max = 72) String newPassword) {
+    }
+
+    public record ChangeEmailRequest(
+            @jakarta.validation.constraints.NotBlank String password,
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Email String email) {
+    }
+
+    public record FeedbackRequest(@jakarta.validation.constraints.NotBlank @Size(max = 2000) String message) {
+    }
+
     public record GymSummaryDto(
             Long id,
             String name,

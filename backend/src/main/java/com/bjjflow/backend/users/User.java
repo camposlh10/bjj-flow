@@ -78,6 +78,18 @@ public class User {
     @Column(name = "is_bot")
     private Boolean bot = false;
 
+    @Column(name = "private_account")
+    private Boolean privateAccount = false;
+
+    @Column(name = "notify_community")
+    private Boolean notifyCommunity = true;
+
+    @Column(name = "notify_messages")
+    private Boolean notifyMessages = true;
+
+    @Column(name = "notify_promotions")
+    private Boolean notifyPromotions = true;
+
     @Column(name = "created_at")
     private Instant createdAt;
 

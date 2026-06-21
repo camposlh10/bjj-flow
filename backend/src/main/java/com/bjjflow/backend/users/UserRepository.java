@@ -18,11 +18,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsernameIgnoreCase(String username);
 
-    /** People search by display name or @handle (case-insensitive contains). */
+    /** People search by display name or @handle (case-insensitive contains); private accounts excluded. */
     @Query("""
             select u from User u
-            where lower(u.displayName) like lower(concat('%', :q, '%'))
-               or lower(u.username) like lower(concat('%', :q, '%'))
+            where (u.privateAccount is null or u.privateAccount = false)
+              and (lower(u.displayName) like lower(concat('%', :q, '%'))
+               or lower(u.username) like lower(concat('%', :q, '%')))
             order by u.displayName asc
             """)
     List<User> search(@Param("q") String q, Pageable pageable);

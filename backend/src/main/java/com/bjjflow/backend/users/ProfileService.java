@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +53,71 @@ public class ProfileService {
     private final GymRepository gymRepository;
     private final GymReviewRepository gymReviewRepository;
     private final CheckInRepository checkInRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final PasswordEncoder passwordEncoder;
     private final com.bjjflow.backend.storage.MediaStorage mediaStorage;
+
+    @Transactional(readOnly = true)
+    public ProfileDtos.SettingsDto settings(Long userId) {
+        User u = requireUser(userId);
+        return new ProfileDtos.SettingsDto(u.getEmail(), u.getUsername(), Boolean.TRUE.equals(u.getPro()),
+                Boolean.TRUE.equals(u.getPrivateAccount()), Boolean.TRUE.equals(u.getNotifyCommunity()),
+                Boolean.TRUE.equals(u.getNotifyMessages()), Boolean.TRUE.equals(u.getNotifyPromotions()));
+    }
+
+    @Transactional
+    public ProfileDtos.SettingsDto updateSettings(Long userId, ProfileDtos.UpdateSettingsRequest req) {
+        User u = requireUser(userId);
+        if (req.privateAccount() != null) {
+            u.setPrivateAccount(req.privateAccount());
+        }
+        if (req.notifyCommunity() != null) {
+            u.setNotifyCommunity(req.notifyCommunity());
+        }
+        if (req.notifyMessages() != null) {
+            u.setNotifyMessages(req.notifyMessages());
+        }
+        if (req.notifyPromotions() != null) {
+            u.setNotifyPromotions(req.notifyPromotions());
+        }
+        userRepository.save(u);
+        return settings(userId);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+        User u = requireUser(userId);
+        if (!passwordEncoder.matches(currentPassword, u.getPasswordHash())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "WRONG_PASSWORD", "Current password is incorrect");
+        }
+        u.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(u);
+    }
+
+    @Transactional
+    public ProfileDtos.SettingsDto changeEmail(Long userId, String password, String newEmail) {
+        User u = requireUser(userId);
+        if (!passwordEncoder.matches(password, u.getPasswordHash())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "WRONG_PASSWORD", "Password is incorrect");
+        }
+        String email = newEmail.trim().toLowerCase(Locale.ROOT);
+        userRepository.findByEmail(email)
+                .filter(other -> !other.getId().equals(userId))
+                .ifPresent(other -> {
+                    throw new ApiException(HttpStatus.CONFLICT, "EMAIL_ALREADY_USED", "Email is already registered");
+                });
+        u.setEmail(email);
+        userRepository.save(u);
+        return settings(userId);
+    }
+
+    @Transactional
+    public void submitFeedback(Long userId, String message) {
+        Feedback f = new Feedback();
+        f.setUserId(userId);
+        f.setMessage(message.trim());
+        feedbackRepository.save(f);
+    }
 
     @Transactional(readOnly = true)
     public List<SearchUserDto> search(String query) {

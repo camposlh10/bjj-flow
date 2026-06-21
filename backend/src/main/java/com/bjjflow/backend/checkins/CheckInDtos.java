@@ -38,6 +38,11 @@ public class CheckInDtos {
             int weeklyProgress,
             boolean checkedInToday,
             List<Boolean> weekDays,
-            long activeWeeks) {
+            long activeWeeks,
+            /** Training load: minutes trained this ISO week and last week. */
+            int weeklyMinutes,
+            int lastWeekMinutes,
+            /** Estimated calories this week (null when no body weight on file). */
+            Long weeklyCalories) {
     }
 }

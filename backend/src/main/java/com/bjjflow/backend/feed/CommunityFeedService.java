@@ -56,6 +56,11 @@ public class CommunityFeedService {
 
         Set<Long> userIds = checkIns.stream().map(CheckIn::getUserId).collect(Collectors.toSet());
         Map<Long, FeedAuthorDto> authors = authorMap(userIds);
+        // Private accounts are hidden from the global feed.
+        Set<Long> privateUsers = userRepository.findAllById(userIds).stream()
+                .filter(u -> Boolean.TRUE.equals(u.getPrivateAccount()))
+                .map(User::getId)
+                .collect(Collectors.toSet());
 
         List<Long> checkInIds = checkIns.stream().map(CheckIn::getId).toList();
         Map<Long, List<SubmissionLog>> subsByCheckIn = submissionLogRepository.findByCheckInIdIn(checkInIds).stream()
@@ -67,7 +72,7 @@ public class CommunityFeedService {
         List<FeedItemDto> items = new ArrayList<>(checkIns.size());
         for (CheckIn c : checkIns) {
             FeedAuthorDto author = authors.get(c.getUserId());
-            if (author == null) {
+            if (author == null || privateUsers.contains(c.getUserId())) {
                 continue;
             }
             List<SubmissionLog> subs = subsByCheckIn.getOrDefault(c.getId(), List.of());
