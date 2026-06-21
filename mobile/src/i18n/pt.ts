@@ -613,6 +613,43 @@ export const pt = {
   'errors.INVALID_INVITE_CODE': 'Código de convite inválido.',
   'errors.NETWORK': 'Sem conexão com o servidor. Tente novamente.',
   'errors.UNKNOWN': 'Algo deu errado. Tente novamente.',
+
+  // Técnicas (technique library)
+  'techniques.title': 'Técnicas',
+  'techniques.card.title': 'Biblioteca de técnicas',
+  'techniques.card.subtitle': 'Explore e salve seus movimentos',
+  'techniques.tab.library': 'Biblioteca',
+  'techniques.tab.mine': 'Minhas técnicas',
+  'techniques.search': 'Buscar técnica ou posição',
+  'techniques.all': 'Todas',
+  'techniques.favorites': 'Favoritas',
+  'techniques.empty': 'Nenhuma técnica encontrada.',
+  'techniques.mine.empty': 'Você ainda não salvou técnicas próprias.',
+  'techniques.mine.add': 'Adicionar técnica',
+  'techniques.position': 'Posição',
+  'techniques.difficulty': 'Nível',
+  'techniques.suggestedBelt': 'Faixa sugerida',
+  'techniques.watchVideo': 'Assistir vídeo',
+  'techniques.noVideo': 'Vídeo em breve',
+  'techniques.new': 'Nova técnica',
+  'techniques.edit': 'Editar técnica',
+  'techniques.field.name': 'Nome da técnica',
+  'techniques.field.category': 'Categoria (opcional)',
+  'techniques.field.notes': 'Anotações',
+  'techniques.field.videoUrl': 'Link do vídeo (YouTube, etc.)',
+  'techniques.save': 'Salvar',
+  'techniques.delete': 'Excluir',
+  'techniques.delete.confirm': 'Excluir esta técnica?',
+
+  // Doações (Phase 4 — links externos)
+  'donations.title': 'Apoiar o BJJ Flow',
+  'donations.intro':
+    'O BJJ Flow é um projeto independente. Se ele te ajuda nos treinos, considere apoiar — é totalmente opcional.',
+  'donations.pix': 'Doar via Pix',
+  'donations.card': 'Doar com cartão',
+  'donations.coffee': 'Pague um café ☕',
+  'donations.note': 'Você será levado para um site externo. Nenhum pagamento acontece dentro do app.',
+  'settings.donations': 'Apoiar o app',
 } as const;
 
 export type TranslationKey = keyof typeof pt;

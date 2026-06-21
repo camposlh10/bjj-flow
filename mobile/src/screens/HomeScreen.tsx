@@ -263,6 +263,28 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* Técnicas shortcut (Técnicas lives off the tab bar — reached from Início) */}
+          <Pressable
+            style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 14 }]}
+            onPress={() => navigation.navigate('Techniques')}>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                backgroundColor: palette.primary + '26',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <MaterialCommunityIcons name="book-open-variant" size={22} color={palette.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>{t('techniques.card.title')}</Text>
+              <Text style={styles.cardSub}>{t('techniques.card.subtitle')}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={palette.textSecondary} />
+          </Pressable>
+
           {/* 4b. Weekly training load + estimated calories */}
           <View style={styles.card}>
             <Pressable style={styles.weekHead} onPress={() => navigation.navigate('Metrics')} hitSlop={6}>

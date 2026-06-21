@@ -102,6 +102,7 @@ export default function SettingsScreen() {
       <View style={styles.card}>
         <Row icon="help-circle-outline" label={t('settings.help')} onPress={() => navigation.navigate('Help')} />
         <Row icon="message-alert-outline" label={t('settings.feedback')} onPress={() => navigation.navigate('Help')} />
+        <Row icon="heart-outline" label={t('settings.donations')} onPress={() => navigation.navigate('Donations')} />
       </View>
 
       <View style={[styles.card, { marginTop: 18 }]}>
