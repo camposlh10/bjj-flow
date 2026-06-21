@@ -7,6 +7,7 @@ import ConversationScreen from '../screens/ConversationScreen';
 import DirectInboxScreen from '../screens/DirectInboxScreen';
 import EditUserProfileScreen from '../screens/EditUserProfileScreen';
 import FeedCommentsScreen from '../screens/FeedCommentsScreen';
+import NotificationCenterScreen from '../screens/NotificationCenterScreen';
 import StudentManagementScreen from '../screens/gym/StudentManagementScreen';
 import SubmissionsScreen from '../screens/SubmissionsScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
@@ -29,6 +30,7 @@ export type ComunidadeStackParamList = {
   Direct: undefined;
   Conversation: ConversationParams;
   StudentManagement: { userId: number };
+  NotificationCenter: undefined;
 };
 
 const Stack = createNativeStackNavigator<ComunidadeStackParamList>();
@@ -66,6 +68,11 @@ export default function ComunidadeNavigator() {
         name="StudentManagement"
         component={StudentManagementScreen}
         options={{ title: t('student.manage') }}
+      />
+      <Stack.Screen
+        name="NotificationCenter"
+        component={NotificationCenterScreen}
+        options={{ title: t('notifications.center.title') }}
       />
     </Stack.Navigator>
   );

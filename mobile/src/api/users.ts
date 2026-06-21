@@ -139,6 +139,7 @@ export type Settings = {
   notifyCommunity: boolean;
   notifyMessages: boolean;
   notifyPromotions: boolean;
+  mfaEnabled: boolean;
 };
 
 export async function getSettings(): Promise<Settings> {

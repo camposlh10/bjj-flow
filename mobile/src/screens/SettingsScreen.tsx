@@ -77,7 +77,7 @@ export default function SettingsScreen() {
         <Row icon="at" label={t('settings.username')} value={user?.username ? `@${user.username}` : '—'} onPress={() => navigation.navigate('EditUserProfile')} />
         <Row icon="email-outline" label={t('settings.email')} value={user?.email} onPress={() => navigation.navigate('Account')} />
         <Row icon="lock-outline" label={t('settings.password')} onPress={() => navigation.navigate('Account')} />
-        <Row icon="shield-check-outline" label={t('settings.mfa')} soon />
+        <Row icon="shield-check-outline" label={t('settings.mfa')} onPress={() => navigation.navigate('Mfa')} />
       </View>
 
       <Text style={styles.section}>{t('settings.preferences')}</Text>

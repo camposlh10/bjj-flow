@@ -9,6 +9,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getCommunityFeed } from '../api/feed';
+import { getNotifications } from '../api/notifications';
 import { resolveMediaUrl } from '../api/posts';
 import { SearchUser, searchUsers } from '../api/users';
 import { TrainingCardSkeleton } from '../components/Skeleton';
@@ -33,6 +34,8 @@ export default function ComunidadeScreen() {
 
   const feed = useQuery({ queryKey: ['communityFeed'], queryFn: getCommunityFeed });
   const results = useQuery({ queryKey: ['userSearch', q], queryFn: () => searchUsers(q), enabled: searching });
+  const notifications = useQuery({ queryKey: ['notifications'], queryFn: () => getNotifications() });
+  const unread = notifications.data?.unread ?? 0;
 
   const items = Array.isArray(feed.data) ? feed.data : [];
   const users = Array.isArray(results.data) ? results.data : [];
@@ -56,8 +59,13 @@ export default function ComunidadeScreen() {
             accessibilityLabel={t('feed.messages')}>
             <MaterialCommunityIcons name="message-outline" size={22} color={palette.textPrimary} />
           </Pressable>
-          <Pressable style={styles.iconBtn} onPress={soon} hitSlop={8} accessibilityLabel={t('feed.notifications')}>
+          <Pressable
+            style={styles.iconBtn}
+            onPress={() => navigation.navigate('NotificationCenter')}
+            hitSlop={8}
+            accessibilityLabel={t('feed.notifications')}>
             <MaterialCommunityIcons name="bell-outline" size={22} color={palette.textPrimary} />
+            {unread > 0 && <View style={styles.bellDot} />}
           </Pressable>
         </View>
       </View>
@@ -169,6 +177,17 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  bellDot: {
+    position: 'absolute',
+    top: 9,
+    right: 9,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: palette.primary,
+    borderWidth: 1.5,
+    borderColor: palette.surface,
   },
   title: { color: palette.textPrimary, fontWeight: 'bold' },
   subtitle: { color: palette.textSecondary, fontSize: 13, marginTop: 2 },

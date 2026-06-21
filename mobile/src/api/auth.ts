@@ -8,6 +8,9 @@ export type AuthResponse = {
   accessToken: string;
   refreshToken: string;
   user: User;
+  // Present only when a login is challenged for MFA (tokens/user are then absent).
+  mfaRequired?: boolean;
+  mfaToken?: string;
 };
 
 export type RegisterPayload = {
@@ -28,6 +31,12 @@ export async function register(payload: RegisterPayload): Promise<AuthResponse> 
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const { data } = await api.post<AuthResponse>('/auth/login', { email, password });
+  return data;
+}
+
+/** Second step of an MFA login: exchange the mfaToken + code (TOTP or recovery) for tokens. */
+export async function completeMfa(mfaToken: string, code: string): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>('/auth/mfa', { mfaToken, code });
   return data;
 }
 
@@ -65,6 +74,12 @@ export function apiErrorMessage(error: unknown): string {
         return t('errors.INVALID_USERNAME');
       case 'WRONG_PASSWORD':
         return t('errors.WRONG_PASSWORD');
+      case 'INVALID_MFA_CODE':
+        return t('errors.INVALID_MFA_CODE');
+      case 'INVALID_MFA_TOKEN':
+        return t('errors.INVALID_MFA_TOKEN');
+      case 'MFA_NOT_ENROLLED':
+        return t('errors.MFA_NOT_ENROLLED');
     }
   }
   return t('errors.UNKNOWN');

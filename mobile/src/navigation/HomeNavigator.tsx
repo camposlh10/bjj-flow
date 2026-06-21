@@ -8,12 +8,14 @@ import EditUserProfileScreen from '../screens/EditUserProfileScreen';
 import HelpScreen from '../screens/HelpScreen';
 import HomeScreen from '../screens/HomeScreen';
 import MetricsScreen from '../screens/MetricsScreen';
+import MfaScreen from '../screens/MfaScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import PersonalTechniqueEditorScreen from '../screens/PersonalTechniqueEditorScreen';
 import PrivacyScreen from '../screens/PrivacyScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import TechniqueDetailScreen from '../screens/TechniqueDetailScreen';
 import TechniquesScreen from '../screens/TechniquesScreen';
+import WearablesScreen from '../screens/WearablesScreen';
 import { palette } from '../theme/theme';
 
 export type HomeStackParamList = {
@@ -25,6 +27,8 @@ export type HomeStackParamList = {
   Privacy: undefined;
   Help: undefined;
   Metrics: undefined;
+  Mfa: undefined;
+  Wearables: undefined;
   Techniques: undefined;
   TechniqueDetail: { id: number };
   PersonalTechniqueEditor: { technique?: PersonalTechnique } | undefined;
@@ -55,6 +59,8 @@ export default function HomeNavigator() {
       <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ title: t('settings.privacy') }} />
       <Stack.Screen name="Help" component={HelpScreen} options={{ title: t('settings.help') }} />
       <Stack.Screen name="Metrics" component={MetricsScreen} options={{ title: t('metrics.title') }} />
+      <Stack.Screen name="Mfa" component={MfaScreen} options={{ title: t('mfa.title') }} />
+      <Stack.Screen name="Wearables" component={WearablesScreen} options={{ title: t('wearables.title') }} />
       <Stack.Screen name="Techniques" component={TechniquesScreen} options={{ title: t('techniques.title') }} />
       <Stack.Screen
         name="TechniqueDetail"

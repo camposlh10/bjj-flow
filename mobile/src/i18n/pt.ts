@@ -650,6 +650,51 @@ export const pt = {
   'donations.coffee': 'Pague um café ☕',
   'donations.note': 'Você será levado para um site externo. Nenhum pagamento acontece dentro do app.',
   'settings.donations': 'Apoiar o app',
+
+  // MFA (2FA / TOTP)
+  'mfa.title': 'Verificação em duas etapas',
+  'mfa.subtitle': 'Use um app autenticador (Google Authenticator, Authy, 1Password) para uma camada extra de segurança.',
+  'mfa.enable': 'Ativar 2FA',
+  'mfa.disable': 'Desativar 2FA',
+  'mfa.step.add': '1. Adicione ao seu app autenticador',
+  'mfa.openApp': 'Abrir no app autenticador',
+  'mfa.secret': 'Ou digite esta chave manualmente:',
+  'mfa.copy': 'Copiar chave',
+  'mfa.copied': 'Chave copiada',
+  'mfa.recovery.title': 'Códigos de recuperação',
+  'mfa.recovery.hint': 'Guarde-os em local seguro. Cada um funciona uma única vez caso você perca o acesso ao autenticador.',
+  'mfa.step.confirm': '2. Confirme com o código de 6 dígitos',
+  'mfa.code': 'Código de 6 dígitos',
+  'mfa.confirm': 'Confirmar e ativar',
+  'mfa.enabled.title': '2FA está ativada',
+  'mfa.enabled.desc': 'A cada login você precisará do código do app autenticador.',
+  'mfa.disable.hint': 'Confirme sua senha para desativar.',
+  'mfa.done': 'Concluir',
+  'mfa.challenge.title': 'Verificação em duas etapas',
+  'mfa.challenge.subtitle': 'Digite o código do app autenticador (ou um código de recuperação).',
+  'mfa.challenge.verify': 'Verificar',
+  'mfa.challenge.back': 'Voltar ao login',
+  'errors.INVALID_MFA_CODE': 'Código inválido. Tente novamente.',
+  'errors.INVALID_MFA_TOKEN': 'Sessão expirada. Faça login novamente.',
+  'errors.MFA_NOT_ENROLLED': 'Inicie a configuração do 2FA primeiro.',
+
+  // Central de notificações
+  'notifications.center.title': 'Notificações',
+  'notifications.empty': 'Nenhuma notificação ainda.',
+  'notifications.markAll': 'Marcar todas como lidas',
+
+  // Wearables
+  'metrics.connect': 'Conectar wearable',
+  'metrics.synced': 'sincronizado',
+  'wearables.title': 'Wearables',
+  'wearables.subtitle': 'Conecte um dispositivo para desbloquear recuperação, sono, prontidão e mais.',
+  'wearables.connect': 'Conectar',
+  'wearables.disconnect': 'Desconectar',
+  'wearables.connected': 'Conectado',
+  'wearables.soon': 'Esse dispositivo ainda não está disponível. Em breve!',
+  'wearables.appleHint': 'O Apple Saúde é lido no próprio aparelho e exige um build do app — no Expo Go não há dados reais. Use o botão abaixo para testar.',
+  'wearables.seed': 'Simular leituras (teste)',
+  'wearables.seeded': 'Leituras de exemplo adicionadas.',
 } as const;
 
 export type TranslationKey = keyof typeof pt;
