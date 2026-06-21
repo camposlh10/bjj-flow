@@ -27,16 +27,17 @@ import { useAuthStore } from '../store/authStore';
 import { palette } from '../theme/theme';
 
 type Direction = 'HIT' | 'CONCEDED';
-const TYPES: { key: string; label: string }[] = [
-  { key: 'GI', label: t('checkin.type.GI') },
-  { key: 'NOGI', label: t('checkin.type.NOGI') },
-  { key: 'OPEN_MAT', label: t('checkin.type.OPEN_MAT') },
-];
 const DURATIONS = [60, 90, 120, 180];
 
 export default function CheckInSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
   const myId = useAuthStore((s) => s.user?.id);
+  // Built in render (not at module load) so labels follow the active language.
+  const TYPES: { key: string; label: string }[] = [
+    { key: 'GI', label: t('checkin.type.GI') },
+    { key: 'NOGI', label: t('checkin.type.NOGI') },
+    { key: 'OPEN_MAT', label: t('checkin.type.OPEN_MAT') },
+  ];
 
   const [sessionType, setSessionType] = useState('GI');
   const [duration, setDuration] = useState(60);

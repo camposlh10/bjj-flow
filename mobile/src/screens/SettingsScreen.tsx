@@ -8,6 +8,7 @@ import { Text } from 'react-native-paper';
 import { togglePro } from '../api/users';
 import { t } from '../i18n';
 import { useAuthStore } from '../store/authStore';
+import { useLocaleStore } from '../store/localeStore';
 import { palette } from '../theme/theme';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -53,6 +54,7 @@ export default function SettingsScreen() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
+  const locale = useLocaleStore((s) => s.locale);
 
   const pro = useMutation({
     mutationFn: togglePro,
@@ -85,7 +87,12 @@ export default function SettingsScreen() {
         <Row icon="bell-outline" label={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} />
         <Row icon="lock-outline" label={t('settings.privacy')} onPress={() => navigation.navigate('Privacy')} />
         <Row icon="theme-light-dark" label={t('settings.appearance')} value={t('settings.appearance.dark')} soon />
-        <Row icon="translate" label={t('settings.language')} value={t('settings.language.pt')} soon />
+        <Row
+          icon="translate"
+          label={t('settings.language')}
+          value={locale === 'en' ? t('settings.language.en') : t('settings.language.pt')}
+          onPress={() => navigation.navigate('Language')}
+        />
       </View>
 
       <Text style={styles.section}>{t('settings.subscription')}</Text>

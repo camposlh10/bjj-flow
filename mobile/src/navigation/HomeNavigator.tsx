@@ -7,6 +7,7 @@ import DonationsScreen from '../screens/DonationsScreen';
 import EditUserProfileScreen from '../screens/EditUserProfileScreen';
 import HelpScreen from '../screens/HelpScreen';
 import HomeScreen from '../screens/HomeScreen';
+import LanguageScreen from '../screens/LanguageScreen';
 import MetricsScreen from '../screens/MetricsScreen';
 import MfaScreen from '../screens/MfaScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
@@ -29,6 +30,7 @@ export type HomeStackParamList = {
   Metrics: undefined;
   Mfa: undefined;
   Wearables: undefined;
+  Language: undefined;
   Techniques: undefined;
   TechniqueDetail: { id: number };
   PersonalTechniqueEditor: { technique?: PersonalTechnique } | undefined;
@@ -61,6 +63,7 @@ export default function HomeNavigator() {
       <Stack.Screen name="Metrics" component={MetricsScreen} options={{ title: t('metrics.title') }} />
       <Stack.Screen name="Mfa" component={MfaScreen} options={{ title: t('mfa.title') }} />
       <Stack.Screen name="Wearables" component={WearablesScreen} options={{ title: t('wearables.title') }} />
+      <Stack.Screen name="Language" component={LanguageScreen} options={{ title: t('language.title') }} />
       <Stack.Screen name="Techniques" component={TechniquesScreen} options={{ title: t('techniques.title') }} />
       <Stack.Screen
         name="TechniqueDetail"

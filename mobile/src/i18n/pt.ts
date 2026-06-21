@@ -695,6 +695,11 @@ export const pt = {
   'wearables.appleHint': 'O Apple Saúde é lido no próprio aparelho e exige um build do app — no Expo Go não há dados reais. Use o botão abaixo para testar.',
   'wearables.seed': 'Simular leituras (teste)',
   'wearables.seeded': 'Leituras de exemplo adicionadas.',
+
+  // Idioma
+  'language.title': 'Idioma',
+  'settings.language.en': 'English',
+  'settings.language.system': 'Sistema',
 } as const;
 
 export type TranslationKey = keyof typeof pt;

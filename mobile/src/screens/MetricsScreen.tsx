@@ -25,23 +25,25 @@ function formatBio(value: number, unit: string): string {
   return unit === '%' ? `${v}%` : `${v}${unit ? ` ${unit}` : ''}`;
 }
 
-// Wearable-only metrics. Each maps to a backend biometric key; a tile unlocks once
-// a reading exists for that key (Apple Health pushes them; cloud providers pull).
-const LOCKED: { icon: ComponentProps<typeof MaterialCommunityIcons>['name']; label: string; metric: string; color: string }[] = [
-  { icon: 'heart-pulse', label: t('metrics.recovery'), metric: 'RECOVERY', color: '#16A34A' },
-  { icon: 'gauge', label: t('metrics.readiness'), metric: 'READINESS', color: '#3E63DD' },
-  { icon: 'sleep', label: t('metrics.sleep'), metric: 'SLEEP', color: '#8E4EC6' },
-  { icon: 'sine-wave', label: t('metrics.hrv'), metric: 'HRV', color: '#2DB6A3' },
-  { icon: 'heart', label: t('metrics.restingHr'), metric: 'RESTING_HR', color: '#E5484D' },
-  { icon: 'lungs', label: t('metrics.vo2max'), metric: 'VO2MAX', color: '#E0A82E' },
-  { icon: 'timer-sand', label: t('metrics.recoveryTime'), metric: 'RECOVERY_TIME', color: '#F76808' },
-];
+type LockedMetric = { icon: ComponentProps<typeof MaterialCommunityIcons>['name']; label: string; metric: string; color: string };
 
 export default function MetricsScreen() {
   const navigation = useNavigation<any>();
   const stats = useQuery({ queryKey: ['stats'], queryFn: getStats });
   const bio = useQuery({ queryKey: ['biometrics'], queryFn: getBiometrics });
   const bioMap = new Map((bio.data ?? []).map((b) => [b.metric, b]));
+
+  // Wearable-only metrics, each mapped to a backend biometric key; a tile unlocks once
+  // a reading exists. Built in render so labels follow the active language.
+  const LOCKED: LockedMetric[] = [
+    { icon: 'heart-pulse', label: t('metrics.recovery'), metric: 'RECOVERY', color: '#16A34A' },
+    { icon: 'gauge', label: t('metrics.readiness'), metric: 'READINESS', color: '#3E63DD' },
+    { icon: 'sleep', label: t('metrics.sleep'), metric: 'SLEEP', color: '#8E4EC6' },
+    { icon: 'sine-wave', label: t('metrics.hrv'), metric: 'HRV', color: '#2DB6A3' },
+    { icon: 'heart', label: t('metrics.restingHr'), metric: 'RESTING_HR', color: '#E5484D' },
+    { icon: 'lungs', label: t('metrics.vo2max'), metric: 'VO2MAX', color: '#E0A82E' },
+    { icon: 'timer-sand', label: t('metrics.recoveryTime'), metric: 'RECOVERY_TIME', color: '#F76808' },
+  ];
 
   if (stats.isLoading || !stats.data) {
     return (
