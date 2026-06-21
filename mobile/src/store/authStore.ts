@@ -41,6 +41,7 @@ type AuthState = {
   setOnboarding: (answers: Partial<OnboardingAnswers>) => void;
   setAuth: (tokens: Tokens, user: User) => Promise<void>;
   setTokens: (tokens: Tokens) => Promise<void>;
+  setUser: (user: User) => void;
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
 };
@@ -74,6 +75,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       SecureStore.setItemAsync(REFRESH_KEY, tokens.refreshToken),
     ]);
     set({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
+  },
+
+  setUser: (user) => {
+    SecureStore.setItemAsync(USER_KEY, JSON.stringify(user)).catch(() => undefined);
+    set({ user });
   },
 
   logout: async () => {

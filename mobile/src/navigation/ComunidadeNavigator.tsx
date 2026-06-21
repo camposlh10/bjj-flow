@@ -7,6 +7,7 @@ import ConversationScreen from '../screens/ConversationScreen';
 import DirectInboxScreen from '../screens/DirectInboxScreen';
 import EditUserProfileScreen from '../screens/EditUserProfileScreen';
 import FeedCommentsScreen from '../screens/FeedCommentsScreen';
+import StudentManagementScreen from '../screens/gym/StudentManagementScreen';
 import SubmissionsScreen from '../screens/SubmissionsScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import { palette } from '../theme/theme';
@@ -16,6 +17,7 @@ export type ConversationParams = {
   userId?: number;
   title?: string;
   username?: string | null;
+  avatarUrl?: string | null;
 };
 
 export type ComunidadeStackParamList = {
@@ -26,6 +28,7 @@ export type ComunidadeStackParamList = {
   Submissions: { userId?: number } | undefined;
   Direct: undefined;
   Conversation: ConversationParams;
+  StudentManagement: { userId: number };
 };
 
 const Stack = createNativeStackNavigator<ComunidadeStackParamList>();
@@ -58,6 +61,11 @@ export default function ComunidadeNavigator() {
         name="Conversation"
         component={ConversationScreen}
         options={({ route }) => ({ title: route.params?.title ?? t('dm.title') })}
+      />
+      <Stack.Screen
+        name="StudentManagement"
+        component={StudentManagementScreen}
+        options={{ title: t('student.manage') }}
       />
     </Stack.Navigator>
   );

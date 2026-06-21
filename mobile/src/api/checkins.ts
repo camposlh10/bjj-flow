@@ -12,6 +12,11 @@ export type Stats = {
   weekDays: boolean[];
   /** semanas distintas com ao menos um treino */
   activeWeeks: number;
+  /** carga de treino: minutos nesta semana e na semana passada */
+  weeklyMinutes: number;
+  lastWeekMinutes: number;
+  /** calorias estimadas na semana (null se não houver peso cadastrado) */
+  weeklyCalories: number | null;
 };
 
 /** Data local do aparelho em YYYY-MM-DD (sem efeitos de fuso do servidor). */

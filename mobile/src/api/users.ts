@@ -66,6 +66,20 @@ export async function getUserProfile(id: number): Promise<UserProfile> {
   return data;
 }
 
+export type SearchUser = {
+  id: number;
+  username: string | null;
+  displayName: string;
+  avatarUrl: string | null;
+  pro: boolean;
+  belt: ProfileBelt | null;
+};
+
+export async function searchUsers(q: string): Promise<SearchUser[]> {
+  const { data } = await api.get<SearchUser[]>('/users/search', { params: { q } });
+  return data;
+}
+
 export async function getUserJourney(id: number): Promise<Journey> {
   const { data } = await api.get<Journey>(`/users/${id}/journey`);
   return data;
@@ -115,4 +129,37 @@ export async function updateMyMedals(medals: MedalInput[]): Promise<UserProfile>
 export async function togglePro(): Promise<UserProfile> {
   const { data } = await api.post<UserProfile>('/users/me/pro');
   return data;
+}
+
+export type Settings = {
+  email: string;
+  username: string | null;
+  pro: boolean;
+  privateAccount: boolean;
+  notifyCommunity: boolean;
+  notifyMessages: boolean;
+  notifyPromotions: boolean;
+};
+
+export async function getSettings(): Promise<Settings> {
+  const { data } = await api.get<Settings>('/users/me/settings');
+  return data;
+}
+
+export async function updateSettings(payload: Partial<Omit<Settings, 'email' | 'username' | 'pro'>>): Promise<Settings> {
+  const { data } = await api.put<Settings>('/users/me/settings', payload);
+  return data;
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await api.put('/users/me/password', { currentPassword, newPassword });
+}
+
+export async function changeEmail(password: string, email: string): Promise<Settings> {
+  const { data } = await api.put<Settings>('/users/me/email', { password, email });
+  return data;
+}
+
+export async function sendFeedback(message: string): Promise<void> {
+  await api.post('/users/me/feedback', { message });
 }

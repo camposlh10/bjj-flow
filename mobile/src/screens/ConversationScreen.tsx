@@ -1,9 +1,11 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,6 +17,7 @@ import {
 import { ActivityIndicator } from 'react-native-paper';
 
 import { DirectMessage, getMessages, sendMessage, startConversation } from '../api/messages';
+import { resolveMediaUrl } from '../api/posts';
 import { t } from '../i18n';
 import { palette } from '../theme/theme';
 
@@ -23,7 +26,39 @@ type Params = {
   userId?: number;
   title?: string;
   username?: string | null;
+  avatarUrl?: string | null;
 };
+
+type Peer = { name: string; username: string | null; avatarUrl: string | null };
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
+
+function HeaderTitle({ peer }: { peer: Peer }) {
+  return (
+    <View style={styles.headerTitle}>
+      {peer.avatarUrl ? (
+        <Image source={{ uri: resolveMediaUrl(peer.avatarUrl) }} style={styles.headerAvatar} />
+      ) : (
+        <View style={[styles.headerAvatar, styles.headerAvatarFallback]}>
+          <Text style={styles.headerAvatarText}>{initialsOf(peer.name || '?')}</Text>
+        </View>
+      )}
+      <View>
+        <Text style={styles.headerName} numberOfLines={1}>
+          {peer.name}
+        </Text>
+        {peer.username ? (
+          <Text style={styles.headerHandle} numberOfLines={1}>
+            @{peer.username}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
 
 export default function ConversationScreen() {
   const route = useRoute<RouteProp<Record<string, Params>, string>>();
@@ -35,25 +70,31 @@ export default function ConversationScreen() {
   const params = route.params ?? {};
   const [convId, setConvId] = useState<number | null>(params.conversationId ?? null);
   const [text, setText] = useState('');
+  const [peer, setPeer] = useState<Peer>({
+    name: params.title ?? '',
+    username: params.username ?? null,
+    avatarUrl: params.avatarUrl ?? null,
+  });
 
+  // Render the Instagram-style header (avatar + name + @handle).
   useEffect(() => {
-    if (params.title) navigation.setOptions({ title: params.title });
-  }, [navigation, params.title]);
+    navigation.setOptions({ headerTitle: () => <HeaderTitle peer={peer} />, headerTitleAlign: 'left' });
+  }, [navigation, peer]);
 
-  // When opened from a profile we only have a userId — get-or-create the thread.
+  // Opened from a profile with only a userId — get-or-create the thread + peer info.
   useEffect(() => {
     let active = true;
     if (convId == null && params.userId != null) {
       startConversation(params.userId).then((c) => {
         if (!active) return;
         setConvId(c.id);
-        navigation.setOptions({ title: c.other.displayName });
+        setPeer({ name: c.other.displayName, username: c.other.username, avatarUrl: c.other.avatarUrl });
       });
     }
     return () => {
       active = false;
     };
-  }, [convId, params.userId, navigation]);
+  }, [convId, params.userId]);
 
   const messages = useQuery({
     queryKey: ['messages', convId],
@@ -72,6 +113,7 @@ export default function ConversationScreen() {
   });
 
   const data = messages.data ?? [];
+  const canSend = text.trim().length > 0 && convId != null && !send.isPending;
 
   return (
     <KeyboardAvoidingView
@@ -92,29 +134,47 @@ export default function ConversationScreen() {
           keyboardDismissMode="on-drag"
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={<Text style={styles.emptyHint}>{t('dm.thread.empty')}</Text>}
-          renderItem={({ item }) => (
-            <View style={[styles.bubbleRow, item.fromMe ? styles.rowMine : styles.rowTheirs]}>
-              <View style={[styles.bubble, item.fromMe ? styles.bubbleMine : styles.bubbleTheirs]}>
-                <Text style={item.fromMe ? styles.textMine : styles.textTheirs}>{item.content}</Text>
+          renderItem={({ item, index }) => {
+            // Group consecutive messages from the same sender (tighter spacing, IG-style).
+            const prev = data[index - 1];
+            const grouped = prev && prev.fromMe === item.fromMe;
+            return (
+              <View
+                style={[
+                  styles.bubbleRow,
+                  item.fromMe ? styles.rowMine : styles.rowTheirs,
+                  { marginTop: grouped ? 2 : 10 },
+                ]}>
+                <View
+                  style={[
+                    styles.bubble,
+                    item.fromMe ? styles.bubbleMine : styles.bubbleTheirs,
+                    grouped && (item.fromMe ? styles.groupedMine : styles.groupedTheirs),
+                  ]}>
+                  <Text style={item.fromMe ? styles.textMine : styles.textTheirs}>{item.content}</Text>
+                </View>
               </View>
-            </View>
-          )}
+            );
+          }}
         />
       )}
       <View style={styles.composer}>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder={t('dm.thread.placeholder')}
-          placeholderTextColor={palette.textSecondary}
-          style={styles.input}
-          multiline
-        />
+        <View style={styles.inputPill}>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder={t('dm.thread.placeholder')}
+            placeholderTextColor={palette.textSecondary}
+            style={styles.input}
+            multiline
+          />
+        </View>
         <Pressable
           onPress={() => send.mutate()}
-          disabled={text.trim().length === 0 || send.isPending || convId == null}
-          style={[styles.sendBtn, (text.trim().length === 0 || send.isPending) && styles.sendBtnOff]}>
-          <Text style={styles.sendText}>{t('dm.thread.send')}</Text>
+          disabled={!canSend}
+          style={[styles.sendBtn, !canSend && styles.sendBtnOff]}
+          hitSlop={6}>
+          <MaterialCommunityIcons name="arrow-up" size={20} color="#fff" />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -124,28 +184,53 @@ export default function ConversationScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  headerTitle: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerAvatar: { width: 32, height: 32, borderRadius: 16 },
+  headerAvatarFallback: { backgroundColor: palette.surfaceVariant, alignItems: 'center', justifyContent: 'center' },
+  headerAvatarText: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 12 },
+  headerName: { color: palette.textPrimary, fontSize: 15, fontWeight: 'bold' },
+  headerHandle: { color: palette.textSecondary, fontSize: 11 },
+
   list: { padding: 12, flexGrow: 1, justifyContent: 'flex-end' },
   emptyHint: { color: palette.textSecondary, fontSize: 13, textAlign: 'center', marginVertical: 24 },
-  bubbleRow: { marginVertical: 3, flexDirection: 'row' },
+  bubbleRow: { flexDirection: 'row' },
   rowMine: { justifyContent: 'flex-end' },
   rowTheirs: { justifyContent: 'flex-start' },
-  bubble: { maxWidth: '78%', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8 },
-  bubbleMine: { backgroundColor: palette.primary, borderBottomRightRadius: 4 },
-  bubbleTheirs: { backgroundColor: palette.surface, borderBottomLeftRadius: 4 },
-  textMine: { color: '#fff', fontSize: 14, lineHeight: 19 },
-  textTheirs: { color: palette.textPrimary, fontSize: 14, lineHeight: 19 },
+  bubble: { maxWidth: '76%', borderRadius: 20, paddingHorizontal: 13, paddingVertical: 9 },
+  bubbleMine: { backgroundColor: palette.primary, borderBottomRightRadius: 6 },
+  bubbleTheirs: { backgroundColor: palette.surface, borderBottomLeftRadius: 6 },
+  groupedMine: { borderTopRightRadius: 6 },
+  groupedTheirs: { borderTopLeftRadius: 6 },
+  textMine: { color: '#fff', fontSize: 15, lineHeight: 20 },
+  textTheirs: { color: palette.textPrimary, fontSize: 15, lineHeight: 20 },
+
   composer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: palette.surfaceVariant,
-    backgroundColor: palette.surface,
+    backgroundColor: palette.background,
   },
-  input: { flex: 1, maxHeight: 110, color: palette.textPrimary, fontSize: 14, paddingHorizontal: 8 },
-  sendBtn: { backgroundColor: palette.primary, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8 },
-  sendBtnOff: { opacity: 0.5 },
-  sendText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  inputPill: {
+    flex: 1,
+    backgroundColor: palette.surface,
+    borderRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.surfaceVariant,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
+    justifyContent: 'center',
+  },
+  input: { maxHeight: 110, color: palette.textPrimary, fontSize: 15, padding: 0 },
+  sendBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: palette.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendBtnOff: { opacity: 0.4 },
 });

@@ -1,6 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -21,11 +20,8 @@ import MilestoneBar from '../components/MilestoneBar';
 import { rankBarColorFor } from '../constants/belts';
 import { STREAK_MILESTONES, TRAINING_MILESTONES, WEEK_MILESTONES, nextMilestone } from '../constants/milestones';
 import { t, tf } from '../i18n';
-import type { AppTabsParamList } from '../navigation/AppTabs';
 import { useAuthStore } from '../store/authStore';
 import { palette } from '../theme/theme';
-
-type Nav = BottomTabNavigationProp<AppTabsParamList>;
 
 const WEEK_LETTERS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -40,6 +36,14 @@ const JOURNEY_DOT_COLORS = ['#E63946', '#E0A82E', '#2DB6A3', '#3E63DD', '#8E4EC6
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
+
+function formatMinutes(m: number): string {
+  if (!m) return '0min';
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  if (h === 0) return `${min}min`;
+  return min === 0 ? `${h}h` : `${h}h ${min}min`;
 }
 
 // Calendar-date label from a UTC-midnight instant (avoids timezone off-by-one).
@@ -93,7 +97,7 @@ function nextGoal(s: Stats): string {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<Nav>();
+  const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [compOpen, setCompOpen] = useState(false);
@@ -171,6 +175,13 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+        <Pressable
+          onPress={() => navigation.navigate('Settings')}
+          hitSlop={8}
+          style={styles.gearBtn}
+          accessibilityLabel={t('settings.title')}>
+          <MaterialCommunityIcons name="cog-outline" size={22} color={palette.textSecondary} />
+        </Pressable>
       </View>
 
       {!s ? (
@@ -250,6 +261,56 @@ export default function HomeScreen() {
               <MilestoneBar icon="fire" label={t('home.overview.streak')} value={s.longestStreak} ladder={STREAK_MILESTONES} color={METRIC_COLORS.streak} />
               <MilestoneBar icon="calendar-check" label={t('home.overview.weeks')} value={s.activeWeeks ?? 0} ladder={WEEK_MILESTONES} color={METRIC_COLORS.weeks} />
             </View>
+          </View>
+
+          {/* 4b. Weekly training load + estimated calories */}
+          <View style={styles.card}>
+            <Pressable style={styles.weekHead} onPress={() => navigation.navigate('Metrics')} hitSlop={6}>
+              <Text style={styles.sectionTitle}>{t('home.week.title')}</Text>
+              <View style={styles.weekLink}>
+                <Text style={styles.link}>{t('metrics.seeAll')}</Text>
+                <MaterialCommunityIcons name="chevron-right" size={16} color={palette.primary} />
+              </View>
+            </Pressable>
+            <View style={styles.loadRow}>
+              <View style={styles.loadMain}>
+                <View style={styles.loadIcon}>
+                  <MaterialCommunityIcons name="lightning-bolt" size={20} color={METRIC_COLORS.trainings} />
+                </View>
+                <View>
+                  <Text style={styles.loadValue}>{formatMinutes(s.weeklyMinutes)}</Text>
+                  <Text style={styles.loadLabel}>{t('home.week.load')}</Text>
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.trend,
+                  s.weeklyMinutes >= s.lastWeekMinutes ? styles.trendUp : styles.trendDown,
+                ]}>
+                <MaterialCommunityIcons
+                  name={
+                    s.weeklyMinutes === s.lastWeekMinutes
+                      ? 'minus'
+                      : s.weeklyMinutes > s.lastWeekMinutes
+                        ? 'arrow-up'
+                        : 'arrow-down'
+                  }
+                  size={13}
+                  color={s.weeklyMinutes >= s.lastWeekMinutes ? '#16A34A' : '#E5484D'}
+                />
+                <Text style={[styles.trendText, { color: s.weeklyMinutes >= s.lastWeekMinutes ? '#16A34A' : '#E5484D' }]}>
+                  {s.weeklyMinutes === s.lastWeekMinutes
+                    ? t('home.week.same')
+                    : `${Math.abs(s.weeklyMinutes - s.lastWeekMinutes)}min`}
+                </Text>
+              </View>
+            </View>
+            {s.weeklyCalories != null && (
+              <View style={styles.calRow}>
+                <MaterialCommunityIcons name="fire" size={16} color={palette.primary} />
+                <Text style={styles.calText}>{tf('home.week.calories', { n: s.weeklyCalories })}</Text>
+              </View>
+            )}
           </View>
 
           {/* 5. Next Goal */}
@@ -361,6 +422,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
   content: { paddingHorizontal: 20, paddingBottom: 32, gap: 14 },
   greeting: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  gearBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: palette.surfaceVariant, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 15 },
   name: { color: palette.textPrimary, fontWeight: 'bold' },
@@ -397,6 +459,20 @@ const styles = StyleSheet.create({
   sectionTitle: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 14 },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   link: { color: palette.primary, fontSize: 12, fontWeight: '600' },
+
+  weekHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  weekLink: { flexDirection: 'row', alignItems: 'center' },
+  loadRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
+  loadMain: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  loadIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: palette.surfaceVariant, alignItems: 'center', justifyContent: 'center' },
+  loadValue: { color: palette.textPrimary, fontSize: 22, fontWeight: 'bold' },
+  loadLabel: { color: palette.textSecondary, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 },
+  trend: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  trendUp: { backgroundColor: 'rgba(22,163,74,0.15)' },
+  trendDown: { backgroundColor: 'rgba(229,72,77,0.15)' },
+  trendText: { fontSize: 12, fontWeight: '700' },
+  calRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: palette.surfaceVariant },
+  calText: { color: palette.textSecondary, fontSize: 13 },
 
   goalCard: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   goalLabel: { color: palette.textSecondary, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },

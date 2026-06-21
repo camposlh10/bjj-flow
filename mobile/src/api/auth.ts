@@ -63,6 +63,8 @@ export function apiErrorMessage(error: unknown): string {
         return t('errors.USERNAME_TAKEN');
       case 'INVALID_USERNAME':
         return t('errors.INVALID_USERNAME');
+      case 'WRONG_PASSWORD':
+        return t('errors.WRONG_PASSWORD');
     }
   }
   return t('errors.UNKNOWN');

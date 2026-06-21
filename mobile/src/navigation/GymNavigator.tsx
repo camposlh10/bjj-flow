@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AgendaOccurrence } from '../api/classes';
 import { t } from '../i18n';
 import ConversationScreen from '../screens/ConversationScreen';
+import StudentManagementScreen from '../screens/gym/StudentManagementScreen';
 import type { ConversationParams } from './ComunidadeNavigator';
 import AdminVerificationsScreen from '../screens/gym/AdminVerificationsScreen';
 import AttendanceScreen from '../screens/gym/AttendanceScreen';
@@ -14,6 +15,7 @@ import CreateProductScreen from '../screens/gym/CreateProductScreen';
 import EditGymScreen from '../screens/gym/EditGymScreen';
 import GymHomeScreen from '../screens/gym/GymHomeScreen';
 import GymProfileScreen from '../screens/gym/GymProfileScreen';
+import GymSettingsScreen from '../screens/gym/GymSettingsScreen';
 import GymVerificationScreen from '../screens/gym/GymVerificationScreen';
 import JoinGymScreen from '../screens/gym/JoinGymScreen';
 import PostDetailScreen from '../screens/gym/PostDetailScreen';
@@ -42,6 +44,8 @@ export type GymStackParamList = {
   GymVerification: undefined;
   AdminVerifications: undefined;
   Conversation: ConversationParams;
+  StudentManagement: { userId: number };
+  GymSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<GymStackParamList>();
@@ -129,6 +133,16 @@ export default function GymNavigator() {
         name="Conversation"
         component={ConversationScreen}
         options={({ route }) => ({ title: route.params?.title ?? t('dm.title') })}
+      />
+      <Stack.Screen
+        name="StudentManagement"
+        component={StudentManagementScreen}
+        options={{ title: t('student.manage') }}
+      />
+      <Stack.Screen
+        name="GymSettings"
+        component={GymSettingsScreen}
+        options={{ title: t('gym.settings.title') }}
       />
     </Stack.Navigator>
   );

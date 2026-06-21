@@ -245,15 +245,26 @@ export default function UserProfileScreen() {
             mode="outlined"
             icon="message-outline"
             style={styles.actionFlex}
-            onPress={() => navigation.navigate('Conversation', { userId: p.id, title: p.displayName })}>
+            onPress={() =>
+              navigation.navigate('Conversation', {
+                userId: p.id,
+                title: p.displayName,
+                username: p.username,
+                avatarUrl: p.avatarUrl,
+              })
+            }>
             {t('profile.message')}
           </Button>
         </View>
       )}
 
       {canGraduate && (
-        <Button mode="contained-tonal" icon="arrow-up-bold" style={styles.graduarBtn} onPress={openSheet}>
-          {t('member.promote')}
+        <Button
+          mode="contained-tonal"
+          icon="clipboard-account"
+          style={styles.graduarBtn}
+          onPress={() => navigation.navigate('StudentManagement', { userId: targetId })}>
+          {t('student.manage')}
         </Button>
       )}
 

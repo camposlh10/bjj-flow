@@ -17,7 +17,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.luizhsc10.bjjflowmobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -26,6 +27,11 @@
       "expo-font",
       "expo-secure-store",
       "expo-video"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "75004a02-cc83-4730-96ca-3769d2b18d4d"
+      }
+    }
   }
 }

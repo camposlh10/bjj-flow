@@ -5,9 +5,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import CheckInSheet from '../components/CheckInSheet';
 import { t } from '../i18n';
-import HomeScreen from '../screens/HomeScreen';
 import ComunidadeNavigator from './ComunidadeNavigator';
 import GymNavigator from './GymNavigator';
+import HomeNavigator from './HomeNavigator';
 import ProfileNavigator from './ProfileNavigator';
 import { palette } from '../theme/theme';
 
@@ -40,7 +40,7 @@ export default function AppTabs() {
       }}>
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeNavigator}
         options={{
           tabBarLabel: t('tabs.home'),
           tabBarIcon: ({ color, size }) => (

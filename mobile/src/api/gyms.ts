@@ -21,6 +21,7 @@ export type Gym = {
   memberCount: number;
   role: GymRole;
   graduationTarget: number;
+  instructorsOnlyPosts: boolean;
   /** present only for owner/instructor */
   inviteCode: string | null;
   phone: string | null;
@@ -171,6 +172,21 @@ export async function promoteMember(
 
 export async function updateGym(payload: UpdateGymPayload): Promise<Gym> {
   const { data } = await api.put<Gym>('/gyms/me', payload);
+  return data;
+}
+
+/** Owner-only: update gym rules without touching the rest of the gym profile. */
+export async function updateGymRules(payload: {
+  graduationTarget?: number;
+  instructorsOnlyPosts?: boolean;
+}): Promise<Gym> {
+  const { data } = await api.put<Gym>('/gyms/me/rules', payload);
+  return data;
+}
+
+/** TEMP testing aid: add the BJJ Bot student to my gym + seed feed/attendance. */
+export async function addTestBot(): Promise<{ userId: number; username: string; displayName: string }> {
+  const { data } = await api.post('/dev/bot');
   return data;
 }
 

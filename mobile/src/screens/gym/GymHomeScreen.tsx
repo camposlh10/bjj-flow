@@ -221,6 +221,16 @@ function GymView({ gym }: { gym: Gym }) {
               onPress={() => setMenuVisible(true)}
             />
           }>
+          {gym.role === 'OWNER' && (
+            <Menu.Item
+              onPress={() => {
+                setMenuVisible(false);
+                navigation.navigate('GymSettings');
+              }}
+              title={t('gym.settings.title')}
+              leadingIcon="cog-outline"
+            />
+          )}
           <Menu.Item onPress={confirmLeave} title={t('gym.leave.title')} leadingIcon="exit-to-app" />
         </Menu>
       </View>
@@ -282,6 +292,13 @@ function MembersList({ gym }: { gym: Gym }) {
   const staff = gym.role === 'OWNER' || gym.role === 'INSTRUCTOR';
   const target = gym.graduationTarget || 40;
 
+  // Instructors/owners tap a student straight into the admin panel; plain members
+  // open the public profile.
+  const openMember = (userId: number) =>
+    staff
+      ? navigation.navigate('StudentManagement', { userId })
+      : navigation.navigate('MemberProfile', { userId });
+
   if (members.isLoading) {
     return (
       <View style={styles.center}>
@@ -306,7 +323,7 @@ function MembersList({ gym }: { gym: Gym }) {
           <Pressable
             key={m.userId}
             style={styles.memberRow}
-            onPress={() => navigation.navigate('MemberProfile', { userId: m.userId })}>
+            onPress={() => openMember(m.userId)}>
             <View style={styles.memberAvatar}>
               <Text style={styles.memberAvatarText}>{initialsOf(m.displayName)}</Text>
             </View>
