@@ -32,6 +32,7 @@ public class AuthService {
     private final BeltRankRepository beltRankRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final MfaService mfaService;
     private final com.bjjflow.backend.common.AdminAccess adminAccess;
 
     @Transactional
@@ -69,6 +70,26 @@ public class AuthService {
                 .filter(u -> passwordEncoder.matches(request.password(), u.getPasswordHash()))
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS",
                         "Invalid email or password"));
+        if (Boolean.TRUE.equals(user.getMfaEnabled())) {
+            return AuthResponse.mfaChallenge(jwtService.createMfaToken(user.getId()));
+        }
+        return buildAuthResponse(user, findProgress(user.getId()));
+    }
+
+    /** Second step of an MFA login: exchange the mfaToken + code (TOTP or recovery) for real tokens. */
+    @Transactional
+    public AuthResponse completeMfa(String mfaToken, String code) {
+        Long userId = jwtService.parse(mfaToken)
+                .filter(token -> "mfa".equals(token.type()))
+                .map(JwtService.ParsedToken::userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_MFA_TOKEN",
+                        "MFA session expired, sign in again"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_MFA_TOKEN",
+                        "MFA session expired, sign in again"));
+        if (!Boolean.TRUE.equals(user.getMfaEnabled()) || !mfaService.verifyChallenge(user, code)) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_MFA_CODE", "Invalid authenticator code");
+        }
         return buildAuthResponse(user, findProgress(user.getId()));
     }
 
@@ -113,7 +134,7 @@ public class AuthService {
     }
 
     private AuthResponse buildAuthResponse(User user, UserBeltProgress progress) {
-        return new AuthResponse(
+        return AuthResponse.tokens(
                 jwtService.createAccessToken(user.getId()),
                 jwtService.createRefreshToken(user.getId()),
                 toUserDto(user, progress));

@@ -9,6 +9,7 @@ import com.bjjflow.backend.auth.AuthDtos.AuthResponse;
 import com.bjjflow.backend.auth.AuthDtos.LoginRequest;
 import com.bjjflow.backend.auth.AuthDtos.RefreshRequest;
 import com.bjjflow.backend.auth.AuthDtos.RegisterRequest;
+import com.bjjflow.backend.auth.MfaDtos.MfaChallengeRequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,5 +34,10 @@ public class AuthController {
     @PostMapping("/refresh")
     public AuthResponse refresh(@Valid @RequestBody RefreshRequest request) {
         return authService.refresh(request.refreshToken());
+    }
+
+    @PostMapping("/mfa")
+    public AuthResponse completeMfa(@Valid @RequestBody MfaChallengeRequest request) {
+        return authService.completeMfa(request.mfaToken(), request.code());
     }
 }

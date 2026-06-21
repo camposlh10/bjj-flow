@@ -39,6 +39,15 @@ public class AuthDtos {
             BigDecimal weightKg, Integer heightCm, BeltDto belt, boolean admin, boolean pro) {
     }
 
-    public record AuthResponse(String accessToken, String refreshToken, UserDto user) {
+    public record AuthResponse(String accessToken, String refreshToken, UserDto user, boolean mfaRequired,
+            String mfaToken) {
+
+        public static AuthResponse tokens(String accessToken, String refreshToken, UserDto user) {
+            return new AuthResponse(accessToken, refreshToken, user, false, null);
+        }
+
+        public static AuthResponse mfaChallenge(String mfaToken) {
+            return new AuthResponse(null, null, null, true, mfaToken);
+        }
     }
 }

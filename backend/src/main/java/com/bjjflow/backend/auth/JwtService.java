@@ -43,6 +43,11 @@ public class JwtService {
         return createToken(userId, "refresh", Instant.now().plus(refreshTtlDays, ChronoUnit.DAYS));
     }
 
+    /** Short-lived token issued after password check, exchanged for real tokens once MFA is satisfied. */
+    public String createMfaToken(Long userId) {
+        return createToken(userId, "mfa", Instant.now().plus(5, ChronoUnit.MINUTES));
+    }
+
     private String createToken(Long userId, String type, Instant expiresAt) {
         return Jwts.builder()
                 .subject(String.valueOf(userId))

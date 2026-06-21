@@ -90,6 +90,12 @@ public class User {
     @Column(name = "notify_promotions")
     private Boolean notifyPromotions = true;
 
+    @Column(name = "mfa_enabled")
+    private Boolean mfaEnabled = false;
+
+    @Column(name = "totp_secret")
+    private String totpSecret;
+
     @Column(name = "created_at")
     private Instant createdAt;
 

@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bjjflow.backend.common.ApiException;
+import com.bjjflow.backend.notifications.NotificationService;
+import com.bjjflow.backend.notifications.NotificationType;
 import com.bjjflow.backend.messages.MessageDtos.ConversationDto;
 import com.bjjflow.backend.messages.MessageDtos.MessageDto;
 import com.bjjflow.backend.messages.MessageDtos.ParticipantDto;
@@ -28,6 +30,7 @@ public class ConversationService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final MediaStorage mediaStorage;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<ConversationDto> inbox(Long me) {
@@ -95,6 +98,12 @@ public class ConversationService {
         }
         conversationRepository.save(conv);
 
+        // Notify the recipient (respects their notify_messages preference).
+        Long recipient = conv.getUserAId().equals(me) ? conv.getUserBId() : conv.getUserAId();
+        String senderName = userRepository.findById(me).map(User::getDisplayName).orElse("Alguém");
+        notificationService.notify(recipient, NotificationType.MESSAGE, senderName, preview(msg.getContent()),
+                "conversation:" + conversationId);
+
         // If the other participant is the test bot, it auto-replies so DMs are testable solo.
         maybeBotReply(conv, me);
         return new MessageDto(msg.getId(), me, true, msg.getContent(), msg.getCreatedAt());
@@ -142,6 +151,10 @@ public class ConversationService {
 
     private Long otherId(Conversation c, Long me) {
         return c.getUserAId().equals(me) ? c.getUserBId() : c.getUserAId();
+    }
+
+    private static String preview(String content) {
+        return content.length() <= 120 ? content : content.substring(0, 117) + "...";
     }
 
     private ConversationDto toDto(Conversation c, Long me, User other) {

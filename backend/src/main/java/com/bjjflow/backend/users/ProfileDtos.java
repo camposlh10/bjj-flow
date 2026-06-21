@@ -20,7 +20,7 @@ public class ProfileDtos {
     }
 
     public record SettingsDto(String email, String username, boolean pro, boolean privateAccount,
-            boolean notifyCommunity, boolean notifyMessages, boolean notifyPromotions) {
+            boolean notifyCommunity, boolean notifyMessages, boolean notifyPromotions, boolean mfaEnabled) {
     }
 
     public record UpdateSettingsRequest(Boolean privateAccount, Boolean notifyCommunity, Boolean notifyMessages,
