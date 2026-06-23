@@ -33,6 +33,8 @@ export default function AppTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        // Smooth cross-fade/shift between tabs (RN Navigation 7) instead of an instant cut.
+        animation: 'shift',
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: palette.primary,
         tabBarInactiveTintColor: palette.textSecondary,

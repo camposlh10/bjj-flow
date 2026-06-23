@@ -3,40 +3,41 @@ import { getActiveLocale } from '../i18n';
 export type BodyView = 'front' | 'back';
 export type RegionNode = { key: string; x: number; y: number };
 
-// Hotspot coordinates on a 200x400 viewBox body. "left"/"right" follow the image
-// the athlete sees (mirror), which is what they tap.
+// Hotspot positions as PERCENT (0-100) of the displayed body image (each view is a
+// square crop — front = left half, back = right half of assets/body-anatomy.png).
+// "left"/"right" follow the image the athlete sees (mirror), which is what they tap.
 export const BODY_NODES: Record<BodyView, RegionNode[]> = {
   front: [
-    { key: 'neck', x: 100, y: 52 },
-    { key: 'shoulder_left', x: 66, y: 70 },
-    { key: 'shoulder_right', x: 134, y: 70 },
-    { key: 'chest', x: 100, y: 86 },
-    { key: 'ribs', x: 100, y: 120 },
-    { key: 'elbow_left', x: 60, y: 124 },
-    { key: 'elbow_right', x: 140, y: 124 },
-    { key: 'wrist_left', x: 58, y: 168 },
-    { key: 'wrist_right', x: 142, y: 168 },
-    { key: 'hip_left', x: 89, y: 160 },
-    { key: 'hip_right', x: 111, y: 160 },
-    { key: 'knee_left', x: 90, y: 264 },
-    { key: 'knee_right', x: 110, y: 264 },
-    { key: 'ankle_left', x: 90, y: 356 },
-    { key: 'ankle_right', x: 110, y: 356 },
+    { key: 'neck', x: 50, y: 14 },
+    { key: 'shoulder_left', x: 33, y: 20 },
+    { key: 'shoulder_right', x: 67, y: 20 },
+    { key: 'chest', x: 50, y: 25 },
+    { key: 'ribs', x: 50, y: 36 },
+    { key: 'elbow_left', x: 24, y: 36 },
+    { key: 'elbow_right', x: 76, y: 36 },
+    { key: 'wrist_left', x: 17, y: 50 },
+    { key: 'wrist_right', x: 83, y: 50 },
+    { key: 'hip_left', x: 43, y: 48 },
+    { key: 'hip_right', x: 57, y: 48 },
+    { key: 'knee_left', x: 44, y: 69 },
+    { key: 'knee_right', x: 56, y: 69 },
+    { key: 'ankle_left', x: 45, y: 90 },
+    { key: 'ankle_right', x: 55, y: 90 },
   ],
   back: [
-    { key: 'neck', x: 100, y: 52 },
-    { key: 'shoulder_left', x: 66, y: 70 },
-    { key: 'shoulder_right', x: 134, y: 70 },
-    { key: 'upper_back', x: 100, y: 92 },
-    { key: 'lower_back', x: 100, y: 134 },
-    { key: 'elbow_left', x: 60, y: 124 },
-    { key: 'elbow_right', x: 140, y: 124 },
-    { key: 'hamstring_left', x: 90, y: 234 },
-    { key: 'hamstring_right', x: 110, y: 234 },
-    { key: 'calf_left', x: 90, y: 312 },
-    { key: 'calf_right', x: 110, y: 312 },
-    { key: 'ankle_left', x: 90, y: 356 },
-    { key: 'ankle_right', x: 110, y: 356 },
+    { key: 'neck', x: 50, y: 14 },
+    { key: 'shoulder_left', x: 33, y: 20 },
+    { key: 'shoulder_right', x: 67, y: 20 },
+    { key: 'upper_back', x: 50, y: 24 },
+    { key: 'lower_back', x: 50, y: 36 },
+    { key: 'elbow_left', x: 24, y: 36 },
+    { key: 'elbow_right', x: 76, y: 36 },
+    { key: 'hamstring_left', x: 44, y: 60 },
+    { key: 'hamstring_right', x: 56, y: 60 },
+    { key: 'calf_left', x: 44, y: 80 },
+    { key: 'calf_right', x: 56, y: 80 },
+    { key: 'ankle_left', x: 45, y: 90 },
+    { key: 'ankle_right', x: 55, y: 90 },
   ],
 };
 
