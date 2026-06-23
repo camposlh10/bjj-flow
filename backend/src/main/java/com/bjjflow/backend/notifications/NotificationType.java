@@ -1,9 +1,16 @@
 package com.bjjflow.backend.notifications;
 
-/** Notification categories, mapped to the user's notify_* preferences. */
+/**
+ * Notification categories (drive the categorized notification center + prefs).
+ * SOCIAL = follows/likes/comments; MESSAGE = DMs; TRAINING = streaks/goals;
+ * PERFORMANCE = data-driven insights ("AI coach"); COMPETITION; ACADEMY; SYSTEM.
+ */
 public enum NotificationType {
-    COMMUNITY,
+    SOCIAL,
     MESSAGE,
-    PROMOTION,
+    TRAINING,
+    PERFORMANCE,
+    COMPETITION,
+    ACADEMY,
     SYSTEM
 }

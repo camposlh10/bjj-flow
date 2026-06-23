@@ -17,6 +17,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     Optional<Notification> findByIdAndUserId(Long id, Long userId);
 
+    /** Dedup guard for insights: has this exact insight already been generated since {@code after}? */
+    boolean existsByUserIdAndPayloadAndCreatedAtAfter(Long userId, String payload, java.time.Instant after);
+
     @Transactional
     @Modifying
     @Query("UPDATE Notification n SET n.read = true WHERE n.userId = :userId AND n.read = false")

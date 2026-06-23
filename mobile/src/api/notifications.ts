@@ -1,6 +1,13 @@
 import { api } from './client';
 
-export type NotificationType = 'COMMUNITY' | 'MESSAGE' | 'PROMOTION' | 'SYSTEM';
+export type NotificationType =
+  | 'SOCIAL'
+  | 'MESSAGE'
+  | 'TRAINING'
+  | 'PERFORMANCE'
+  | 'COMPETITION'
+  | 'ACADEMY'
+  | 'SYSTEM';
 
 export type NotificationItem = {
   id: number;
@@ -25,6 +32,12 @@ export async function markNotificationRead(id: number): Promise<void> {
 
 export async function markAllNotificationsRead(): Promise<void> {
   await api.post('/users/me/notifications/read-all');
+}
+
+/** Recompute data-driven insights, returns the refreshed list. */
+export async function refreshInsights(limit?: number): Promise<NotificationList> {
+  const { data } = await api.post<NotificationList>('/users/me/insights/refresh', null, { params: { limit } });
+  return data;
 }
 
 // Device-token registration for remote push. Wired for when a dev/EAS build adds

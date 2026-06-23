@@ -45,6 +45,7 @@ public class CommunityFeedService {
     private final CheckInLikeRepository likeRepository;
     private final CheckInCommentRepository commentRepository;
     private final MediaStorage mediaStorage;
+    private final com.bjjflow.backend.notifications.NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<FeedItemDto> feed(Long requesterId, int limit) {
@@ -113,6 +114,7 @@ public class CommunityFeedService {
             like.setUserId(userId);
             likeRepository.save(like);
             liked = true;
+            notifyActor(checkIn.getUserId(), userId, "curtiu seu treino.", checkIn.getId());
         }
         return new LikeResponse(liked, likeRepository.countByCheckInId(checkIn.getId()));
     }
@@ -140,14 +142,25 @@ public class CommunityFeedService {
 
     @Transactional
     public FeedCommentDto addComment(Long userId, Long checkInId, String content) {
-        requirePublic(checkInId);
+        CheckIn checkIn = requirePublic(checkInId);
         CheckInComment comment = new CheckInComment();
         comment.setCheckInId(checkInId);
         comment.setUserId(userId);
         comment.setContent(content.trim());
         comment = commentRepository.save(comment);
+        notifyActor(checkIn.getUserId(), userId, "comentou no seu treino.", checkInId);
         FeedAuthorDto author = authorMap(Set.of(userId)).getOrDefault(userId, fallbackAuthor(userId));
         return new FeedCommentDto(comment.getId(), author, comment.getContent(), comment.getCreatedAt());
+    }
+
+    /** Tell a training's author that someone liked/commented (skips self-actions). */
+    private void notifyActor(Long authorId, Long actorId, String action, Long checkInId) {
+        if (authorId == null || authorId.equals(actorId)) {
+            return;
+        }
+        String name = userRepository.findById(actorId).map(User::getDisplayName).orElse("Alguém");
+        notificationService.notify(authorId, com.bjjflow.backend.notifications.NotificationType.SOCIAL,
+                name, action, "checkin:" + checkInId);
     }
 
     private CheckIn requirePublic(Long checkInId) {

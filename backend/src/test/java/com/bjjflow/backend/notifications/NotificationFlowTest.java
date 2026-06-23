@@ -102,4 +102,43 @@ class NotificationFlowTest {
                 .andExpect(jsonPath("$.unread").value(0))
                 .andExpect(jsonPath("$.items.length()").value(0));
     }
+
+    @Test
+    void socialTriggersAndInsights() throws Exception {
+        String[] a = register("notif-soc-a@bjjflow.com");
+        String[] b = register("notif-soc-b@bjjflow.com");
+        long aId = Long.parseLong(a[1]);
+        String today = java.time.LocalDate.now().toString();
+
+        // B follows A -> A gets a SOCIAL notification
+        mockMvc.perform(post("/api/v1/users/" + aId + "/follow").header("Authorization", auth(b[0])))
+                .andExpect(status().isOk());
+
+        // A logs a PUBLIC training with a landed submission
+        mockMvc.perform(post("/api/v1/checkins").header("Authorization", auth(a[0]))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"date\": \"" + today + "\", \"durationMinutes\": 60, \"visibility\": \"PUBLIC\","
+                        + " \"submissions\": [{\"submission\": \"ARMBAR\", \"direction\": \"HIT\", \"count\": 3}]}"))
+                .andExpect(status().isOk());
+
+        // B likes + comments on it -> A gets SOCIAL notifications
+        String feed = mockMvc.perform(get("/api/v1/feed").header("Authorization", auth(b[0])))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        int ciId = JsonPath.read(feed, "$[0].checkInId");
+        mockMvc.perform(post("/api/v1/feed/" + ciId + "/like").header("Authorization", auth(b[0])))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/feed/" + ciId + "/comments").header("Authorization", auth(b[0]))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"content\": \"boa!\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/users/me/notifications").header("Authorization", auth(a[0])))
+                .andExpect(jsonPath("$.items[?(@.type == 'SOCIAL')]")
+                        .value(org.hamcrest.Matchers.hasSize(org.hamcrest.Matchers.greaterThanOrEqualTo(3))));
+
+        // Insights refresh creates a PERFORMANCE notification from the landed submission
+        mockMvc.perform(post("/api/v1/users/me/insights/refresh").header("Authorization", auth(a[0])))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[?(@.type == 'PERFORMANCE')]")
+                        .value(org.hamcrest.Matchers.hasSize(org.hamcrest.Matchers.greaterThan(0))));
+    }
 }

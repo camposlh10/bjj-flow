@@ -56,6 +56,7 @@ public class ProfileService {
     private final FeedbackRepository feedbackRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.bjjflow.backend.storage.MediaStorage mediaStorage;
+    private final com.bjjflow.backend.notifications.NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public ProfileDtos.SettingsDto settings(Long userId) {
@@ -306,6 +307,8 @@ public class ProfileService {
             f.setFollowerId(viewerId);
             f.setFollowingId(targetId);
             followRepository.save(f);
+            notificationService.notify(targetId, com.bjjflow.backend.notifications.NotificationType.SOCIAL,
+                    requireUser(viewerId).getDisplayName(), "começou a te seguir.", "user:" + viewerId);
         }
         return profile(viewerId, targetId);
     }

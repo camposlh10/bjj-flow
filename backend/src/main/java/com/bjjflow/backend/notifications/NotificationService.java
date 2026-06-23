@@ -89,9 +89,10 @@ public class NotificationService {
     private boolean prefsAllow(User user, NotificationType type) {
         return switch (type) {
             case MESSAGE -> Boolean.TRUE.equals(user.getNotifyMessages());
-            case COMMUNITY -> Boolean.TRUE.equals(user.getNotifyCommunity());
-            case PROMOTION -> Boolean.TRUE.equals(user.getNotifyPromotions());
-            case SYSTEM -> true;
+            case SOCIAL -> Boolean.TRUE.equals(user.getNotifyCommunity());
+            case ACADEMY, COMPETITION -> Boolean.TRUE.equals(user.getNotifyPromotions());
+            // Training nudges + performance insights are low-volume and high-value: always kept.
+            case TRAINING, PERFORMANCE, SYSTEM -> true;
         };
     }
 

@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final InsightService insightService;
 
     private static Long userId(Authentication auth) {
         return Long.parseLong(auth.getName());
@@ -31,6 +32,14 @@ public class NotificationController {
     @GetMapping("/notifications")
     public NotificationListDto list(Authentication auth, @RequestParam(required = false) Integer limit) {
         return notificationService.list(userId(auth), limit);
+    }
+
+    /** Recompute data-driven insights, then return the (refreshed) notification list. */
+    @PostMapping("/insights/refresh")
+    public NotificationListDto refreshInsights(Authentication auth, @RequestParam(required = false) Integer limit) {
+        Long uid = userId(auth);
+        insightService.refresh(uid);
+        return notificationService.list(uid, limit);
     }
 
     @PostMapping("/notifications/{id}/read")
