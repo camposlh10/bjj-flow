@@ -1,13 +1,14 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { BODY_NODES, BodyView, intensityColor } from '../constants/body';
+import { BODY_NODES, BodyView, FIGURE_BOX, HALF_SIZE, intensityColor } from '../constants/body';
 import { palette } from '../theme/theme';
 
 // The anatomy image: front figure on the left half, back on the right half.
-// Replace assets/body-anatomy.png with your own image keeping that layout.
+// Replace assets/body-anatomy.png with your own (keep that 2:1 layout) and update
+// FIGURE_BOX in constants/body.ts if the figures sit differently.
 const BODY_IMAGE = require('../../assets/body-anatomy.png');
 
-/** Anatomy body (front/back crop) with tappable pain hotspots colored by intensity (0-10). */
+/** Anatomy body (front/back), each figure centered, with tappable pain hotspots. */
 export default function BodyMap({
   view,
   pain,
@@ -19,17 +20,23 @@ export default function BodyMap({
   onRegionPress: (region: string) => void;
   width?: number;
 }) {
-  const size = width; // each half is ~square
-  const nodes = BODY_NODES[view];
+  const size = width;
+  const scale = size / HALF_SIZE;
+  const box = FIGURE_BOX[view];
+  const figW = (box.right - box.left) * scale;
+  const figH = (box.bottom - box.top) * scale;
+  const figLeft = (size - figW) / 2; // center the figure horizontally in the view
+  const figTop = box.top * scale;
+  const translateX = figLeft - box.left * scale;
 
   return (
     <View style={[styles.frame, { width: size, height: size }]}>
       <Image
         source={BODY_IMAGE}
-        style={{ width: size * 2, height: size, transform: [{ translateX: view === 'back' ? -size : 0 }] }}
+        style={{ width: size * 2, height: size, transform: [{ translateX }] }}
         resizeMode="cover"
       />
-      {nodes.map((n) => {
+      {BODY_NODES[view].map((n) => {
         const intensity = pain[n.key] ?? 0;
         const active = intensity > 0;
         const color = intensityColor(intensity);
@@ -38,7 +45,7 @@ export default function BodyMap({
             key={n.key}
             onPress={() => onRegionPress(n.key)}
             hitSlop={6}
-            style={[styles.hotspot, { left: (n.x / 100) * size - 16, top: (n.y / 100) * size - 16 }]}>
+            style={[styles.hotspot, { left: figLeft + n.x * figW - 16, top: figTop + n.y * figH - 16 }]}>
             {active && <View style={[styles.glow, { backgroundColor: color }]} />}
             <View
               style={[

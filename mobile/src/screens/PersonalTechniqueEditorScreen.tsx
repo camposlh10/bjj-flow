@@ -77,6 +77,7 @@ export default function PersonalTechniqueEditorScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <Field label={t('techniques.field.name')} value={name} onChange={setName} />
+      <Field label={t('techniques.field.category')} value={category} onChange={setCategory} />
 
       <Text style={styles.label}>{t('techniques.field.color')}</Text>
       <View style={styles.swatches}>

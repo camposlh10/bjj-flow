@@ -30,6 +30,7 @@ export default function TechniquesScreen() {
   const [category, setCategory] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [playing, setPlaying] = useState<string | null>(null);
+  const [mineCategory, setMineCategory] = useState<string | null>(null);
 
   const list = useQuery({
     queryKey: ['techniques', category === FAV ? null : category, search.trim()],
@@ -48,6 +49,11 @@ export default function TechniquesScreen() {
 
   const items: Technique[] = category === FAV ? favorites.data ?? [] : list.data?.items ?? [];
   const categories = list.data?.categories ?? [];
+
+  // Personal library organized by the category names the user assigns ("files").
+  const mineData = personal.data ?? [];
+  const mineCategories = Array.from(new Set(mineData.map((p) => p.category).filter((c): c is string => !!c)));
+  const mineItems = mineCategory ? mineData.filter((p) => p.category === mineCategory) : mineData;
 
   return (
     <View style={styles.screen}>
@@ -126,12 +132,25 @@ export default function TechniquesScreen() {
             <MaterialCommunityIcons name="plus-circle" size={20} color={palette.primary} />
             <Text style={styles.addText}>{t('techniques.mine.add')}</Text>
           </Pressable>
+          {mineCategories.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+              <Chip label={t('techniques.all')} active={mineCategory === null} onPress={() => setMineCategory(null)} />
+              {mineCategories.map((c) => (
+                <Chip
+                  key={c}
+                  label={c}
+                  active={mineCategory === c}
+                  onPress={() => setMineCategory(mineCategory === c ? null : c)}
+                />
+              ))}
+            </ScrollView>
+          )}
           {personal.isLoading ? (
             <ActivityIndicator style={{ marginTop: 32 }} color={palette.primary} />
-          ) : (personal.data ?? []).length === 0 ? (
+          ) : mineData.length === 0 ? (
             <Text style={styles.empty}>{t('techniques.mine.empty')}</Text>
           ) : (
-            (personal.data ?? []).map((p) => (
+            mineItems.map((p) => (
               <Pressable
                 key={p.id}
                 style={styles.row}

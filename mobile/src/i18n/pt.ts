@@ -634,7 +634,7 @@ export const pt = {
   'techniques.new': 'Nova técnica',
   'techniques.edit': 'Editar técnica',
   'techniques.field.name': 'Nome da técnica',
-  'techniques.field.category': 'Categoria (opcional)',
+  'techniques.field.category': 'Pasta / categoria (ex: Guarda, Costas)',
   'techniques.field.notes': 'Anotações',
   'techniques.field.videoUrl': 'Link do vídeo (YouTube, etc.)',
   'techniques.save': 'Salvar',

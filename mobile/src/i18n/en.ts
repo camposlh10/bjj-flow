@@ -636,7 +636,7 @@ export const en: Record<TranslationKey, string> = {
   'techniques.new': 'New technique',
   'techniques.edit': 'Edit technique',
   'techniques.field.name': 'Technique name',
-  'techniques.field.category': 'Category (optional)',
+  'techniques.field.category': 'Folder / category (e.g. Guard, Back)',
   'techniques.field.notes': 'Notes',
   'techniques.field.videoUrl': 'Video link (YouTube, etc.)',
   'techniques.save': 'Save',
