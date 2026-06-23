@@ -700,6 +700,23 @@ export const pt = {
   'language.title': 'Idioma',
   'settings.language.en': 'English',
   'settings.language.system': 'Sistema',
+
+  // Mapa corporal (dor / lesões)
+  'body.title': 'Mapa corporal',
+  'body.card.title': 'Como você está?',
+  'body.card.subtitle': 'Registre dores e lesões no corpo',
+  'body.front': 'Frente',
+  'body.back': 'Costas',
+  'body.intro': 'Toque em uma região do corpo para registrar dor ou lesão (0 a 10).',
+  'body.intensity': 'Intensidade da dor',
+  'body.note': 'O que aconteceu? (opcional)',
+  'body.save': 'Salvar',
+  'body.clear': 'Sem dor / curado',
+  'body.none': 'Nenhuma dor registrada. Você está 100%! 💪',
+  'body.current': 'Dores ativas',
+  'body.legend.low': 'Leve',
+  'body.legend.mid': 'Moderada',
+  'body.legend.high': 'Forte',
 } as const;
 
 export type TranslationKey = keyof typeof pt;

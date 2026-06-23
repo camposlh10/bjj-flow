@@ -702,4 +702,21 @@ export const en: Record<TranslationKey, string> = {
   'language.title': 'Language',
   'settings.language.en': 'English',
   'settings.language.system': 'System',
+
+  // Body map (pain / injuries)
+  'body.title': 'Body map',
+  'body.card.title': 'How do you feel?',
+  'body.card.subtitle': 'Log pain and injuries on your body',
+  'body.front': 'Front',
+  'body.back': 'Back',
+  'body.intro': 'Tap a body region to log pain or injury (0 to 10).',
+  'body.intensity': 'Pain intensity',
+  'body.note': 'What happened? (optional)',
+  'body.save': 'Save',
+  'body.clear': 'No pain / healed',
+  'body.none': "No pain logged. You're at 100%! 💪",
+  'body.current': 'Active pain',
+  'body.legend.low': 'Mild',
+  'body.legend.mid': 'Moderate',
+  'body.legend.high': 'Severe',
 };

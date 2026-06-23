@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { PersonalTechnique } from '../api/techniques';
 import { t } from '../i18n';
 import AccountScreen from '../screens/AccountScreen';
+import BodyMapScreen from '../screens/BodyMapScreen';
 import DonationsScreen from '../screens/DonationsScreen';
 import EditUserProfileScreen from '../screens/EditUserProfileScreen';
 import HelpScreen from '../screens/HelpScreen';
@@ -33,6 +34,7 @@ export type HomeStackParamList = {
   TechniqueDetail: { id: number };
   PersonalTechniqueEditor: { technique?: PersonalTechnique } | undefined;
   Donations: undefined;
+  BodyMap: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -73,6 +75,7 @@ export default function HomeNavigator() {
         options={{ title: t('techniques.tab.mine') }}
       />
       <Stack.Screen name="Donations" component={DonationsScreen} options={{ title: t('donations.title') }} />
+      <Stack.Screen name="BodyMap" component={BodyMapScreen} options={{ title: t('body.title') }} />
     </Stack.Navigator>
   );
 }

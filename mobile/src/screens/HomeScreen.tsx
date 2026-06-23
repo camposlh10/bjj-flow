@@ -285,6 +285,28 @@ export default function HomeScreen() {
             <MaterialCommunityIcons name="chevron-right" size={20} color={palette.textSecondary} />
           </Pressable>
 
+          {/* Body map shortcut (log pain / injuries on a body diagram) */}
+          <Pressable
+            style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 14 }]}
+            onPress={() => navigation.navigate('BodyMap')}>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                backgroundColor: '#2DB6A326',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <MaterialCommunityIcons name="human-handsup" size={22} color="#2DB6A3" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>{t('body.card.title')}</Text>
+              <Text style={styles.cardSub}>{t('body.card.subtitle')}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={palette.textSecondary} />
+          </Pressable>
+
           {/* 4b. Weekly training load + estimated calories */}
           <View style={styles.card}>
             <Pressable style={styles.weekHead} onPress={() => navigation.navigate('Metrics')} hitSlop={6}>
