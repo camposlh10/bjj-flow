@@ -13,6 +13,7 @@ import { getGymMembers, getMyGym, promoteMember } from '../api/gyms';
 import { resolveMediaUrl } from '../api/posts';
 import { todayLocalDate } from '../api/checkins';
 import { getUserSubmissions } from '../api/submissions';
+import SubmissionRadar from '../components/SubmissionRadar';
 import {
   UserProfile,
   followUser,
@@ -20,7 +21,7 @@ import {
   getUserProfile,
   unfollowUser,
 } from '../api/users';
-import { submissionStyle } from '../constants/submissions';
+import { SUBMISSIONS, submissionStyle } from '../constants/submissions';
 import BeltVisual, { formatStripes } from '../components/BeltVisual';
 import ImageLightbox from '../components/ImageLightbox';
 import Skeleton from '../components/Skeleton';
@@ -314,7 +315,17 @@ export default function UserProfileScreen() {
             {(submissions.data?.items.length ?? 0) === 0 ? (
               <Text style={styles.muted}>{t('submissions.empty')}</Text>
             ) : (
-              submissions.data!.items.slice(0, 3).map((it) => {
+              <>
+                <View style={{ alignItems: 'center', marginBottom: 8 }}>
+                  <SubmissionRadar
+                    axes={SUBMISSIONS.map((sb) => ({
+                      label: sb.label,
+                      value: submissions.data!.items.find((i) => i.submission === sb.key)?.count ?? 0,
+                    }))}
+                    color={palette.primary}
+                  />
+                </View>
+                {submissions.data!.items.slice(0, 3).map((it) => {
                 const s = submissionStyle(it.submission);
                 const maxC = submissions.data!.items[0].count || 1;
                 return (
@@ -329,7 +340,8 @@ export default function UserProfileScreen() {
                     <Text style={styles.snapCount}>{it.count}</Text>
                   </View>
                 );
-              })
+                })}
+              </>
             )}
           </View>
         </>

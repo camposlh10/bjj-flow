@@ -15,6 +15,7 @@ import NotificationsScreen from '../screens/NotificationsScreen';
 import PersonalTechniqueEditorScreen from '../screens/PersonalTechniqueEditorScreen';
 import PrivacyScreen from '../screens/PrivacyScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import SubmissionsScreen from '../screens/SubmissionsScreen';
 import TechniqueDetailScreen from '../screens/TechniqueDetailScreen';
 import TechniquesScreen from '../screens/TechniquesScreen';
 import { palette } from '../theme/theme';
@@ -35,6 +36,7 @@ export type HomeStackParamList = {
   PersonalTechniqueEditor: { technique?: PersonalTechnique } | undefined;
   Donations: undefined;
   BodyMap: undefined;
+  Submissions: { userId?: number } | undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -76,6 +78,7 @@ export default function HomeNavigator() {
       />
       <Stack.Screen name="Donations" component={DonationsScreen} options={{ title: t('donations.title') }} />
       <Stack.Screen name="BodyMap" component={BodyMapScreen} options={{ title: t('body.title') }} />
+      <Stack.Screen name="Submissions" component={SubmissionsScreen} options={{ title: t('submissions.title') }} />
     </Stack.Navigator>
   );
 }

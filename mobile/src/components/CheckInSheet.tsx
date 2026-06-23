@@ -22,12 +22,11 @@ import { apiErrorMessage } from '../api/auth';
 import { CheckInSubmission, Visibility, createCheckIn, todayLocalDate } from '../api/checkins';
 import { logPain } from '../api/pain';
 import { uploadMedia } from '../api/posts';
-import { BodyView, bodyRegionLabel, intensityColor } from '../constants/body';
+import { ALL_REGIONS, bodyRegionLabel, intensityColor } from '../constants/body';
 import { SUBMISSIONS } from '../constants/submissions';
 import { t, tf } from '../i18n';
 import { useAuthStore } from '../store/authStore';
 import { palette } from '../theme/theme';
-import BodyMap from './BodyMap';
 
 type Direction = 'HIT' | 'CONCEDED';
 const DURATIONS = [60, 90, 120, 180];
@@ -52,7 +51,6 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
   const [photo, setPhoto] = useState<{ key: string; uri: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pain, setPain] = useState<Record<string, number>>({});
-  const [painView, setPainView] = useState<BodyView>('front');
   const [painRegion, setPainRegion] = useState<string | null>(null);
 
   const reset = () => {
@@ -66,7 +64,6 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
     setPhoto(null);
     setPain({});
     setPainRegion(null);
-    setPainView('front');
   };
 
   const pickPhoto = async () => {
@@ -214,24 +211,35 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
               })}
             </View>
 
-            {/* Pain / injury — logs to the body map */}
+            {/* Pain / injury — slide through regions, pick one, then set 0-10 */}
             <Text style={styles.label}>{t('checkin.pain.title')}</Text>
-            <View style={styles.painToggle}>
-              {(['front', 'back'] as const).map((v) => (
-                <Pressable
-                  key={v}
-                  style={[styles.painTabBtn, painView === v && styles.segBtnOn]}
-                  onPress={() => setPainView(v)}>
-                  <Text style={[styles.segText, painView === v && styles.segTextOn]}>
-                    {t(v === 'front' ? 'body.front' : 'body.back')}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-            <View style={{ alignItems: 'center' }}>
-              <BodyMap view={painView} pain={pain} onRegionPress={(r) => setPainRegion(r)} width={150} />
-            </View>
-            {painRegion ? (
+            <Text style={styles.painHint}>
+              {Object.keys(pain).length > 0 ? tf('checkin.pain.added', { n: Object.keys(pain).length }) : t('checkin.pain.hint')}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.painChips}>
+              {ALL_REGIONS.map((r) => {
+                const intensity = pain[r] ?? 0;
+                const active = intensity > 0;
+                const selected = painRegion === r;
+                return (
+                  <Pressable
+                    key={r}
+                    onPress={() => setPainRegion(selected ? null : r)}
+                    style={[styles.painChip, selected && styles.painChipSelected, active && { borderColor: intensityColor(intensity) }]}>
+                    {active && <View style={[styles.painChipDot, { backgroundColor: intensityColor(intensity) }]} />}
+                    <Text style={[styles.painChipText, (active || selected) && styles.painChipTextOn]} numberOfLines={1}>
+                      {bodyRegionLabel(r)}
+                    </Text>
+                    {active && <Text style={[styles.painChipNum, { color: intensityColor(intensity) }]}>{intensity}</Text>}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            {painRegion && (
               <View style={styles.painPicker}>
                 <Text style={styles.painPickerTitle}>{bodyRegionLabel(painRegion)}</Text>
                 <View style={styles.painScale}>
@@ -253,12 +261,6 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
                   ))}
                 </View>
               </View>
-            ) : (
-              <Text style={styles.painHint}>
-                {Object.keys(pain).length > 0
-                  ? tf('checkin.pain.added', { n: Object.keys(pain).length })
-                  : t('checkin.pain.hint')}
-              </Text>
             )}
 
             <TextInput
@@ -373,9 +375,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepNum: { color: palette.textPrimary, fontSize: 14, fontWeight: 'bold', minWidth: 18, textAlign: 'center' },
-  painToggle: { flexDirection: 'row', alignSelf: 'center', backgroundColor: palette.surfaceVariant, borderRadius: 10, padding: 3, marginTop: 14, marginBottom: 6 },
-  painTabBtn: { paddingVertical: 6, paddingHorizontal: 22, borderRadius: 8 },
-  painPicker: { marginTop: 4 },
+  painChips: { gap: 8, paddingVertical: 6, paddingRight: 8 },
+  painChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: palette.outline, backgroundColor: palette.surfaceVariant },
+  painChipSelected: { borderColor: palette.primary, backgroundColor: palette.surface },
+  painChipDot: { width: 8, height: 8, borderRadius: 4 },
+  painChipText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
+  painChipTextOn: { color: palette.textPrimary },
+  painChipNum: { fontWeight: '800', fontSize: 13 },
+  painPicker: { marginTop: 8 },
   painPickerTitle: { color: palette.textPrimary, fontWeight: '700', textAlign: 'center', marginBottom: 8 },
   painScale: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center' },
   painScaleBtn: { width: 26, height: 32, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },

@@ -732,7 +732,7 @@ export const pt = {
   'body.month.days': '{n} dias',
   'body.peak': 'pico {n}/10',
   'checkin.pain.title': 'Sentiu alguma dor?',
-  'checkin.pain.hint': 'Toque numa região para registrar (aparece no mapa corporal).',
+  'checkin.pain.hint': 'Deslize, toque na região dolorida e escolha de 0 a 10.',
   'checkin.pain.added': '{n} região(ões) marcada(s)',
 } as const;
 

@@ -13,11 +13,14 @@ import { TimelineItem, getJourney, logCompetition } from '../api/activity';
 import { Stats, createQuickCheckIn, getStats, todayLocalDate } from '../api/checkins';
 import { getMyGym } from '../api/gyms';
 import { resolveMediaUrl } from '../api/posts';
+import { getUserSubmissions } from '../api/submissions';
 import { getUserProfile } from '../api/users';
 import BeltVisual from '../components/BeltVisual';
 import Skeleton from '../components/Skeleton';
 import MilestoneBar from '../components/MilestoneBar';
+import SubmissionRadar from '../components/SubmissionRadar';
 import { rankBarColorFor } from '../constants/belts';
+import { SUBMISSIONS } from '../constants/submissions';
 import { STREAK_MILESTONES, TRAINING_MILESTONES, WEEK_MILESTONES, nextMilestone } from '../constants/milestones';
 import { t, tf } from '../i18n';
 import { useAuthStore } from '../store/authStore';
@@ -103,6 +106,12 @@ export default function HomeScreen() {
   const [compOpen, setCompOpen] = useState(false);
 
   const stats = useQuery({ queryKey: ['stats'], queryFn: getStats });
+  const subMonth = todayLocalDate().slice(0, 7);
+  const submissions = useQuery({
+    queryKey: ['userSubmissions', user?.id ?? 0, subMonth, 'HIT'],
+    queryFn: () => getUserSubmissions(user?.id ?? 0, subMonth, 'HIT'),
+    enabled: !!user?.id,
+  });
   const gym = useQuery({ queryKey: ['myGym'], queryFn: getMyGym });
   const journey = useQuery({ queryKey: ['journey'], queryFn: getJourney });
   const profile = useQuery({
@@ -305,6 +314,23 @@ export default function HomeScreen() {
               <Text style={styles.cardSub}>{t('body.card.subtitle')}</Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={20} color={palette.textSecondary} />
+          </Pressable>
+
+          {/* Submissions widget → full Submissions screen */}
+          <Pressable style={styles.card} onPress={() => navigation.navigate('Submissions', { userId: user?.id })}>
+            <View style={styles.sectionHead}>
+              <Text style={styles.sectionTitle}>{t('profile.submissions')}</Text>
+              <MaterialCommunityIcons name="chevron-right" size={18} color={palette.textSecondary} />
+            </View>
+            <View style={{ alignItems: 'center', marginTop: 4 }}>
+              <SubmissionRadar
+                axes={SUBMISSIONS.map((sb) => ({
+                  label: sb.label,
+                  value: submissions.data?.items.find((i) => i.submission === sb.key)?.count ?? 0,
+                }))}
+                color={palette.primary}
+              />
+            </View>
           </Pressable>
 
           {/* 4b. Weekly training load + estimated calories */}

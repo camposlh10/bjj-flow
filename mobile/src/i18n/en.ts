@@ -734,6 +734,6 @@ export const en: Record<TranslationKey, string> = {
   'body.month.days': '{n} days',
   'body.peak': 'peak {n}/10',
   'checkin.pain.title': 'Any pain?',
-  'checkin.pain.hint': 'Tap a region to log it (shows on your body map).',
+  'checkin.pain.hint': 'Swipe, tap the sore region and pick 0–10.',
   'checkin.pain.added': '{n} region(s) marked',
 };
