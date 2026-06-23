@@ -32,6 +32,9 @@ export type PersonalTechnique = {
   category: string | null;
   notes: string | null;
   videoUrl: string | null;
+  color: string | null;
+  mediaKey: string | null;
+  mediaUrl: string | null;
   createdAt: string;
 };
 
@@ -40,6 +43,8 @@ export type PersonalTechniqueInput = {
   category?: string | null;
   notes?: string | null;
   videoUrl?: string | null;
+  color?: string | null;
+  mediaKey?: string | null;
 };
 
 export async function getTechniques(params?: { category?: string; q?: string }): Promise<TechniqueList> {

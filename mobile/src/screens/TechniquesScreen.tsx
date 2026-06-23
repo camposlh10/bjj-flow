@@ -3,9 +3,10 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text, TextInput } from 'react-native-paper';
 
+import { resolveMediaUrl } from '../api/posts';
 import {
   Technique,
   getFavoriteTechniques,
@@ -13,6 +14,7 @@ import {
   getTechniques,
   toggleTechniqueFavorite,
 } from '../api/techniques';
+import VideoModal from '../components/VideoModal';
 import { CATEGORY_COLORS, DIFFICULTY_LABELS, categoryLabel } from '../constants/techniques';
 import { t } from '../i18n';
 import type { HomeStackParamList } from '../navigation/HomeNavigator';
@@ -27,6 +29,7 @@ export default function TechniquesScreen() {
   const [tab, setTab] = useState<'library' | 'mine'>('library');
   const [category, setCategory] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [playing, setPlaying] = useState<string | null>(null);
 
   const list = useQuery({
     queryKey: ['techniques', category === FAV ? null : category, search.trim()],
@@ -133,7 +136,7 @@ export default function TechniquesScreen() {
                 key={p.id}
                 style={styles.row}
                 onPress={() => navigation.navigate('PersonalTechniqueEditor', { technique: p })}>
-                <View style={[styles.dot, { backgroundColor: palette.primary }]} />
+                <View style={[styles.dot, { backgroundColor: p.color ?? palette.primary }]} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowName}>{p.name}</Text>
                   {!!(p.category || p.notes) && (
@@ -142,14 +145,27 @@ export default function TechniquesScreen() {
                     </Text>
                   )}
                 </View>
-                {!!p.videoUrl && (
-                  <MaterialCommunityIcons name="play-circle-outline" size={22} color={palette.primary} />
+                {!!(p.mediaUrl || p.videoUrl) && (
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() => {
+                      if (p.mediaUrl) setPlaying(resolveMediaUrl(p.mediaUrl));
+                      else if (p.videoUrl) Linking.openURL(p.videoUrl);
+                    }}>
+                    <MaterialCommunityIcons
+                      name={p.mediaUrl ? 'play-circle' : 'open-in-new'}
+                      size={24}
+                      color={palette.primary}
+                    />
+                  </Pressable>
                 )}
               </Pressable>
             ))
           )}
         </ScrollView>
       )}
+
+      {playing && <VideoModal url={playing} onClose={() => setPlaying(null)} />}
     </View>
   );
 }

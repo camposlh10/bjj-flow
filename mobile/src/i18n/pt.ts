@@ -640,6 +640,13 @@ export const pt = {
   'techniques.save': 'Salvar',
   'techniques.delete': 'Excluir',
   'techniques.delete.confirm': 'Excluir esta técnica?',
+  'techniques.field.color': 'Cor (para organizar)',
+  'techniques.field.video': 'Vídeo',
+  'techniques.importVideo': 'Importar vídeo do celular',
+  'techniques.videoAdded': 'Vídeo importado',
+  'techniques.removeVideo': 'Remover',
+  'techniques.or': 'ou',
+  'techniques.uploadFail': 'Não foi possível enviar o vídeo.',
 
   // Doações (Phase 4 — links externos)
   'donations.title': 'Apoiar o BJJ Flow',

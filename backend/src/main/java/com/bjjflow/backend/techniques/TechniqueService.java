@@ -25,6 +25,7 @@ public class TechniqueService {
     private final TechniqueRepository techniqueRepository;
     private final TechniqueFavoriteRepository favoriteRepository;
     private final PersonalTechniqueRepository personalTechniqueRepository;
+    private final com.bjjflow.backend.storage.MediaStorage mediaStorage;
 
     @Transactional(readOnly = true)
     public TechniqueListDto list(Long userId, String category, String q) {
@@ -88,7 +89,7 @@ public class TechniqueService {
     @Transactional(readOnly = true)
     public List<PersonalTechniqueDto> personalList(Long userId) {
         return personalTechniqueRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(TechniqueService::toPersonalDto).toList();
+                .map(this::toPersonalDto).toList();
     }
 
     @Transactional
@@ -121,6 +122,8 @@ public class TechniqueService {
         p.setCategory(blankToNull(req.category()));
         p.setNotes(blankToNull(req.notes()));
         p.setVideoUrl(blankToNull(req.videoUrl()));
+        p.setColor(blankToNull(req.color()));
+        p.setMediaKey(blankToNull(req.mediaKey()));
     }
 
     private Set<Long> favoriteIds(Long userId) {
@@ -135,9 +138,10 @@ public class TechniqueService {
                 favorites.contains(t.getId()));
     }
 
-    private static PersonalTechniqueDto toPersonalDto(PersonalTechnique p) {
+    private PersonalTechniqueDto toPersonalDto(PersonalTechnique p) {
+        String mediaUrl = p.getMediaKey() == null ? null : mediaStorage.urlFor(p.getMediaKey());
         return new PersonalTechniqueDto(p.getId(), p.getName(), p.getCategory(), p.getNotes(), p.getVideoUrl(),
-                p.getCreatedAt());
+                p.getColor(), p.getMediaKey(), mediaUrl, p.getCreatedAt());
     }
 
     private static int nullSafe(Integer v) {

@@ -642,6 +642,13 @@ export const en: Record<TranslationKey, string> = {
   'techniques.save': 'Save',
   'techniques.delete': 'Delete',
   'techniques.delete.confirm': 'Delete this technique?',
+  'techniques.field.color': 'Color (for organizing)',
+  'techniques.field.video': 'Video',
+  'techniques.importVideo': 'Import video from phone',
+  'techniques.videoAdded': 'Video imported',
+  'techniques.removeVideo': 'Remove',
+  'techniques.or': 'or',
+  'techniques.uploadFail': 'Could not upload the video.',
 
   // Donations (Phase 4 — external links)
   'donations.title': 'Support BJJ Flow',

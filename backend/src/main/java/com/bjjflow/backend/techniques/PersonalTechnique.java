@@ -35,8 +35,13 @@ public class PersonalTechnique {
 
     private String notes;
 
+    private String color;
+
     @Column(name = "video_url")
     private String videoUrl;
+
+    @Column(name = "media_key")
+    private String mediaKey;
 
     @Column(name = "created_at")
     private Instant createdAt;
