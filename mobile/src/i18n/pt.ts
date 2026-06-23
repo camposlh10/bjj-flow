@@ -724,6 +724,16 @@ export const pt = {
   'body.legend.low': 'Leve',
   'body.legend.mid': 'Moderada',
   'body.legend.high': 'Forte',
+  'body.day': 'Dia',
+  'body.month': 'Mês',
+  'body.monthlyHint': 'Visão do mês: cada região mostra o pico de dor.',
+  'body.month.none': 'Nenhuma dor registrada neste mês.',
+  'body.month.day': '1 dia',
+  'body.month.days': '{n} dias',
+  'body.peak': 'pico {n}/10',
+  'checkin.pain.title': 'Sentiu alguma dor?',
+  'checkin.pain.hint': 'Toque numa região para registrar (aparece no mapa corporal).',
+  'checkin.pain.added': '{n} região(ões) marcada(s)',
 } as const;
 
 export type TranslationKey = keyof typeof pt;

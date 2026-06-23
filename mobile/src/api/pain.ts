@@ -17,8 +17,23 @@ export type PainHistoryItem = {
   occurredAt: string;
 };
 
+export type MonthlyRegion = { region: string; intensity: number; days: number };
+export type PainMonthly = { month: string; regions: MonthlyRegion[] };
+
 export async function getPainMap(): Promise<PainMap> {
   const { data } = await api.get<PainMap>('/users/me/pain');
+  return data;
+}
+
+/** A single day's pain (latest reading per region that day). */
+export async function getPainDaily(date?: string): Promise<PainMap> {
+  const { data } = await api.get<PainMap>('/users/me/pain/daily', { params: { date } });
+  return data;
+}
+
+/** A month's aggregate per region (peak intensity + days it hurt). */
+export async function getPainMonthly(month?: string): Promise<PainMonthly> {
+  const { data } = await api.get<PainMonthly>('/users/me/pain/monthly', { params: { month } });
   return data;
 }
 

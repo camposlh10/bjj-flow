@@ -20,11 +20,14 @@ import { Button, Text, TextInput } from 'react-native-paper';
 
 import { apiErrorMessage } from '../api/auth';
 import { CheckInSubmission, Visibility, createCheckIn, todayLocalDate } from '../api/checkins';
+import { logPain } from '../api/pain';
 import { uploadMedia } from '../api/posts';
+import { BodyView, bodyRegionLabel, intensityColor } from '../constants/body';
 import { SUBMISSIONS } from '../constants/submissions';
-import { t } from '../i18n';
+import { t, tf } from '../i18n';
 import { useAuthStore } from '../store/authStore';
 import { palette } from '../theme/theme';
+import BodyMap from './BodyMap';
 
 type Direction = 'HIT' | 'CONCEDED';
 const DURATIONS = [60, 90, 120, 180];
@@ -48,6 +51,9 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
   const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
   const [photo, setPhoto] = useState<{ key: string; uri: string } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [pain, setPain] = useState<Record<string, number>>({});
+  const [painView, setPainView] = useState<BodyView>('front');
+  const [painRegion, setPainRegion] = useState<string | null>(null);
 
   const reset = () => {
     setSessionType('GI');
@@ -58,6 +64,9 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
     setNotes('');
     setVisibility('PUBLIC');
     setPhoto(null);
+    setPain({});
+    setPainRegion(null);
+    setPainView('front');
   };
 
   const pickPhoto = async () => {
@@ -85,12 +94,12 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
   };
 
   const save = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const submissions: CheckInSubmission[] = [
         ...Object.entries(hit).filter(([, n]) => n > 0).map(([submission, n]) => ({ submission, direction: 'HIT' as const, count: n })),
         ...Object.entries(conceded).filter(([, n]) => n > 0).map(([submission, n]) => ({ submission, direction: 'CONCEDED' as const, count: n })),
       ];
-      return createCheckIn({
+      const result = await createCheckIn({
         date: todayLocalDate(),
         sessionType,
         durationMinutes: duration,
@@ -99,6 +108,13 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
         photoKey: photo?.key,
         submissions: submissions.length ? submissions : undefined,
       });
+      // Log any pain marked in this report — it shows on the body map.
+      for (const [region, n] of Object.entries(pain)) {
+        if (n > 0) {
+          await logPain({ region, intensity: n });
+        }
+      }
+      return result;
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -106,6 +122,8 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
       queryClient.invalidateQueries({ queryKey: ['journey'] });
       queryClient.invalidateQueries({ queryKey: ['communityFeed'] });
       queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['painDaily'] });
+      queryClient.invalidateQueries({ queryKey: ['painMonthly'] });
       if (myId) queryClient.invalidateQueries({ queryKey: ['userProfile', myId] });
       reset();
       onClose();
@@ -195,6 +213,53 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
                 );
               })}
             </View>
+
+            {/* Pain / injury — logs to the body map */}
+            <Text style={styles.label}>{t('checkin.pain.title')}</Text>
+            <View style={styles.painToggle}>
+              {(['front', 'back'] as const).map((v) => (
+                <Pressable
+                  key={v}
+                  style={[styles.painTabBtn, painView === v && styles.segBtnOn]}
+                  onPress={() => setPainView(v)}>
+                  <Text style={[styles.segText, painView === v && styles.segTextOn]}>
+                    {t(v === 'front' ? 'body.front' : 'body.back')}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <View style={{ alignItems: 'center' }}>
+              <BodyMap view={painView} pain={pain} onRegionPress={(r) => setPainRegion(r)} width={150} />
+            </View>
+            {painRegion ? (
+              <View style={styles.painPicker}>
+                <Text style={styles.painPickerTitle}>{bodyRegionLabel(painRegion)}</Text>
+                <View style={styles.painScale}>
+                  {Array.from({ length: 11 }).map((_, i) => (
+                    <Pressable
+                      key={i}
+                      onPress={() => {
+                        setPain((prev) => {
+                          const next = { ...prev };
+                          if (i === 0) delete next[painRegion];
+                          else next[painRegion] = i;
+                          return next;
+                        });
+                        setPainRegion(null);
+                      }}
+                      style={[styles.painScaleBtn, { backgroundColor: i === 0 ? palette.surfaceVariant : intensityColor(i) }]}>
+                      <Text style={[styles.painScaleText, i === 0 && { color: palette.textSecondary }]}>{i}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.painHint}>
+                {Object.keys(pain).length > 0
+                  ? tf('checkin.pain.added', { n: Object.keys(pain).length })
+                  : t('checkin.pain.hint')}
+              </Text>
+            )}
 
             <TextInput
               mode="outlined"
@@ -308,6 +373,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepNum: { color: palette.textPrimary, fontSize: 14, fontWeight: 'bold', minWidth: 18, textAlign: 'center' },
+  painToggle: { flexDirection: 'row', alignSelf: 'center', backgroundColor: palette.surfaceVariant, borderRadius: 10, padding: 3, marginTop: 14, marginBottom: 6 },
+  painTabBtn: { paddingVertical: 6, paddingHorizontal: 22, borderRadius: 8 },
+  painPicker: { marginTop: 4 },
+  painPickerTitle: { color: palette.textPrimary, fontWeight: '700', textAlign: 'center', marginBottom: 8 },
+  painScale: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center' },
+  painScaleBtn: { width: 26, height: 32, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  painScaleText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  painHint: { color: palette.textSecondary, fontSize: 11, textAlign: 'center', marginTop: 4, marginBottom: 4 },
   notes: { marginTop: 14, backgroundColor: palette.surface },
   photoWrap: { marginBottom: 6, borderRadius: 12, overflow: 'hidden' },
   photo: { width: '100%', height: 170, borderRadius: 12 },

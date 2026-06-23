@@ -74,6 +74,21 @@ class PainFlowTest {
         mockMvc.perform(get("/api/v1/users/me/pain/history").header("Authorization", auth(tok)))
                 .andExpect(jsonPath("$.length()").value(3));
 
+        // Daily (today) shows the latest-per-region for the day (shoulder healed -> only knee)
+        mockMvc.perform(get("/api/v1/users/me/pain/daily").header("Authorization", auth(tok)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.regions.length()").value(1))
+                .andExpect(jsonPath("$.regions[0].region").value("knee_right"));
+
+        // Monthly "bigger picture": both regions hurt this month, with peak intensity + day count
+        mockMvc.perform(get("/api/v1/users/me/pain/monthly").header("Authorization", auth(tok)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.regions.length()").value(2))
+                .andExpect(jsonPath("$.regions[?(@.region == 'shoulder_left')].intensity")
+                        .value(org.hamcrest.Matchers.hasItem(8)))
+                .andExpect(jsonPath("$.regions[?(@.region == 'knee_right')].days")
+                        .value(org.hamcrest.Matchers.hasItem(1)));
+
         // Out-of-range intensity rejected
         mockMvc.perform(post("/api/v1/users/me/pain").header("Authorization", auth(tok))
                 .contentType(MediaType.APPLICATION_JSON)

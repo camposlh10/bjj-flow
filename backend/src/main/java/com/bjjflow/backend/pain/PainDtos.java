@@ -26,4 +26,11 @@ public class PainDtos {
 
     public record PainMapDto(List<PainEntryDto> regions) {
     }
+
+    /** One region's monthly aggregate: peak intensity + how many days it hurt. */
+    public record MonthlyRegionDto(String region, int intensity, int days) {
+    }
+
+    public record PainMonthlyDto(String month, List<MonthlyRegionDto> regions) {
+    }
 }
