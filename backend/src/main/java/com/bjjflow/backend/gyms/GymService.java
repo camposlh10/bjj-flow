@@ -73,6 +73,16 @@ public class GymService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "INVALID_INVITE_CODE",
                         "No gym matches this invite code"));
         addMember(gym.getId(), userId, GymRole.MEMBER);
+
+        // Tell the gym's staff (owner + instructors) that a new student joined.
+        String name = userRepository.findById(userId).map(x -> x.getDisplayName()).orElse("Um novo aluno");
+        for (GymMember staff : gymMemberRepository.findAllByGymId(gym.getId())) {
+            if (staff.getRole() != GymRole.MEMBER && !staff.getUserId().equals(userId)) {
+                notificationService.notify(staff.getUserId(),
+                        com.bjjflow.backend.notifications.NotificationType.ACADEMY, name,
+                        "entrou na sua academia.", "user:" + userId);
+            }
+        }
         return toGymDto(gym, GymRole.MEMBER);
     }
 
