@@ -48,6 +48,7 @@ public class GymService {
     private final GymVerificationRepository gymVerificationRepository;
     private final GymVerificationMediaRepository gymVerificationMediaRepository;
     private final com.bjjflow.backend.storage.MediaStorage mediaStorage;
+    private final com.bjjflow.backend.notifications.NotificationService notificationService;
 
     @Transactional
     public GymDto createGym(Long userId, String name, String city, String description) {
@@ -201,6 +202,9 @@ public class GymService {
         promotion.setStripes(newStripes);
         promotion.setPromotedByUserId(callerId);
         beltPromotionRepository.save(promotion);
+
+        notificationService.notify(targetUserId, com.bjjflow.backend.notifications.NotificationType.ACADEMY,
+                "Você foi graduado! 🥋", "Parabéns! Nova faixa: " + rank.getNamePt() + ".", "user:" + callerId);
 
         return toMemberDto(target, caller.getGymId());
     }

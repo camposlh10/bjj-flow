@@ -53,6 +53,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final UserBeltProgressRepository beltProgressRepository;
     private final MediaStorage mediaStorage;
+    private final com.bjjflow.backend.notifications.NotificationService notificationService;
 
     @Transactional
     public UploadResponse uploadMedia(Long userId, MultipartFile file) {
@@ -110,6 +111,21 @@ public class PostService {
             m.setMediaType(parseMediaType(input.type()));
             m.setPosition(position++);
             mediaRepository.save(m);
+        }
+
+        // A staff post is a gym announcement -> notify the other members.
+        if (membership.getRole() != GymRole.MEMBER) {
+            String author = userRepository.findById(userId).map(x -> x.getDisplayName()).orElse("Professor");
+            String preview = text.isEmpty()
+                    ? "compartilhou algo no Mural."
+                    : "postou no Mural: " + (text.length() > 80 ? text.substring(0, 77) + "…" : text);
+            for (GymMember m : gymMemberRepository.findAllByGymId(membership.getGymId())) {
+                if (!m.getUserId().equals(userId)) {
+                    notificationService.notify(m.getUserId(),
+                            com.bjjflow.backend.notifications.NotificationType.ACADEMY, author, preview,
+                            "gym:" + membership.getGymId());
+                }
+            }
         }
         return toPostDto(post, userId);
     }
