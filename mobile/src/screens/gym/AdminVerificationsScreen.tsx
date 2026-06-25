@@ -9,7 +9,7 @@ import { VerificationAdminItem, decideVerification, getVerificationQueue } from 
 import { resolveMediaUrl } from '../../api/posts';
 import ImageLightbox from '../../components/ImageLightbox';
 import { t, tf } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 type LightboxState = { urls: string[]; index: number } | null;
 
@@ -140,7 +140,7 @@ function Card({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background, padding: 24 },
@@ -171,4 +171,4 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 10, marginTop: 12 },
   rejectBtn: { flex: 1, borderColor: palette.primary },
   approveBtn: { flex: 1 },
-});
+}));

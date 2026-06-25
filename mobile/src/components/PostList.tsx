@@ -10,7 +10,7 @@ import { Post, deletePost, setPinned, sharePost, toggleLike, toggleSave } from '
 import { t } from '../i18n';
 import { GymStackParamList } from '../navigation/GymNavigator';
 import { useAuthStore } from '../store/authStore';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 import { downloadPostMedia } from '../utils/download';
 import PostCard from './PostCard';
 
@@ -116,7 +116,7 @@ export default function PostList({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   content: { paddingBottom: 24, flexGrow: 1 },
   empty: { color: palette.textSecondary, textAlign: 'center', paddingVertical: 32 },
-});
+}));

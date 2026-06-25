@@ -19,7 +19,7 @@ import { apiErrorMessage } from '../../api/auth';
 import { Gym, VerificationStatus, getMyGym, submitGymVerification } from '../../api/gyms';
 import { uploadMedia } from '../../api/posts';
 import { t, tf } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 type Pic = { key: string; uri: string };
 
@@ -207,7 +207,7 @@ function Form({ gym, goBack }: { gym: Gym; goBack: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
   content: { padding: 20, paddingBottom: 40 },
@@ -265,4 +265,4 @@ const styles = StyleSheet.create({
   error: { color: palette.primary, marginBottom: 12 },
   submit: { marginTop: 4 },
   submitContent: { paddingVertical: 6 },
-});
+}));

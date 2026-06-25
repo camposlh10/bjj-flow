@@ -16,7 +16,7 @@ import {
 } from '../api/notifications';
 import { t, type TranslationKey } from '../i18n';
 import type { ComunidadeStackParamList } from '../navigation/ComunidadeNavigator';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 type Nav = NativeStackNavigationProp<ComunidadeStackParamList>;
 
@@ -133,7 +133,7 @@ function Tab({ label, active, onPress, color }: { label: string; active: boolean
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   screen: { flex: 1, backgroundColor: palette.background },
   topRow: { paddingTop: 8 },
   tabs: { gap: 8, paddingHorizontal: 16, paddingVertical: 6 },
@@ -150,4 +150,4 @@ const styles = StyleSheet.create({
   rowTime: { color: palette.textSecondary, fontSize: 11, marginTop: 4 },
   dot: { width: 9, height: 9, borderRadius: 5 },
   empty: { color: palette.textSecondary, textAlign: 'center', marginTop: 60 },
-});
+}));

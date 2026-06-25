@@ -6,7 +6,7 @@ import { Button, Text, TextInput } from 'react-native-paper';
 import { apiErrorMessage } from '../../api/auth';
 import { createGym } from '../../api/gyms';
 import { t } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 export default function CreateGymScreen({ navigation }: { navigation: { goBack: () => void } }) {
   const queryClient = useQueryClient();
@@ -78,11 +78,11 @@ export default function CreateGymScreen({ navigation }: { navigation: { goBack: 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 20 },
   input: { marginBottom: 12 },
   error: { color: palette.primary, marginBottom: 8 },
   submit: { marginTop: 8 },
   buttonContent: { paddingVertical: 6 },
-});
+}));

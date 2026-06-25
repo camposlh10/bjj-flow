@@ -9,7 +9,8 @@ import { togglePro } from '../api/users';
 import { t } from '../i18n';
 import { useAuthStore } from '../store/authStore';
 import { useLocaleStore } from '../store/localeStore';
-import { palette } from '../theme/theme';
+import { useThemeStore } from '../store/themeStore';
+import { makeStyles, palette } from '../theme/theme';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -55,6 +56,7 @@ export default function SettingsScreen() {
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
   const locale = useLocaleStore((s) => s.locale);
+  const themePref = useThemeStore((s) => s.preference);
 
   const pro = useMutation({
     mutationFn: togglePro,
@@ -86,7 +88,18 @@ export default function SettingsScreen() {
       <View style={styles.card}>
         <Row icon="bell-outline" label={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} />
         <Row icon="lock-outline" label={t('settings.privacy')} onPress={() => navigation.navigate('Privacy')} />
-        <Row icon="theme-light-dark" label={t('settings.appearance')} value={t('settings.appearance.dark')} soon />
+        <Row
+          icon="theme-light-dark"
+          label={t('settings.appearance')}
+          value={
+            themePref === 'light'
+              ? t('settings.appearance.light')
+              : themePref === 'system'
+                ? t('settings.appearance.system')
+                : t('settings.appearance.dark')
+          }
+          onPress={() => navigation.navigate('Appearance')}
+        />
         <Row
           icon="translate"
           label={t('settings.language')}
@@ -121,7 +134,7 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 16, paddingBottom: 40 },
   section: {
@@ -140,4 +153,4 @@ const styles = StyleSheet.create({
   rowValue: { color: palette.textSecondary, fontSize: 13, maxWidth: 160 },
   soon: { color: palette.textSecondary, fontSize: 10, backgroundColor: palette.surfaceVariant, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, overflow: 'hidden' },
   version: { color: palette.outline, fontSize: 12, textAlign: 'center', marginTop: 24 },
-});
+}));

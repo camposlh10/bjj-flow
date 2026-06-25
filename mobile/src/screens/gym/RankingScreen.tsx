@@ -10,7 +10,7 @@ import BeltVisual from '../../components/BeltVisual';
 import { rankBarColorFor } from '../../constants/belts';
 import { t, tf } from '../../i18n';
 import { useAuthStore } from '../../store/authStore';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 const PODIUM: Record<number, { bg: string; fg: string }> = {
   1: { bg: '#FACC15', fg: '#422006' },
@@ -125,7 +125,7 @@ export default function RankingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
   content: { paddingBottom: 24 },
   title: { color: palette.textSecondary, fontSize: 11, marginBottom: 10 },
@@ -179,4 +179,4 @@ const styles = StyleSheet.create({
   name: { color: palette.textPrimary, fontSize: 14, fontWeight: 'bold' },
   beltMini: { width: 48, marginTop: 5 },
   classes: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold' },
-});
+}));

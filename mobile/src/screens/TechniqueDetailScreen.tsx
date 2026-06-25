@@ -8,7 +8,7 @@ import { getTechnique, toggleTechniqueFavorite } from '../api/techniques';
 import { CATEGORY_COLORS, DIFFICULTY_LABELS, categoryLabel } from '../constants/techniques';
 import { t } from '../i18n';
 import type { HomeStackParamList } from '../navigation/HomeNavigator';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 const BELT_LABELS: Record<string, string> = {
   white: 'Branca',
@@ -103,7 +103,7 @@ function Meta({ icon, label, value }: { icon: string; label: string; value: stri
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   screen: { flex: 1, backgroundColor: palette.background },
   body: { padding: 16 },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -126,4 +126,4 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
   },
   noVideoText: { color: palette.textSecondary },
-});
+}));

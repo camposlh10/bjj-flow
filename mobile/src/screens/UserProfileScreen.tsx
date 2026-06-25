@@ -32,7 +32,7 @@ import { competitionStyle } from '../constants/competitions';
 import { TRAINING_MILESTONES, WEEK_MILESTONES, milestoneProgress, nextMilestone } from '../constants/milestones';
 import { t, tf } from '../i18n';
 import { useAuthStore } from '../store/authStore';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 import { formatMonthYear } from '../utils/time';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -567,7 +567,7 @@ export default function UserProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
   skeletonWrap: { flex: 1, backgroundColor: palette.background, paddingHorizontal: 20, alignItems: 'center' },
@@ -701,4 +701,4 @@ const styles = StyleSheet.create({
   beltDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.3)' },
   stripesRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 },
   stripesNum: { color: palette.textPrimary, fontSize: 18, fontWeight: 'bold', minWidth: 24, textAlign: 'center' },
-});
+}));

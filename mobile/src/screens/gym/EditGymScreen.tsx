@@ -34,7 +34,7 @@ import MedalVisual from '../../components/MedalVisual';
 import { COMPETITIONS } from '../../constants/competitions';
 import { t } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 type Nav = NativeStackNavigationProp<GymStackParamList>;
 
@@ -340,7 +340,7 @@ function EditForm({ gym, goBack }: { gym: Gym; goBack: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
   content: { padding: 20, paddingBottom: 40 },
@@ -432,4 +432,4 @@ const styles = StyleSheet.create({
   error: { color: palette.primary, marginBottom: 10 },
   save: { marginTop: 4 },
   saveContent: { paddingVertical: 6 },
-});
+}));

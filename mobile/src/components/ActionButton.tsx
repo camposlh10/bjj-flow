@@ -3,7 +3,7 @@ import { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -42,7 +42,7 @@ export default function ActionButton({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   btn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   count: { fontSize: 11 },
-});
+}));

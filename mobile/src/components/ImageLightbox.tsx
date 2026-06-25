@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { Dimensions, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { resolveMediaUrl } from '../api/posts';
+import { makeStyles } from '../theme/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -42,9 +43,9 @@ export default function ImageLightbox({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.94)', justifyContent: 'center' },
   close: { position: 'absolute', top: 48, right: 20, zIndex: 2, padding: 4 },
   page: { width: SCREEN_WIDTH, alignItems: 'center', justifyContent: 'center' },
   image: { width: SCREEN_WIDTH, height: '80%' },
-});
+}));

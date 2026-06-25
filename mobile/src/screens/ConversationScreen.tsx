@@ -19,7 +19,7 @@ import { ActivityIndicator } from 'react-native-paper';
 import { DirectMessage, getMessages, sendMessage, startConversation } from '../api/messages';
 import { resolveMediaUrl } from '../api/posts';
 import { t } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 type Params = {
   conversationId?: number;
@@ -181,7 +181,7 @@ export default function ConversationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
@@ -233,4 +233,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendBtnOff: { opacity: 0.4 },
-});
+}));

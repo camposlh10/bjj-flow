@@ -17,7 +17,7 @@ import MedalVisual from '../../components/MedalVisual';
 import { competitionStyle } from '../../constants/competitions';
 import { t, tf } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 import { formatMonthYear, formatShortDateTime } from '../../utils/time';
 
 type Nav = NativeStackNavigationProp<GymStackParamList>;
@@ -485,7 +485,7 @@ export default function GymProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
   content: { padding: 20, paddingBottom: 40 },
@@ -606,4 +606,4 @@ const styles = StyleSheet.create({
   certCnpj: { color: palette.textSecondary, fontSize: 12 },
   editBtn: { marginTop: 8 },
   editContent: { paddingVertical: 5 },
-});
+}));

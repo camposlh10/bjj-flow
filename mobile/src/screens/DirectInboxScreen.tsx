@@ -9,7 +9,7 @@ import { Conversation, getConversations } from '../api/messages';
 import { resolveMediaUrl } from '../api/posts';
 import { TrainingCardSkeleton } from '../components/Skeleton';
 import { t } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 import { timeAgo } from '../utils/time';
 
 function initialsOf(name: string): string {
@@ -122,7 +122,7 @@ export default function DirectInboxScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { flexGrow: 1, paddingTop: 8 },
   searchWrap: {
@@ -150,4 +150,4 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 80 },
   emptyTitle: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 15 },
   emptySub: { color: palette.textSecondary, fontSize: 13, textAlign: 'center', paddingHorizontal: 40 },
-});
+}));

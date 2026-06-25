@@ -1,6 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated';
 
+import { makeStyles } from '../theme/theme';
+
 type Props = {
   /** cor da faixa */
   color: string;
@@ -55,7 +57,7 @@ export function formatStripes(stripes: number): string {
   return stripes === 1 ? '1 grau' : `${stripes} graus`;
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   belt: {
     alignSelf: 'stretch',
     flexDirection: 'row',
@@ -70,4 +72,4 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'space-evenly',
   },
-});
+}));

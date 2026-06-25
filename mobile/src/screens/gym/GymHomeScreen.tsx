@@ -24,7 +24,7 @@ import BeltVisual, { formatStripes } from '../../components/BeltVisual';
 import { rankBarColorFor } from '../../constants/belts';
 import { t, TranslationKey } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 import AgendaScreen from './AgendaScreen';
 import MercadoScreen from './MercadoScreen';
 import MuralFeed from './MuralFeed';
@@ -389,7 +389,7 @@ function ComingSoon() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background, paddingHorizontal: 20 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 40 },
   soon: { color: palette.textSecondary },
@@ -515,4 +515,4 @@ const styles = StyleSheet.create({
   memberProgressReady: { backgroundColor: '#16A34A' },
   memberReadyLabel: { color: '#4ADE80', fontWeight: 'bold' },
   graduarLink: { color: palette.primary, fontSize: 11, fontWeight: 'bold' },
-});
+}));

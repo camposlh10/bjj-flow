@@ -3,7 +3,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
 import { t, type TranslationKey } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 // Phase 4: donations are external links only — no in-app payments.
 // Replace these placeholder URLs with the real ones when they exist.
@@ -34,7 +34,7 @@ export default function DonationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   screen: { flex: 1, backgroundColor: palette.background },
   body: { padding: 16 },
   hero: { alignItems: 'center', gap: 12, paddingVertical: 24 },
@@ -50,4 +50,4 @@ const styles = StyleSheet.create({
   },
   rowLabel: { color: palette.textPrimary, fontWeight: '600', flex: 1 },
   note: { color: palette.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 24, lineHeight: 18 },
-});
+}));

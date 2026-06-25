@@ -26,7 +26,7 @@ import { ALL_REGIONS, bodyRegionLabel, intensityColor } from '../constants/body'
 import { SUBMISSIONS } from '../constants/submissions';
 import { t, tf } from '../i18n';
 import { useAuthStore } from '../store/authStore';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 type Direction = 'HIT' | 'CONCEDED';
 const DURATIONS = [60, 90, 120, 180];
@@ -336,7 +336,7 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   kav: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
@@ -419,4 +419,4 @@ const styles = StyleSheet.create({
   visHint: { color: palette.textSecondary, fontSize: 11, marginBottom: 4 },
   save: { marginTop: 16 },
   saveContent: { paddingVertical: 6 },
-});
+}));

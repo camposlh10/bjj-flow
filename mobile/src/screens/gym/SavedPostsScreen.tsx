@@ -6,7 +6,7 @@ import { getMyGym } from '../../api/gyms';
 import { getSavedPosts } from '../../api/posts';
 import PostList from '../../components/PostList';
 import { t } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 export default function SavedPostsScreen() {
   const gym = useQuery({ queryKey: ['myGym'], queryFn: getMyGym });
@@ -33,7 +33,7 @@ export default function SavedPostsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background, paddingHorizontal: 16, paddingTop: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
-});
+}));

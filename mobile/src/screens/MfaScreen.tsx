@@ -9,7 +9,7 @@ import { apiErrorMessage } from '../api/auth';
 import { enableMfa, disableMfa, enrollMfa, type MfaEnrollResponse } from '../api/mfa';
 import { getSettings } from '../api/users';
 import { t } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 export default function MfaScreen() {
   const qc = useQueryClient();
@@ -162,7 +162,7 @@ export default function MfaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   screen: { flex: 1, backgroundColor: palette.background },
   body: { padding: 16 },
   subtitle: { color: palette.textSecondary, lineHeight: 20, marginBottom: 16 },
@@ -195,4 +195,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
-});
+}));

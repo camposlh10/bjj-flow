@@ -2,6 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
+import { makeStyles } from '../theme/theme';
+
 /** Full-screen in-app player for a personal-library video (uploaded media URL). */
 export default function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
   const player = useVideoPlayer(url, (p) => {
@@ -21,8 +23,8 @@ export default function VideoModal({ url, onClose }: { url: string; onClose: () 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   backdrop: { flex: 1, backgroundColor: '#000000EE', justifyContent: 'center' },
   close: { position: 'absolute', top: 48, right: 20, zIndex: 2 },
   video: { width: '100%', aspectRatio: 9 / 16, maxHeight: '80%', alignSelf: 'center' },
-});
+}));

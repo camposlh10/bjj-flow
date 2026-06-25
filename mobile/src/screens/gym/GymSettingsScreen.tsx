@@ -7,7 +7,7 @@ import { ActivityIndicator, Button, Text, TextInput } from 'react-native-paper';
 import { apiErrorMessage } from '../../api/auth';
 import { addTestBot, getMyGym, updateGymRules } from '../../api/gyms';
 import { t } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 export default function GymSettingsScreen() {
   const queryClient = useQueryClient();
@@ -117,7 +117,7 @@ export default function GymSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
@@ -128,4 +128,4 @@ const styles = StyleSheet.create({
   hint: { color: palette.textSecondary, fontSize: 12, marginTop: 3 },
   input: { backgroundColor: palette.surface, marginTop: 10, width: 120 },
   botHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-});
+}));

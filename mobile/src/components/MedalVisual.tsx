@@ -4,6 +4,7 @@ import Svg, { Circle, Path, Polygon, Rect, Text as SvgText } from 'react-native-
 
 import { MedalTier } from '../api/gyms';
 import { competitionStyle } from '../constants/competitions';
+import { makeStyles } from '../theme/theme';
 
 const TIER_COLORS: Record<MedalTier, string> = {
   GOLD: '#F5C518',
@@ -79,7 +80,7 @@ export default function MedalVisual({ competition, tier = 'GOLD', size = 72, cou
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   countBadge: {
     position: 'absolute',
     right: 0,
@@ -93,4 +94,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   countText: { color: '#0D0D10', fontSize: 11, fontWeight: 'bold' },
-});
+}));

@@ -4,7 +4,7 @@ import { ActivityIndicator, Text } from 'react-native-paper';
 
 import { Settings, getSettings, updateSettings } from '../api/users';
 import { t } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 export default function NotificationsScreen() {
   const queryClient = useQueryClient();
@@ -50,7 +50,7 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
@@ -59,4 +59,4 @@ const styles = StyleSheet.create({
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: palette.surfaceVariant },
   label: { color: palette.textPrimary, fontSize: 15, flex: 1 },
   note: { color: palette.textSecondary, fontSize: 12, marginTop: 14, marginHorizontal: 4 },
-});
+}));

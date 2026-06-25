@@ -20,7 +20,7 @@ import { ActivityIndicator } from 'react-native-paper';
 import { apiErrorMessage } from '../../api/auth';
 import { UploadedMedia, createPost, uploadMedia } from '../../api/posts';
 import { t } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 import { renderRichText } from '../../utils/richText';
 
 type Picked = UploadedMedia & { uri: string };
@@ -147,7 +147,7 @@ export default function CreatePostScreen({ navigation }: { navigation: any }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   scroll: { padding: 16 },
   input: { color: palette.textPrimary, fontSize: 16, lineHeight: 22, minHeight: 120, textAlignVertical: 'top' },
@@ -188,4 +188,4 @@ const styles = StyleSheet.create({
   postBtn: { backgroundColor: palette.primary, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 6 },
   postBtnOff: { opacity: 0.5 },
   postBtnText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
-});
+}));

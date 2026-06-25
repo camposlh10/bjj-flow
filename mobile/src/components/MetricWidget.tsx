@@ -3,7 +3,7 @@ import { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -46,7 +46,7 @@ export default function MetricWidget({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   tile: {
     width: '48%',
     backgroundColor: palette.surface,
@@ -61,4 +61,4 @@ const styles = StyleSheet.create({
   valueLocked: { color: palette.textSecondary },
   label: { color: palette.textPrimary, fontSize: 13, fontWeight: '600', marginTop: 2 },
   sub: { color: palette.textSecondary, fontSize: 11, marginTop: 2 },
-});
+}));

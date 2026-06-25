@@ -4,7 +4,7 @@ import { Text } from 'react-native-paper';
 
 import { Locale } from '../i18n';
 import { useLocaleStore } from '../store/localeStore';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 // Language names are shown in their own language (standard convention).
 const OPTIONS: { code: Locale; label: string }[] = [
@@ -30,9 +30,9 @@ export default function LanguageScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   screen: { flex: 1, backgroundColor: palette.background, padding: 16 },
   card: { backgroundColor: palette.surface, borderRadius: 14, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
   label: { color: palette.textPrimary, fontSize: 16 },
-});
+}));

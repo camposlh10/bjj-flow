@@ -22,7 +22,7 @@ import { SESSION_TAG } from '../../constants/classes';
 import { rankBarColorFor } from '../../constants/belts';
 import { t, tf } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 import { dayHeader } from '../../utils/time';
 
 type Props = NativeStackScreenProps<GymStackParamList, 'ClassDetail'>;
@@ -260,7 +260,7 @@ export default function ClassDetailScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 20 },
   card: { backgroundColor: palette.surface, borderRadius: 16, padding: 16, marginBottom: 12 },
@@ -378,4 +378,4 @@ const styles = StyleSheet.create({
   },
   streakText: { color: palette.textPrimary, fontSize: 14, fontWeight: 'bold' },
   deleteBtn: { marginTop: 20, alignSelf: 'center' },
-});
+}));

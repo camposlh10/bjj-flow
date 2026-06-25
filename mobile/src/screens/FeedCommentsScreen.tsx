@@ -19,7 +19,7 @@ import { addFeedComment, getFeedComments } from '../api/feed';
 import TrainingCard from '../components/TrainingCard';
 import { t } from '../i18n';
 import type { ComunidadeStackParamList } from '../navigation/ComunidadeNavigator';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 import { timeAgo } from '../utils/time';
 
 type Props = NativeStackScreenProps<ComunidadeStackParamList, 'FeedComments'>;
@@ -108,7 +108,7 @@ export default function FeedCommentsScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   list: { padding: 16 },
   headerWrap: { marginBottom: 8 },
@@ -141,4 +141,4 @@ const styles = StyleSheet.create({
   replyBtn: { backgroundColor: palette.primary, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
   replyBtnOff: { opacity: 0.5 },
   replyBtnText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-});
+}));

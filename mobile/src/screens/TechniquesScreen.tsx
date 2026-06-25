@@ -18,7 +18,7 @@ import VideoModal from '../components/VideoModal';
 import { CATEGORY_COLORS, DIFFICULTY_LABELS, categoryLabel } from '../constants/techniques';
 import { t } from '../i18n';
 import type { HomeStackParamList } from '../navigation/HomeNavigator';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 const FAV = '__FAV__';
@@ -214,7 +214,7 @@ function Chip({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   screen: { flex: 1, backgroundColor: palette.background },
   segment: {
     flexDirection: 'row',
@@ -269,4 +269,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addText: { color: palette.primary, fontWeight: '700' },
-});
+}));

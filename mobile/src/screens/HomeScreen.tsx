@@ -24,7 +24,7 @@ import { SUBMISSIONS } from '../constants/submissions';
 import { STREAK_MILESTONES, TRAINING_MILESTONES, WEEK_MILESTONES, nextMilestone } from '../constants/milestones';
 import { t, tf } from '../i18n';
 import { useAuthStore } from '../store/authStore';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 const WEEK_LETTERS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -488,7 +488,7 @@ function CompetitionModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { paddingHorizontal: 20, paddingBottom: 32, gap: 14 },
   greeting: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -571,4 +571,4 @@ const styles = StyleSheet.create({
   modalTitle: { color: palette.textPrimary, fontSize: 16, fontWeight: 'bold', marginBottom: 14 },
   modalInput: { marginBottom: 10, backgroundColor: palette.surface },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginTop: 4 },
-});
+}));

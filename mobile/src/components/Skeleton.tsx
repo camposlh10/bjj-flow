@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 /** A single shimmering placeholder block used while content loads. */
 export default function Skeleton({
@@ -60,8 +60,8 @@ export function TrainingCardSkeleton() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   block: { backgroundColor: palette.surfaceVariant },
   card: { backgroundColor: palette.surface, borderRadius: 16, padding: 16, gap: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-});
+}));

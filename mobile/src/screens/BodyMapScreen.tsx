@@ -8,7 +8,7 @@ import { getPainDaily, getPainMonthly, logPain } from '../api/pain';
 import BodyMap from '../components/BodyMap';
 import { BodyView, bodyRegionLabel, intensityColor } from '../constants/body';
 import { getActiveLocale, t, tf } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 const MONTHS_PT = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -210,7 +210,7 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   screen: { flex: 1, backgroundColor: palette.background },
   body: { padding: 16, paddingBottom: 40 },
   modeToggle: { flexDirection: 'row', alignSelf: 'center', backgroundColor: palette.surface, borderRadius: 12, padding: 4, marginBottom: 12 },
@@ -249,4 +249,4 @@ const styles = StyleSheet.create({
   scaleText: { color: palette.textPrimary, fontWeight: '600' },
   noteInput: { backgroundColor: palette.background, marginBottom: 16 },
   saveBtn: { borderRadius: 12 },
-});
+}));

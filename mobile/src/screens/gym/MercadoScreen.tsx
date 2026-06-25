@@ -12,7 +12,7 @@ import { Product, buyProduct, deleteProduct, formatPrice, getProducts } from '..
 import { resolveMediaUrl } from '../../api/posts';
 import { t, tf } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 type Nav = NativeStackNavigationProp<GymStackParamList>;
 
@@ -113,7 +113,7 @@ export default function MercadoScreen({ gym }: { gym: Gym }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
   content: { paddingBottom: 24 },
   columns: { gap: 10 },
@@ -142,4 +142,4 @@ const styles = StyleSheet.create({
   price: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold', marginVertical: 6 },
   orders: { color: palette.textSecondary, fontSize: 10, marginBottom: 6 },
   buyLabel: { fontSize: 11, marginVertical: 4 },
-});
+}));

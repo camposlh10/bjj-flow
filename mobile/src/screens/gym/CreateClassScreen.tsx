@@ -8,7 +8,7 @@ import { apiErrorMessage } from '../../api/auth';
 import { RestrictionMode, SESSION_LABEL, SessionType, createClass } from '../../api/classes';
 import { ADULT_BELTS, KIDS_BELTS } from '../../constants/belts';
 import { t } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 const DAYS: { label: string; dow: number }[] = [
   { label: 'S', dow: 1 },
@@ -156,7 +156,7 @@ export default function CreateClassScreen({ navigation }: { navigation: { goBack
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 20, paddingBottom: 40 },
   input: { marginBottom: 14 },
@@ -200,4 +200,4 @@ const styles = StyleSheet.create({
   error: { color: palette.primary, marginBottom: 10 },
   save: { marginTop: 6 },
   saveContent: { paddingVertical: 6 },
-});
+}));

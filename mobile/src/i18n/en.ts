@@ -218,6 +218,8 @@ export const en: Record<TranslationKey, string> = {
   'settings.notifications': 'Notifications',
   'settings.appearance': 'Appearance',
   'settings.appearance.dark': 'Dark',
+  'settings.appearance.light': 'Light',
+  'settings.appearance.system': 'System',
   'settings.privacy': 'Privacy',
   'settings.language': 'Language',
   'settings.language.pt': 'Portuguese',

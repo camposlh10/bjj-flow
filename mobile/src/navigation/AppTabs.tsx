@@ -9,7 +9,7 @@ import ComunidadeNavigator from './ComunidadeNavigator';
 import GymNavigator from './GymNavigator';
 import HomeNavigator from './HomeNavigator';
 import ProfileNavigator from './ProfileNavigator';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 export type AppTabsParamList = {
   Home: undefined;
@@ -103,7 +103,7 @@ export default function AppTabs() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   tabBar: {
     backgroundColor: palette.surface,
     borderTopColor: palette.surfaceVariant,
@@ -129,4 +129,4 @@ const styles = StyleSheet.create({
   centerPressed: {
     transform: [{ scale: 0.94 }],
   },
-});
+}));

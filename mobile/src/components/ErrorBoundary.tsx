@@ -1,7 +1,7 @@
 import { Component, ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 type Props = { children: ReactNode };
 type State = { error: Error | null; stack: string | null };
@@ -34,10 +34,10 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 24, paddingTop: 80 },
   title: { color: palette.primary, fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   msg: { color: palette.textPrimary, fontSize: 14, marginBottom: 16 },
   stack: { color: palette.textSecondary, fontSize: 11, lineHeight: 16 },
-});
+}));

@@ -2,7 +2,7 @@ import { Dimensions, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Svg, { Circle, Line, Polygon } from 'react-native-svg';
 
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 export type RadarAxis = { label: string; value: number };
 
@@ -89,7 +89,7 @@ export default function SubmissionRadar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   wrap: { alignSelf: 'center', overflow: 'visible' },
   label: {
     position: 'absolute',
@@ -97,4 +97,4 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     fontSize: 9,
   },
-});
+}));

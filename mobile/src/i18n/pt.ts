@@ -216,6 +216,8 @@ export const pt = {
   'settings.notifications': 'Notificações',
   'settings.appearance': 'Aparência',
   'settings.appearance.dark': 'Escuro',
+  'settings.appearance.light': 'Claro',
+  'settings.appearance.system': 'Sistema',
   'settings.privacy': 'Privacidade',
   'settings.language': 'Idioma',
   'settings.language.pt': 'Português',

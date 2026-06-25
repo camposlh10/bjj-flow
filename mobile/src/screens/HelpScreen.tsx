@@ -7,7 +7,7 @@ import { Button, Text, TextInput } from 'react-native-paper';
 import { apiErrorMessage } from '../api/auth';
 import { sendFeedback } from '../api/users';
 import { t } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 const FAQ: { q: string; a: string }[] = [
   { q: 'faq.checkin.q', a: 'faq.checkin.a' },
@@ -78,7 +78,7 @@ export default function HelpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 16, paddingBottom: 40 },
   section: { color: palette.textSecondary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8, marginBottom: 8, marginLeft: 4 },
@@ -90,4 +90,4 @@ const styles = StyleSheet.create({
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: palette.surfaceVariant },
   hint: { color: palette.textSecondary, fontSize: 12, marginBottom: 10 },
   input: { backgroundColor: palette.surface, marginBottom: 12 },
-});
+}));

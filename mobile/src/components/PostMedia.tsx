@@ -2,7 +2,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { Image, StyleSheet, View } from 'react-native';
 
 import { MediaItem, resolveMediaUrl } from '../api/posts';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 function PostVideo({ uri, style }: { uri: string; style: object }) {
   const player = useVideoPlayer(uri, (p) => {
@@ -43,7 +43,7 @@ export default function PostMedia({ media }: { media: MediaItem[] }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   single: { borderRadius: 12, overflow: 'hidden', marginTop: 2 },
   singleMedia: { width: '100%', height: 200, backgroundColor: palette.surfaceVariant },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2 },
@@ -55,4 +55,4 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surfaceVariant,
   },
   gridMedia: { width: '100%', height: '100%' },
-});
+}));

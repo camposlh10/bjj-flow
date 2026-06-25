@@ -9,7 +9,7 @@ import { getFeed } from '../../api/posts';
 import PostList from '../../components/PostList';
 import { t } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 type Nav = NativeStackNavigationProp<GymStackParamList>;
 
@@ -56,9 +56,9 @@ export default function MuralFeed({ gym }: { gym: Gym }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 },
   publish: { flex: 1, borderRadius: 10 },
   publishContent: { paddingVertical: 4 },
-});
+}));

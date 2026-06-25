@@ -67,12 +67,16 @@ export const palette = new Proxy({} as Palette, {
 
 /**
  * Theme-aware StyleSheet. Replace `const styles = StyleSheet.create({...})` with
- * `const useStyles = makeStyles(() => ({...}))` and read `const styles = useStyles()`
- * in the component — it recreates per scheme (cached) so styles follow the theme.
+ * `const styles = makeStyles(() => ({...}))`. The returned `styles` is a proxy: each
+ * `styles.key` access resolves to the active scheme's StyleSheet (cached per scheme),
+ * so styles follow the theme after the tree re-mounts — no per-component changes.
  */
-export function makeStyles<T extends StyleSheet.NamedStyles<T>>(factory: () => T): () => T {
+export function makeStyles<T extends StyleSheet.NamedStyles<T>>(factory: () => T): T {
   const cache: Partial<Record<ColorScheme, T>> = {};
-  return () => (cache[activeScheme] ??= StyleSheet.create(factory()));
+  const resolve = () => (cache[activeScheme] ??= StyleSheet.create(factory()));
+  return new Proxy({} as Record<string | symbol, unknown>, {
+    get: (_t, key) => resolve()[key as keyof T],
+  }) as T;
 }
 
 const { DarkTheme: adaptedDark, LightTheme: adaptedLight } = adaptNavigationTheme({

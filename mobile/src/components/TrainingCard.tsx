@@ -11,7 +11,7 @@ import ActionButton from './ActionButton';
 import { rankBarColorFor } from '../constants/belts';
 import { submissionStyle } from '../constants/submissions';
 import { t, tf } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 import { timeAgo } from '../utils/time';
 
 function initialsOf(name: string): string {
@@ -224,7 +224,7 @@ export default function TrainingCard({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   card: { backgroundColor: palette.surface, borderRadius: 16, padding: 16, gap: 12 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 42, height: 42, borderRadius: 21 },
@@ -269,4 +269,4 @@ const styles = StyleSheet.create({
     borderTopColor: palette.surfaceVariant,
     paddingTop: 12,
   },
-});
+}));

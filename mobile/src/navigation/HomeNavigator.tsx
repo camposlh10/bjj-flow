@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { PersonalTechnique } from '../api/techniques';
 import { t } from '../i18n';
 import AccountScreen from '../screens/AccountScreen';
+import AppearanceScreen from '../screens/AppearanceScreen';
 import BodyMapScreen from '../screens/BodyMapScreen';
 import DonationsScreen from '../screens/DonationsScreen';
 import EditUserProfileScreen from '../screens/EditUserProfileScreen';
@@ -31,6 +32,7 @@ export type HomeStackParamList = {
   Metrics: undefined;
   Mfa: undefined;
   Language: undefined;
+  Appearance: undefined;
   Techniques: undefined;
   TechniqueDetail: { id: number };
   PersonalTechniqueEditor: { technique?: PersonalTechnique } | undefined;
@@ -65,6 +67,7 @@ export default function HomeNavigator() {
       <Stack.Screen name="Metrics" component={MetricsScreen} options={{ title: t('metrics.title') }} />
       <Stack.Screen name="Mfa" component={MfaScreen} options={{ title: t('mfa.title') }} />
       <Stack.Screen name="Language" component={LanguageScreen} options={{ title: t('language.title') }} />
+      <Stack.Screen name="Appearance" component={AppearanceScreen} options={{ title: t('settings.appearance') }} />
       <Stack.Screen name="Techniques" component={TechniquesScreen} options={{ title: t('techniques.title') }} />
       <Stack.Screen
         name="TechniqueDetail"

@@ -13,7 +13,7 @@ import SubmissionRadar from '../components/SubmissionRadar';
 import { SUBMISSIONS, submissionStyle } from '../constants/submissions';
 import { t } from '../i18n';
 import { useAuthStore } from '../store/authStore';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 import { formatMonthYear } from '../utils/time';
 
 function addMonth(month: string, delta: number): string {
@@ -126,7 +126,7 @@ export default function SubmissionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 20, paddingBottom: 40 },
   monthRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
@@ -168,4 +168,4 @@ const styles = StyleSheet.create({
     borderColor: palette.outline,
   },
   logText: { color: palette.primary, fontSize: 14, fontWeight: '600' },
-});
+}));

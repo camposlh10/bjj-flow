@@ -20,7 +20,7 @@ import BeltVisual from '../../components/BeltVisual';
 import Skeleton from '../../components/Skeleton';
 import { ADULT_BELTS, KIDS_BELTS, maxStripesFor, rankBarColorFor } from '../../constants/belts';
 import { t, tf } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 const ALL_BELTS = [...ADULT_BELTS, ...KIDS_BELTS];
 
@@ -355,7 +355,7 @@ function GraduateSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 16, paddingBottom: 40, gap: 14 },
   skeleton: { flex: 1, backgroundColor: palette.background, padding: 16 },
@@ -417,4 +417,4 @@ const styles = StyleSheet.create({
   stripeRow: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   stripeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: palette.surfaceVariant, alignItems: 'center', justifyContent: 'center' },
   stripeNum: { color: palette.textPrimary, fontSize: 20, fontWeight: 'bold', minWidth: 24, textAlign: 'center' },
-});
+}));

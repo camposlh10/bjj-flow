@@ -12,7 +12,7 @@ import { Gym } from '../../api/gyms';
 import { SESSION_TAG, addDays } from '../../constants/classes';
 import { t, tf } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 import { dayHeader } from '../../utils/time';
 
 type Nav = NativeStackNavigationProp<GymStackParamList>;
@@ -189,7 +189,7 @@ export default function AgendaScreen({ gym }: { gym: Gym }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
   strip: { flexGrow: 0, marginBottom: 12 },
   stripContent: { gap: 6, paddingRight: 12 },
@@ -238,4 +238,4 @@ const styles = StyleSheet.create({
   stateLocked: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   stateLockedText: { color: palette.textSecondary, fontSize: 11 },
   stateReservedText: { color: palette.textPrimary, fontSize: 11, fontWeight: 'bold' },
-});
+}));

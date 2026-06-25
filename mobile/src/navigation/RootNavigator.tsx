@@ -7,7 +7,7 @@ import OnboardingScreen from '../screens/auth/OnboardingScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import { useAuthStore } from '../store/authStore';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 import AppTabs from './AppTabs';
 
 export type AuthStackParamList = {
@@ -46,11 +46,11 @@ export default function RootNavigator() {
   return <AppTabs />;
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   splash: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: palette.background,
   },
-});
+}));

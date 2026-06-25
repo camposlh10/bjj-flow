@@ -19,7 +19,7 @@ import { apiErrorMessage } from '../../api/auth';
 import { createProduct } from '../../api/market';
 import { uploadMedia } from '../../api/posts';
 import { t } from '../../i18n';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 /** "450", "450,00", "1.250,50" → cents */
 function parsePriceToCents(value: string): number | null {
@@ -157,7 +157,7 @@ export default function CreateProductScreen({ navigation }: { navigation: { goBa
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 20, paddingBottom: 40 },
   imagePicker: {
@@ -176,4 +176,4 @@ const styles = StyleSheet.create({
   error: { color: palette.primary, marginBottom: 10 },
   save: { marginTop: 4 },
   saveContent: { paddingVertical: 6 },
-});
+}));

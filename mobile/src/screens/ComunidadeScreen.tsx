@@ -16,7 +16,7 @@ import { TrainingCardSkeleton } from '../components/Skeleton';
 import TrainingCard from '../components/TrainingCard';
 import { t } from '../i18n';
 import type { ComunidadeStackParamList } from '../navigation/ComunidadeNavigator';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 type Nav = NativeStackNavigationProp<ComunidadeStackParamList, 'ComunidadeFeed'>;
 
@@ -165,7 +165,7 @@ export default function ComunidadeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { paddingHorizontal: 20, paddingBottom: 32, flexGrow: 1 },
   head: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
@@ -212,4 +212,4 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 80 },
   emptyTitle: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 15 },
   emptySub: { color: palette.textSecondary, fontSize: 13, textAlign: 'center' },
-});
+}));

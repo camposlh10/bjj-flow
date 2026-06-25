@@ -6,7 +6,7 @@ import { getStats } from '../api/checkins';
 import MetricWidget from '../components/MetricWidget';
 import Skeleton from '../components/Skeleton';
 import { t, tf } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 function formatMinutes(m: number): string {
   if (!m) return '0min';
@@ -78,10 +78,10 @@ export default function MetricsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: 16, paddingBottom: 40 },
   loading: { flex: 1, backgroundColor: palette.background, padding: 16 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   section: { color: palette.textSecondary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12, marginLeft: 2 },
-});
+}));

@@ -15,7 +15,7 @@ import {
 } from '../api/techniques';
 import { t } from '../i18n';
 import type { HomeStackParamList } from '../navigation/HomeNavigator';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 const LIBRARY_COLORS = ['#E63946', '#E0A82E', '#2DB6A3', '#3E63DD', '#8E4EC6', '#F76808', '#4A9EED', '#16A34A'];
 
@@ -166,7 +166,7 @@ function Field({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   screen: { flex: 1, backgroundColor: palette.background },
   body: { padding: 16 },
   label: { color: palette.textSecondary, fontSize: 12, marginBottom: 6 },
@@ -180,4 +180,4 @@ const styles = StyleSheet.create({
   importBtn: { borderRadius: 12, borderColor: palette.outline, marginBottom: 6 },
   or: { color: palette.textSecondary, fontSize: 12, textAlign: 'center', marginVertical: 6 },
   save: { marginTop: 8, borderRadius: 12 },
-});
+}));

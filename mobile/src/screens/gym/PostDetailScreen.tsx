@@ -33,7 +33,7 @@ import PostMedia from '../../components/PostMedia';
 import { rankBarColorFor } from '../../constants/belts';
 import { t } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 import { downloadPostMedia } from '../../utils/download';
 import { renderRichText } from '../../utils/richText';
 import { formatDateTime, timeAgo } from '../../utils/time';
@@ -217,7 +217,7 @@ export default function PostDetailScreen({ route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
   list: { padding: 16 },
@@ -283,4 +283,4 @@ const styles = StyleSheet.create({
   replyBtn: { backgroundColor: palette.primary, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
   replyBtnOff: { opacity: 0.5 },
   replyBtnText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-});
+}));

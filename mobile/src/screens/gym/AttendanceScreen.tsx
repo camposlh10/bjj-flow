@@ -9,7 +9,7 @@ import BeltVisual from '../../components/BeltVisual';
 import { rankBarColorFor } from '../../constants/belts';
 import { t } from '../../i18n';
 import { GymStackParamList } from '../../navigation/GymNavigator';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 type Props = NativeStackScreenProps<GymStackParamList, 'Attendance'>;
 
@@ -97,7 +97,7 @@ export default function AttendanceScreen({ route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
   content: { padding: 20 },
@@ -135,4 +135,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkOff: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderColor: palette.outline },
-});
+}));

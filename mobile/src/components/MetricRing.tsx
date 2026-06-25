@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Svg, { Circle } from 'react-native-svg';
 
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 /**
  * WHOOP/Oura-style progress ring: a value in the centre, a coloured arc showing
@@ -60,10 +60,10 @@ export default function MetricRing({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   wrap: { alignItems: 'center', gap: 9 },
   center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   value: { color: palette.textPrimary, fontSize: 21, fontWeight: '700', letterSpacing: -0.5 },
   sub: { color: palette.textSecondary, fontSize: 9, marginTop: 1, letterSpacing: 0.3 },
   label: { color: palette.textSecondary, fontSize: 10.5, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase' },
-});
+}));

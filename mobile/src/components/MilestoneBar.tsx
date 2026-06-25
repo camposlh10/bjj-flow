@@ -5,7 +5,7 @@ import { Text } from 'react-native-paper';
 
 import { milestoneProgress, nextMilestone } from '../constants/milestones';
 import { t, tf } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -44,7 +44,7 @@ export default function MilestoneBar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   row: { gap: 6 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   labelWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -53,4 +53,4 @@ const styles = StyleSheet.create({
   track: { height: 7, borderRadius: 999, backgroundColor: palette.surfaceVariant, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 999, backgroundColor: palette.primary },
   sub: { color: palette.textSecondary, fontSize: 10 },
-});
+}));

@@ -1,7 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BODY_NODES, BodyView, FIGURE_BOX, HALF_SIZE, intensityColor } from '../constants/body';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 // The anatomy image: front figure on the left half, back on the right half.
 // Replace assets/body-anatomy.png with your own (keep that 2:1 layout) and update
@@ -63,10 +63,10 @@ export default function BodyMap({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   frame: { overflow: 'hidden', borderRadius: 14, backgroundColor: palette.surface },
   hotspot: { position: 'absolute', width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   glow: { position: 'absolute', width: 30, height: 30, borderRadius: 15, opacity: 0.35 },
   dot: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 3, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
   dotText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
-});
+}));

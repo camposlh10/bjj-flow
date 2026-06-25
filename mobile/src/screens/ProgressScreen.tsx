@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
 import { t } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 export default function ProgressScreen() {
   return (
@@ -19,7 +19,7 @@ export default function ProgressScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: {
     flex: 1,
     backgroundColor: palette.background,
@@ -34,4 +34,4 @@ const styles = StyleSheet.create({
   soon: {
     color: palette.textSecondary,
   },
-});
+}));

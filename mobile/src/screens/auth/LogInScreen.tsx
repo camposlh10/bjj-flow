@@ -10,7 +10,7 @@ import { apiErrorMessage, completeMfa, login } from '../../api/auth';
 import { t } from '../../i18n';
 import { AuthStackParamList } from '../../navigation/RootNavigator';
 import { useAuthStore } from '../../store/authStore';
-import { palette } from '../../theme/theme';
+import { makeStyles, palette } from '../../theme/theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'LogIn'>;
 
@@ -164,7 +164,7 @@ export default function LogInScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: {
     flex: 1,
     backgroundColor: palette.background,
@@ -196,4 +196,4 @@ const styles = StyleSheet.create({
   buttonContent: {
     paddingVertical: 6,
   },
-});
+}));

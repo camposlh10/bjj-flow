@@ -7,7 +7,7 @@ import { Post } from '../api/posts';
 import { GymRole } from '../api/gyms';
 import { rankBarColorFor } from '../constants/belts';
 import { t } from '../i18n';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 import { renderRichText } from '../utils/richText';
 import { formatShortDateTime } from '../utils/time';
 import ActionButton from './ActionButton';
@@ -167,7 +167,7 @@ export default memo(
     prev.isStaff === next.isStaff,
 );
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   card: { backgroundColor: palette.surface, borderRadius: 14, padding: 12, marginBottom: 10 },
   cardPinned: { borderWidth: 1, borderColor: palette.primary },
   pinnedRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
@@ -192,4 +192,4 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, paddingRight: 4 },
   action: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   actionText: { color: palette.textSecondary, fontSize: 11 },
-});
+}));

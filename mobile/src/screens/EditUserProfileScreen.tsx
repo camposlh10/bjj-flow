@@ -33,7 +33,7 @@ import MedalVisual from '../components/MedalVisual';
 import { COMPETITIONS } from '../constants/competitions';
 import { t } from '../i18n';
 import { useAuthStore } from '../store/authStore';
-import { palette } from '../theme/theme';
+import { makeStyles, palette } from '../theme/theme';
 
 const TIERS: { key: MedalTier; color: string }[] = [
   { key: 'GOLD', color: '#F5C518' },
@@ -393,7 +393,7 @@ function Form({ profile }: { profile: UserProfile }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = makeStyles(() => ({
   container: { flex: 1, backgroundColor: palette.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
   content: { padding: 20, paddingBottom: 40 },
@@ -523,4 +523,4 @@ const styles = StyleSheet.create({
   saveContent: { paddingVertical: 6 },
   adminBtn: { marginTop: 16, borderRadius: 12 },
   logout: { marginTop: 8 },
-});
+}));
