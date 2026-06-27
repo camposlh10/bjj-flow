@@ -45,8 +45,13 @@ export type FeedComment = {
   createdAt: string;
 };
 
-export async function getCommunityFeed(): Promise<FeedItem[]> {
-  const { data } = await api.get<FeedItem[]>('/feed');
+/** A page of the feed plus the cursor for the next (older) page (null = end). */
+export type FeedPage = { items: FeedItem[]; nextCursor: number | null };
+
+export async function getCommunityFeed(cursor?: number): Promise<FeedPage> {
+  const { data } = await api.get<FeedPage | FeedItem[]>('/feed', { params: { cursor, limit: 20 } });
+  // Tolerate the older array response shape (pre-pagination backend) during rollout.
+  if (Array.isArray(data)) return { items: data, nextCursor: null };
   return data;
 }
 

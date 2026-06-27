@@ -103,6 +103,7 @@ function PostCard({
                 size={18}
                 iconColor={palette.textSecondary}
                 onPress={() => setMenuVisible(true)}
+                accessibilityLabel={t('a11y.more')}
               />
             }>
             {canPin && (
@@ -142,14 +143,16 @@ function PostCard({
           count={post.likeCount}
           color={post.likedByMe ? palette.primary : palette.textSecondary}
           onPress={onLike}
+          accessibilityLabel={t('a11y.like')}
         />
-        <ActionButton icon="comment-outline" count={post.commentCount} onPress={onComment} />
-        <ActionButton icon="share-outline" count={post.shareCount} onPress={onShare} />
-        <ActionButton icon="tray-arrow-down" onPress={onDownload} />
+        <ActionButton icon="comment-outline" count={post.commentCount} onPress={onComment} accessibilityLabel={t('a11y.comment')} />
+        <ActionButton icon="share-outline" count={post.shareCount} onPress={onShare} accessibilityLabel={t('a11y.share')} />
+        <ActionButton icon="tray-arrow-down" onPress={onDownload} accessibilityLabel={t('a11y.download')} />
         <ActionButton
           icon={post.savedByMe ? 'bookmark' : 'bookmark-outline'}
           color={post.savedByMe ? palette.primary : palette.textSecondary}
           onPress={onSave}
+          accessibilityLabel={t('a11y.bookmark')}
         />
       </View>
     </View>

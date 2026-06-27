@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TimelineItem, getJourney, logCompetition } from '../api/activity';
 import { Stats, createQuickCheckIn, getStats, todayLocalDate } from '../api/checkins';
 import { getMyGym } from '../api/gyms';
+import { getNotifications } from '../api/notifications';
 import { resolveMediaUrl } from '../api/posts';
 import { getUserSubmissions } from '../api/submissions';
 import { getUserProfile } from '../api/users';
@@ -114,6 +115,8 @@ export default function HomeScreen() {
   });
   const gym = useQuery({ queryKey: ['myGym'], queryFn: getMyGym });
   const journey = useQuery({ queryKey: ['journey'], queryFn: getJourney });
+  const notifications = useQuery({ queryKey: ['notifications'], queryFn: () => getNotifications() });
+  const unread = notifications.data?.unread ?? 0;
   const profile = useQuery({
     queryKey: ['userProfile', user?.id ?? 0],
     queryFn: () => getUserProfile(user!.id),
@@ -185,11 +188,12 @@ export default function HomeScreen() {
           )}
         </View>
         <Pressable
-          onPress={() => navigation.navigate('Settings')}
+          onPress={() => navigation.navigate('Comunidade', { screen: 'NotificationCenter' })}
           hitSlop={8}
           style={styles.gearBtn}
-          accessibilityLabel={t('settings.title')}>
-          <MaterialCommunityIcons name="cog-outline" size={22} color={palette.textSecondary} />
+          accessibilityLabel={t('feed.notifications')}>
+          <MaterialCommunityIcons name="bell-outline" size={22} color={palette.textSecondary} />
+          {unread > 0 && <View style={styles.bellDot} />}
         </Pressable>
       </View>
 
@@ -493,6 +497,7 @@ const styles = makeStyles(() => ({
   content: { paddingHorizontal: 20, paddingBottom: 32, gap: 14 },
   greeting: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   gearBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
+  bellDot: { position: 'absolute', top: 9, right: 9, width: 9, height: 9, borderRadius: 5, backgroundColor: palette.primary, borderWidth: 1.5, borderColor: palette.surface },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: palette.surfaceVariant, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: palette.textPrimary, fontWeight: 'bold', fontSize: 15 },
   name: { color: palette.textPrimary, fontWeight: 'bold' },

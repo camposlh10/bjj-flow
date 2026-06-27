@@ -1,6 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 
+import { clearPersistedCache } from '../queryClient';
+
 export type Belt = {
   slug: string;
   name: string;
@@ -23,7 +25,14 @@ export type User = {
 };
 
 export type OnboardingAnswers = {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
   age?: number;
+  gender?: string;
+  city?: string;
+  favoriteArt?: string;
+  trainingStartYear?: number;
   beltSlug?: string;
   stripes?: number;
   weightKg?: number;
@@ -88,6 +97,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       SecureStore.deleteItemAsync(REFRESH_KEY),
       SecureStore.deleteItemAsync(USER_KEY),
     ]);
+    // Drop the previous user's persisted query cache so the next login starts clean.
+    await clearPersistedCache();
     set({ accessToken: null, refreshToken: null, user: null });
   },
 

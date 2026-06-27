@@ -21,7 +21,6 @@ export default function SignUpScreen({ navigation }: Props) {
   const onboarding = useAuthStore((s) => s.onboarding);
   const setAuth = useAuthStore((s) => s.setAuth);
 
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,17 +28,24 @@ export default function SignUpScreen({ navigation }: Props) {
 
   // Sem as respostas do onboarding não dá para registrar — volta para o início
   useEffect(() => {
-    if (!onboarding.age || !onboarding.beltSlug) {
+    if (!onboarding.firstName || !onboarding.username || !onboarding.age || !onboarding.beltSlug) {
       navigation.replace('Onboarding');
     }
-  }, [onboarding.age, onboarding.beltSlug, navigation]);
+  }, [onboarding.firstName, onboarding.username, onboarding.age, onboarding.beltSlug, navigation]);
 
   const mutation = useMutation({
     mutationFn: () =>
       register({
         email: email.trim().toLowerCase(),
         password,
-        displayName: name.trim(),
+        displayName: [onboarding.firstName, onboarding.lastName].filter(Boolean).join(' ').trim(),
+        firstName: onboarding.firstName,
+        lastName: onboarding.lastName,
+        username: onboarding.username,
+        gender: onboarding.gender,
+        city: onboarding.city,
+        favoriteArt: onboarding.favoriteArt,
+        trainingStartYear: onboarding.trainingStartYear,
         age: onboarding.age!,
         beltSlug: onboarding.beltSlug!,
         stripes: onboarding.stripes ?? 0,
@@ -55,7 +61,7 @@ export default function SignUpScreen({ navigation }: Props) {
     onError: (err) => setError(apiErrorMessage(err)),
   });
 
-  const formValid = name.trim().length > 0 && EMAIL_REGEX.test(email.trim()) && password.length >= 8;
+  const formValid = EMAIL_REGEX.test(email.trim()) && password.length >= 8;
 
   return (
     <KeyboardAvoidingView
@@ -70,14 +76,6 @@ export default function SignUpScreen({ navigation }: Props) {
             {t('signup.subtitle')}
           </Text>
 
-          <TextInput
-            mode="outlined"
-            label={t('signup.name')}
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
-            style={styles.input}
-          />
           <TextInput
             mode="outlined"
             label={t('signup.email')}

@@ -15,6 +15,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Button, Text, TextInput } from 'react-native-paper';
 
@@ -33,6 +34,7 @@ const DURATIONS = [60, 90, 120, 180];
 
 export default function CheckInSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const { height } = useWindowDimensions();
   const myId = useAuthStore((s) => s.user?.id);
   // Built in render (not at module load) so labels follow the active language.
   const TYPES: { key: string; label: string }[] = [
@@ -141,13 +143,15 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView style={styles.kav} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={styles.backdrop} onPress={onClose}>
-          <Pressable style={styles.sheet} onPress={() => Keyboard.dismiss()}>
+        {/* Dimmed area ABOVE the sheet dismisses on tap. It's a sibling (not a
+            wrapper), so nothing competes with the ScrollView for the scroll gesture. */}
+        <Pressable style={styles.dismissArea} onPress={onClose} accessibilityLabel={t('a11y.close')} />
+        <View style={styles.sheet}>
             <View style={styles.handle} />
             <Text style={styles.title}>{t('checkin.sheet.title')}</Text>
             <ScrollView
-              showsVerticalScrollIndicator={false}
-              style={styles.scroll}
+              showsVerticalScrollIndicator
+              style={[styles.scroll, { maxHeight: height * 0.7 }]}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag">
             {/* Session type */}
@@ -199,11 +203,11 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
                     <Text style={[styles.subLabel, n > 0 && styles.subLabelOn]} numberOfLines={1}>
                       {s.label}
                     </Text>
-                    <Pressable onPress={() => bump(s.key, -1)} hitSlop={8} style={styles.stepBtn} disabled={n === 0}>
+                    <Pressable onPress={() => bump(s.key, -1)} hitSlop={8} style={styles.stepBtn} disabled={n === 0} accessibilityRole="button" accessibilityLabel={`${t('a11y.decrease')} ${s.label}`}>
                       <MaterialCommunityIcons name="minus" size={15} color={n === 0 ? palette.outline : palette.textPrimary} />
                     </Pressable>
                     <Text style={styles.stepNum}>{n}</Text>
-                    <Pressable onPress={() => bump(s.key, 1)} hitSlop={8} style={styles.stepBtn}>
+                    <Pressable onPress={() => bump(s.key, 1)} hitSlop={8} style={styles.stepBtn} accessibilityRole="button" accessibilityLabel={`${t('a11y.increase')} ${s.label}`}>
                       <MaterialCommunityIcons name="plus" size={15} color={palette.primary} />
                     </Pressable>
                   </View>
@@ -278,7 +282,7 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
             {photo ? (
               <View style={styles.photoWrap}>
                 <Image source={{ uri: photo.uri }} style={styles.photo} />
-                <Pressable style={styles.photoRemove} onPress={() => setPhoto(null)} hitSlop={8}>
+                <Pressable style={styles.photoRemove} onPress={() => setPhoto(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.remove')}>
                   <MaterialCommunityIcons name="close" size={16} color="#fff" />
                 </Pressable>
               </View>
@@ -329,8 +333,7 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
             style={styles.save}>
             {t('checkin.sheet.save')}
           </Button>
-          </Pressable>
-        </Pressable>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -338,7 +341,8 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
 
 const styles = makeStyles(() => ({
   kav: { flex: 1 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  // Fills the space above the sheet (which sits at the bottom of the column).
+  dismissArea: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' },
   sheet: {
     backgroundColor: palette.surface,
     borderTopLeftRadius: 24,
@@ -349,7 +353,9 @@ const styles = makeStyles(() => ({
   },
   handle: { width: 36, height: 4, borderRadius: 999, backgroundColor: palette.outline, alignSelf: 'center', marginBottom: 12 },
   title: { color: palette.textPrimary, fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 14 },
-  scroll: { flexGrow: 0 },
+  // flexShrink lets the list shrink to fit the maxHeight-capped sheet so it can
+  // actually scroll (and keeps the Save button visible) when the form is tall.
+  scroll: { flexShrink: 1 },
   label: { color: palette.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8, marginTop: 6 },
   chips: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: palette.surfaceVariant },

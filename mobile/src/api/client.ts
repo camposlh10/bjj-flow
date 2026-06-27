@@ -12,7 +12,9 @@ export const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1$/, '');
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10_000,
+  // Fail a stalled request in 8s so screens reach an error/retry state quickly
+  // instead of appearing to "never load".
+  timeout: 8_000,
 });
 
 api.interceptors.request.use((config) => {

@@ -219,6 +219,7 @@ function GymView({ gym }: { gym: Gym }) {
               iconColor={palette.textSecondary}
               size={20}
               onPress={() => setMenuVisible(true)}
+              accessibilityLabel={t('a11y.more')}
             />
           }>
           {gym.role === 'OWNER' && (

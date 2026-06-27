@@ -59,6 +59,12 @@ export type UserProfile = {
   following: number;
   isFollowing: boolean;
   isMe: boolean;
+  firstName: string | null;
+  lastName: string | null;
+  gender: string | null;
+  favoriteArt: string | null;
+  trainingStartYear: number | null;
+  age: number | null;
 };
 
 export async function getUserProfile(id: number): Promise<UserProfile> {
@@ -140,6 +146,7 @@ export type Settings = {
   notifyMessages: boolean;
   notifyPromotions: boolean;
   mfaEnabled: boolean;
+  gymBeltSync: boolean;
 };
 
 export async function getSettings(): Promise<Settings> {

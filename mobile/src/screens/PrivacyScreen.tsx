@@ -39,6 +39,18 @@ export default function PrivacyScreen() {
             thumbColor="#fff"
           />
         </View>
+        <View style={[styles.row, styles.rowDivider]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>{t('privacy.beltSync')}</Text>
+            <Text style={styles.hint}>{t('privacy.beltSync.hint')}</Text>
+          </View>
+          <Switch
+            value={s.gymBeltSync}
+            onValueChange={(v) => mut.mutate({ gymBeltSync: v })}
+            trackColor={{ true: palette.primary, false: palette.surfaceVariant }}
+            thumbColor="#fff"
+          />
+        </View>
       </View>
       <Text style={styles.note}>{t('privacy.note')}</Text>
     </ScrollView>
@@ -51,6 +63,7 @@ const styles = makeStyles(() => ({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
   card: { backgroundColor: palette.surface, borderRadius: 14, paddingHorizontal: 16 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 16 },
+  rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: palette.surfaceVariant },
   label: { color: palette.textPrimary, fontSize: 15, fontWeight: '600' },
   hint: { color: palette.textSecondary, fontSize: 12, marginTop: 3 },
   note: { color: palette.textSecondary, fontSize: 12, marginTop: 14, marginHorizontal: 4 },

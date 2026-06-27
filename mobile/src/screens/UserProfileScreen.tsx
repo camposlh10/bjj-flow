@@ -3,7 +3,7 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { ComponentProps, useState } from 'react';
+import { ComponentProps, useLayoutEffect, useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, IconButton, Text } from 'react-native-paper';
 
@@ -28,6 +28,7 @@ import Skeleton from '../components/Skeleton';
 import MedalVisual from '../components/MedalVisual';
 import MetricRing from '../components/MetricRing';
 import { ADULT_BELTS, KIDS_BELTS, beltBySlug, maxStripesFor, rankBarColorFor } from '../constants/belts';
+import { martialArtIcon, martialArtLabel } from '../constants/profile';
 import { competitionStyle } from '../constants/competitions';
 import { TRAINING_MILESTONES, WEEK_MILESTONES, milestoneProgress, nextMilestone } from '../constants/milestones';
 import { t, tf } from '../i18n';
@@ -145,6 +146,35 @@ export default function UserProfileScreen() {
     onError: (e) => Alert.alert(apiErrorMessage(e)),
   });
 
+  // Only on the Profile tab root (no userId param): a home shortcut (left) to the
+  // Início tab and a gear (right) opening Settings in this stack. Skipped when your
+  // own profile is pushed from another stack (e.g. Comunidade), which lacks Settings
+  // and where replacing the back button would trap the user.
+  const isOwnProfileTab = route.params?.userId == null && (profile.data?.isMe ?? true);
+  useLayoutEffect(() => {
+    if (!isOwnProfileTab) return;
+    navigation.setOptions({
+      headerLeft: () => (
+        <IconButton
+          icon="home-outline"
+          iconColor={palette.textPrimary}
+          size={22}
+          onPress={() => navigation.navigate('Home')}
+          accessibilityLabel={t('tabs.home')}
+        />
+      ),
+      headerRight: () => (
+        <IconButton
+          icon="cog-outline"
+          iconColor={palette.textPrimary}
+          size={22}
+          onPress={() => navigation.navigate('Settings')}
+          accessibilityLabel={t('settings.title')}
+        />
+      ),
+    });
+  }, [navigation, isOwnProfileTab]);
+
   if (profile.isLoading || !profile.data) {
     return (
       <View style={styles.skeletonWrap}>
@@ -221,6 +251,28 @@ export default function UserProfileScreen() {
           )}
           <Text style={styles.since}>{tf('profile.since', { date: formatMonthYear(p.joinedAt) })}</Text>
         </View>
+        {(p.favoriteArt || p.city || p.trainingStartYear) && (
+          <View style={styles.metaChips}>
+            {p.favoriteArt && (
+              <View style={styles.metaChip}>
+                <MaterialCommunityIcons name={martialArtIcon(p.favoriteArt)} size={13} color={palette.textSecondary} />
+                <Text style={styles.metaChipText}>{martialArtLabel(p.favoriteArt)}</Text>
+              </View>
+            )}
+            {p.city && (
+              <View style={styles.metaChip}>
+                <MaterialCommunityIcons name="map-marker-outline" size={13} color={palette.textSecondary} />
+                <Text style={styles.metaChipText}>{p.city}</Text>
+              </View>
+            )}
+            {p.trainingStartYear && (
+              <View style={styles.metaChip}>
+                <MaterialCommunityIcons name="calendar-check-outline" size={13} color={palette.textSecondary} />
+                <Text style={styles.metaChipText}>{tf('profile.trainingSince', { y: p.trainingStartYear })}</Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Stats row (Instagram-style) */}
@@ -548,9 +600,9 @@ export default function UserProfileScreen() {
             </View>
             <Text style={styles.sheetLabel}>{t('member.promote.stripes')}</Text>
             <View style={styles.stripesRow}>
-              <IconButton icon="minus" size={20} iconColor={palette.textPrimary} onPress={() => changeStripes(-1)} />
+              <IconButton icon="minus" size={20} iconColor={palette.textPrimary} onPress={() => changeStripes(-1)} accessibilityLabel={t('a11y.decrease')} />
               <Text style={styles.stripesNum}>{stripes}</Text>
-              <IconButton icon="plus" size={20} iconColor={palette.primary} onPress={() => changeStripes(1)} />
+              <IconButton icon="plus" size={20} iconColor={palette.primary} onPress={() => changeStripes(1)} accessibilityLabel={t('a11y.increase')} />
             </View>
             <Button
               mode="contained"
@@ -595,6 +647,9 @@ const styles = makeStyles(() => ({
   subRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
   beltMini: { width: 38 },
   since: { color: palette.textSecondary, fontSize: 12 },
+  metaChips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 10 },
+  metaChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: palette.surface, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  metaChipText: { color: palette.textSecondary, fontSize: 12, fontWeight: '600' },
   statsRow: {
     flexDirection: 'row',
     paddingVertical: 14,

@@ -46,3 +46,69 @@ export async function getPainHistory(limit?: number): Promise<PainHistoryItem[]>
   const { data } = await api.get<PainHistoryItem[]>('/users/me/pain/history', { params: { limit } });
   return data;
 }
+
+// --- Pain assessments (the "Mapa Corporal" pain journal) ---
+
+export type AssessmentArea = {
+  region: string;
+  painType: string | null;
+  intensity: number;
+  note: string | null;
+};
+
+export type PainAssessment = {
+  id: number;
+  assessedOn: string;
+  onsetDate: string | null;
+  trend: string | null;
+  frequency: string | null;
+  relieves: string | null;
+  worsens: string | null;
+  notes: string | null;
+  areas: AssessmentArea[];
+  avgIntensity: number;
+  predominantType: string | null;
+};
+
+export type AssessmentSummary = {
+  id: number;
+  assessedOn: string;
+  areaCount: number;
+  avgIntensity: number;
+  trend: string | null;
+  predominantType: string | null;
+};
+
+export type CreateAssessmentBody = {
+  onsetDate?: string | null;
+  trend?: string | null;
+  frequency?: string | null;
+  relieves?: string | null;
+  worsens?: string | null;
+  notes?: string | null;
+  areas: { region: string; painType?: string | null; intensity: number; note?: string | null }[];
+};
+
+export async function createAssessment(body: CreateAssessmentBody): Promise<PainAssessment> {
+  const { data } = await api.post<PainAssessment>('/users/me/pain/assessments', body);
+  return data;
+}
+
+export async function listAssessments(limit?: number): Promise<AssessmentSummary[]> {
+  const { data } = await api.get<AssessmentSummary[]>('/users/me/pain/assessments', { params: { limit } });
+  return data;
+}
+
+export async function getAssessment(id: number): Promise<PainAssessment> {
+  const { data } = await api.get<PainAssessment>(`/users/me/pain/assessments/${id}`);
+  return data;
+}
+
+export async function getLatestAssessment(): Promise<PainAssessment | null> {
+  const { data } = await api.get<PainAssessment | null>('/users/me/pain/assessments/latest');
+  return data ?? null;
+}
+
+export async function deleteAssessment(id: number): Promise<void> {
+  await api.delete(`/users/me/pain/assessments/${id}`);
+}

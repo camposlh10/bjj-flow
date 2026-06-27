@@ -6,6 +6,7 @@ import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Text, TextInput } from 'react-native-paper';
 
 import { apiErrorMessage } from '../api/auth';
+import QueryState from '../components/QueryState';
 import { enableMfa, disableMfa, enrollMfa, type MfaEnrollResponse } from '../api/mfa';
 import { getSettings } from '../api/users';
 import { t } from '../i18n';
@@ -13,7 +14,7 @@ import { makeStyles, palette } from '../theme/theme';
 
 export default function MfaScreen() {
   const qc = useQueryClient();
-  const { data: settings, isLoading } = useQuery({ queryKey: ['settings'], queryFn: getSettings });
+  const { data: settings, isLoading, isError, refetch } = useQuery({ queryKey: ['settings'], queryFn: getSettings });
 
   const [enroll, setEnroll] = useState<MfaEnrollResponse | null>(null);
   const [code, setCode] = useState('');
@@ -60,7 +61,7 @@ export default function MfaScreen() {
   };
 
   if (isLoading || !settings) {
-    return <ActivityIndicator style={{ marginTop: 48 }} color={palette.primary} />;
+    return <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()} />;
   }
 
   return (

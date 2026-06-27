@@ -173,7 +173,9 @@ export default function ConversationScreen() {
           onPress={() => send.mutate()}
           disabled={!canSend}
           style={[styles.sendBtn, !canSend && styles.sendBtnOff]}
-          hitSlop={6}>
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y.send')}>
           <MaterialCommunityIcons name="arrow-up" size={20} color="#fff" />
         </Pressable>
       </View>

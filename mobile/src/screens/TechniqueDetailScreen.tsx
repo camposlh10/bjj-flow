@@ -5,6 +5,7 @@ import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Text } from 'react-native-paper';
 
 import { getTechnique, toggleTechniqueFavorite } from '../api/techniques';
+import QueryState from '../components/QueryState';
 import { CATEGORY_COLORS, DIFFICULTY_LABELS, categoryLabel } from '../constants/techniques';
 import { t } from '../i18n';
 import type { HomeStackParamList } from '../navigation/HomeNavigator';
@@ -34,7 +35,7 @@ export default function TechniqueDetailScreen() {
   const qc = useQueryClient();
   const { id } = route.params;
 
-  const { data: tech, isLoading } = useQuery({ queryKey: ['technique', id], queryFn: () => getTechnique(id) });
+  const { data: tech, isLoading, isError, refetch } = useQuery({ queryKey: ['technique', id], queryFn: () => getTechnique(id) });
 
   const fav = useMutation({
     mutationFn: () => toggleTechniqueFavorite(id),
@@ -46,7 +47,7 @@ export default function TechniqueDetailScreen() {
   });
 
   if (isLoading || !tech) {
-    return <ActivityIndicator style={{ marginTop: 48 }} color={palette.primary} />;
+    return <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()} />;
   }
 
   const belt = beltLabel(tech.beltSlug);

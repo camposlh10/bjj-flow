@@ -40,6 +40,7 @@ export default function MuralFeed({ gym }: { gym: Gym }) {
         iconColor={palette.textSecondary}
         size={22}
         onPress={() => navigation.navigate('SavedPosts')}
+        accessibilityLabel={t('a11y.savedPosts')}
       />
     </View>
   );

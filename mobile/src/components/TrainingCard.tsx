@@ -1,10 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, Share, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
-import type { FeedItem } from '../api/feed';
+import type { FeedItem, FeedPage } from '../api/feed';
 import { shareFeedItem, toggleFeedLike } from '../api/feed';
 import { resolveMediaUrl } from '../api/posts';
 import ActionButton from './ActionButton';
@@ -73,21 +73,31 @@ export default function TrainingCard({
   showActions?: boolean;
 }) {
   const { author } = item;
-  const finishes = item.submissions.filter((s) => s.direction === 'HIT');
-  const openProfile = onPressAuthor ? () => onPressAuthor(author.id) : undefined;
+  // Defensive: tolerate a feed item that arrives without a submissions array so one
+  // malformed row can't crash the whole feed (the app-wide ErrorBoundary).
+  const finishes = (item.submissions ?? []).filter((s) => s.direction === 'HIT');
+  const openProfile = onPressAuthor && author ? () => onPressAuthor(author.id) : undefined;
 
   const queryClient = useQueryClient();
-  // Patch just this item in the cached feed instead of refetching the whole list —
-  // refetching on every tap caused the press lag.
+  // Patch just this item in the cached (paginated) feed instead of refetching the
+  // whole list — refetching on every tap caused the press lag.
   const patch = (fn: (it: FeedItem) => FeedItem) =>
-    queryClient.setQueryData<FeedItem[]>(['communityFeed'], (old) =>
-      old?.map((it) => (it.checkInId === item.checkInId ? fn(it) : it)),
+    queryClient.setQueryData<InfiniteData<FeedPage>>(['communityFeed'], (old) =>
+      old
+        ? {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((it) => (it.checkInId === item.checkInId ? fn(it) : it)),
+            })),
+          }
+        : old,
     );
 
   const like = useMutation({
     mutationFn: () => toggleFeedLike(item.checkInId),
     onMutate: () => {
-      const prev = queryClient.getQueryData<FeedItem[]>(['communityFeed']);
+      const prev = queryClient.getQueryData<InfiniteData<FeedPage>>(['communityFeed']);
       patch((it) => ({ ...it, likedByMe: !it.likedByMe, likeCount: it.likeCount + (it.likedByMe ? -1 : 1) }));
       return { prev };
     },
@@ -211,13 +221,15 @@ export default function TrainingCard({
             count={item.likeCount}
             color={item.likedByMe ? palette.primary : palette.textSecondary}
             onPress={() => like.mutate()}
+            accessibilityLabel={t('a11y.like')}
           />
           <ActionButton
             icon="comment-outline"
             count={item.commentCount}
             onPress={() => onPressComment?.(item)}
+            accessibilityLabel={t('a11y.comment')}
           />
-          <ActionButton icon="share-outline" count={item.shareCount} onPress={onShare} />
+          <ActionButton icon="share-outline" count={item.shareCount} onPress={onShare} accessibilityLabel={t('a11y.share')} />
         </View>
       )}
     </View>

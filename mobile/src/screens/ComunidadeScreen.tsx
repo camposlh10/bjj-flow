@@ -1,9 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, TextInput, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,12 +32,17 @@ export default function ComunidadeScreen() {
   const q = query.trim();
   const searching = q.length >= 2;
 
-  const feed = useQuery({ queryKey: ['communityFeed'], queryFn: getCommunityFeed });
+  const feed = useInfiniteQuery({
+    queryKey: ['communityFeed'],
+    queryFn: ({ pageParam }) => getCommunityFeed(pageParam),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
   const results = useQuery({ queryKey: ['userSearch', q], queryFn: () => searchUsers(q), enabled: searching });
   const notifications = useQuery({ queryKey: ['notifications'], queryFn: () => getNotifications() });
   const unread = notifications.data?.unread ?? 0;
 
-  const items = Array.isArray(feed.data) ? feed.data : [];
+  const items = feed.data?.pages.flatMap((p) => p.items) ?? [];
   const users = Array.isArray(results.data) ? results.data : [];
 
   const soon = () => Alert.alert(t('gym.soon'));
@@ -142,10 +147,17 @@ export default function ComunidadeScreen() {
         </Animated.View>
       )}
       ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+      onEndReachedThreshold={0.5}
+      onEndReached={() => {
+        if (feed.hasNextPage && !feed.isFetchingNextPage) feed.fetchNextPage();
+      }}
       refreshControl={
         <RefreshControl refreshing={feed.isRefetching} onRefresh={() => feed.refetch()} tintColor={palette.primary} />
       }
       ListHeaderComponent={Header}
+      ListFooterComponent={
+        feed.isFetchingNextPage ? <ActivityIndicator style={{ marginVertical: 16 }} color={palette.primary} /> : null
+      }
       ListEmptyComponent={
         feed.isLoading ? (
           <View style={{ gap: 12 }}>

@@ -15,12 +15,14 @@ export default function ActionButton({
   color = palette.textSecondary,
   size = 17,
   onPress,
+  accessibilityLabel,
 }: {
   icon: IconName;
   count?: number;
   color?: string;
   size?: number;
   onPress: () => void;
+  accessibilityLabel?: string;
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -35,6 +37,8 @@ export default function ActionButton({
         scale.value = withSpring(1, { damping: 8, stiffness: 240 });
       }}
       hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       style={[styles.btn, animStyle]}>
       <MaterialCommunityIcons name={icon} size={size} color={color} />
       {count !== undefined && <Text style={[styles.count, { color }]}>{count}</Text>}

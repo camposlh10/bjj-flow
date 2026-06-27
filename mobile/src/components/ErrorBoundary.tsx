@@ -1,6 +1,7 @@
 import { Component, ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
+import { t } from '../i18n';
 import { makeStyles, palette } from '../theme/theme';
 
 type Props = { children: ReactNode };
@@ -20,12 +21,19 @@ export default class ErrorBoundary extends Component<Props, State> {
     this.setState({ stack: info.componentStack ?? null });
   }
 
+  // Clear the error so the tree re-mounts (navigation resets to its root) — lets a
+  // one-off screen crash recover instead of leaving the whole app stuck/blank.
+  reset = () => this.setState({ error: null, stack: null });
+
   render() {
     if (this.state.error) {
       return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
           <Text style={styles.title}>App error</Text>
           <Text style={styles.msg}>{this.state.error.message}</Text>
+          <Pressable style={styles.retry} onPress={this.reset}>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
+          </Pressable>
           <Text style={styles.stack}>{this.state.stack ?? this.state.error.stack ?? ''}</Text>
         </ScrollView>
       );
@@ -39,5 +47,7 @@ const styles = makeStyles(() => ({
   content: { padding: 24, paddingTop: 80 },
   title: { color: palette.primary, fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   msg: { color: palette.textPrimary, fontSize: 14, marginBottom: 16 },
+  retry: { alignSelf: 'flex-start', backgroundColor: palette.primary, borderRadius: 999, paddingHorizontal: 20, paddingVertical: 10, marginBottom: 20 },
+  retryText: { color: '#fff', fontWeight: '700' },
   stack: { color: palette.textSecondary, fontSize: 11, lineHeight: 16 },
 }));

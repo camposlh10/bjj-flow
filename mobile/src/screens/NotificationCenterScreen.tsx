@@ -45,7 +45,7 @@ export default function NotificationCenterScreen() {
   const navigation = useNavigation<Nav>();
   const qc = useQueryClient();
   const [filter, setFilter] = useState<NotificationType | null>(null);
-  const { data, isLoading } = useQuery({ queryKey: ['notifications'], queryFn: () => getNotifications() });
+  const { data, isLoading, refetch } = useQuery({ queryKey: ['notifications'], queryFn: () => getNotifications() });
 
   // Generate fresh data-driven insights on open (idempotent per day on the backend).
   useEffect(() => {
@@ -71,10 +71,27 @@ export default function NotificationCenterScreen() {
     else if (p.startsWith('insight:')) navigation.navigate('Submissions', {});
   };
 
-  if (isLoading || !data) {
+  if (isLoading && !data) {
     return <ActivityIndicator style={{ marginTop: 48 }} color={palette.primary} />;
   }
 
+  // Defensive: a failed request or an unexpected response shape must never crash
+  // the screen (the app-wide ErrorBoundary would blank everything) or spin forever
+  // — show a retry state instead of a black screen.
+  if (!data || !Array.isArray(data.items)) {
+    return (
+      <View style={styles.errorWrap}>
+        <MaterialCommunityIcons name="cloud-off-outline" size={44} color={palette.surfaceVariant} />
+        <Text style={styles.errorTitle}>{t('notifications.error')}</Text>
+        <Pressable style={styles.retryBtn} onPress={() => refetch()}>
+          <MaterialCommunityIcons name="refresh" size={16} color={palette.primary} />
+          <Text style={styles.retryText}>{t('common.retry')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const unread = data.unread ?? 0;
   const present = CAT_ORDER.filter((c) => data.items.some((n) => n.type === c));
   const items = filter ? data.items.filter((n) => n.type === filter) : data.items;
 
@@ -88,7 +105,7 @@ export default function NotificationCenterScreen() {
           ))}
         </ScrollView>
       </View>
-      {data.unread > 0 && (
+      {unread > 0 && (
         <Pressable style={styles.markAll} onPress={() => readAll.mutate()}>
           <MaterialCommunityIcons name="check-all" size={16} color={palette.primary} />
           <Text style={styles.markAllText}>{t('notifications.markAll')}</Text>
@@ -150,4 +167,17 @@ const styles = makeStyles(() => ({
   rowTime: { color: palette.textSecondary, fontSize: 11, marginTop: 4 },
   dot: { width: 9, height: 9, borderRadius: 5 },
   empty: { color: palette.textSecondary, textAlign: 'center', marginTop: 60 },
+  errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 24 },
+  errorTitle: { color: palette.textSecondary, fontSize: 14, textAlign: 'center' },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: palette.surface,
+  },
+  retryText: { color: palette.primary, fontWeight: '700', fontSize: 13 },
 }));

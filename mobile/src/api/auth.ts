@@ -17,6 +17,13 @@ export type RegisterPayload = {
   email: string;
   password: string;
   displayName: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  gender?: string;
+  city?: string;
+  favoriteArt?: string;
+  trainingStartYear?: number;
   age: number;
   beltSlug: string;
   stripes?: number;

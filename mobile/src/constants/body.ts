@@ -3,12 +3,15 @@ import { getActiveLocale } from '../i18n';
 export type BodyView = 'front' | 'back';
 export type RegionNode = { key: string; x: number; y: number };
 
-// body-anatomy.png is 1774x887 (two 887x887 halves). Each figure's bounding box
-// within its half (measured by pixel scan) — used to center the figure in the view.
-export const HALF_SIZE = 887;
+// body-silhouette.png is 1402x1122: the front figure sits on the LEFT, the back
+// on the RIGHT (separated by a background gap). Each figure's bounding box is in
+// ABSOLUTE image pixels, head-top to feet-bottom (measured by pixel scan). BodyMap
+// scales each figure to the view width and centers it, so the source image does
+// not need to be a 2:1 two-halves layout.
+export const BODY_IMAGE_SIZE = { width: 1402, height: 1122 };
 export const FIGURE_BOX: Record<BodyView, { left: number; right: number; top: number; bottom: number }> = {
-  front: { left: 372, right: 849, top: 15, bottom: 867 },
-  back: { left: 36, right: 507, top: 15, bottom: 864 },
+  front: { left: 137, right: 627, top: 27, bottom: 1053 },
+  back: { left: 749, right: 1244, top: 27, bottom: 1042 },
 };
 
 // Hotspot positions as FRACTIONS (0-1) WITHIN the figure box: x 0=left edge (hand)

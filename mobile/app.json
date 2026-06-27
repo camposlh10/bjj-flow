@@ -8,7 +8,8 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0D0D10",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.luizhsc10.bjjflowmobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,7 +27,22 @@
     "plugins": [
       "expo-font",
       "expo-secure-store",
-      "expo-video"
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O BJJ Flow acessa suas fotos para você definir avatar e banner e registrar seus treinos.",
+          "cameraPermission": "O BJJ Flow usa a câmera para você adicionar fotos ao seu perfil e treinos."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "O BJJ Flow acessa suas fotos para anexá-las aos seus treinos e à academia.",
+          "savePhotosPermission": "O BJJ Flow salva fotos e vídeos na sua galeria.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
     ],
     "extra": {
       "eas": {
