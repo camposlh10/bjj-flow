@@ -15,6 +15,11 @@ server:
   # dev machine — sharing 8081 made API calls silently hit Metro when Expo
   # started first. Keep this in sync with API_BASE_URL in the mobile client.ts.
   port: ${PORT:8090}
+  # Gzip JSON responses over ~1KB — large transfer savings on feeds and lists.
+  compression:
+    enabled: true
+    mime-types: application/json,application/hal+json,text/plain,text/css,application/javascript
+    min-response-size: 1024
 
 app:
   jwt:
@@ -53,6 +58,10 @@ spring:
     console:
       enabled: true
       path: /h2-console
+app:
+  # Dev/testing backdoors (role/verify/pro toggles, seed bot) are ON locally only.
+  # Production runs the postgres profile, which does NOT set this → endpoints 404.
+  dev-tools: true
 
 ---
 # --- postgres profile: real PostgreSQL (local install or docker-compose) ---

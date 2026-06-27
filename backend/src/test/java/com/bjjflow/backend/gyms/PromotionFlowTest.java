@@ -2,6 +2,7 @@ package com.bjjflow.backend.gyms;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -120,5 +121,48 @@ class PromotionFlowTest {
         mockMvc.perform(get("/api/v1/users/me").header("Authorization", auth(student[0])))
                 .andExpect(jsonPath("$.belt.namePt").value("Roxa"))
                 .andExpect(jsonPath("$.belt.stripes").value(1));
+    }
+
+    @Test
+    void beltSyncOff_updatesGymBeltButNotProfile() throws Exception {
+        String[] owner = register("syncowner@bjjflow.com", "adult-black");
+        String code = JsonPath.read(mockMvc.perform(post("/api/v1/gyms")
+                .header("Authorization", auth(owner[0]))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Academia Sync\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), "$.inviteCode");
+
+        String[] student = register("syncaluno@bjjflow.com", "adult-blue");
+        mockMvc.perform(post("/api/v1/gyms/join").header("Authorization", auth(student[0]))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"inviteCode\": \"%s\"}".formatted(code)))
+                .andExpect(status().isOk());
+
+        // student opts out of letting the gym change their public profile belt
+        mockMvc.perform(put("/api/v1/users/me/settings").header("Authorization", auth(student[0]))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"gymBeltSync\": false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gymBeltSync").value(false));
+
+        // owner promotes to purple 1 -> the gym's view of the member reflects it
+        mockMvc.perform(post("/api/v1/gyms/me/members/" + student[1] + "/promote")
+                .header("Authorization", auth(owner[0]))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"beltSlug\": \"adult-purple\", \"stripes\": 1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.belt.slug").value("adult-purple"))
+                .andExpect(jsonPath("$.belt.stripes").value(1));
+
+        // the members list shows the gym-local belt (purple)
+        mockMvc.perform(get("/api/v1/gyms/me/members").header("Authorization", auth(owner[0])))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.userId == %s)].belt.slug".formatted(student[1]))
+                        .value(org.hamcrest.Matchers.contains("adult-purple")));
+
+        // but the student's PROFILE belt is untouched — still blue, 2 stripes
+        mockMvc.perform(get("/api/v1/users/me").header("Authorization", auth(student[0])))
+                .andExpect(jsonPath("$.belt.namePt").value("Azul"))
+                .andExpect(jsonPath("$.belt.stripes").value(2));
     }
 }

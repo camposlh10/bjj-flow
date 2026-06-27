@@ -84,7 +84,7 @@ class AccountSettingsTest {
                 .content("{\"date\": \"%s\", \"durationMinutes\": 90, \"visibility\": \"PUBLIC\"}".formatted(today)))
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/v1/feed").header("Authorization", auth(b)))
-                .andExpect(jsonPath("$[?(@.author.displayName == 'priv-a')]")
+                .andExpect(jsonPath("$.items[?(@.author.displayName == 'priv-a')]")
                         .value(org.hamcrest.Matchers.hasSize(1)));
         mockMvc.perform(get("/api/v1/users/search").param("q", "priv-a").header("Authorization", auth(b)))
                 .andExpect(jsonPath("$.length()").value(1));
@@ -99,7 +99,7 @@ class AccountSettingsTest {
 
         // now hidden from the feed + search
         mockMvc.perform(get("/api/v1/feed").header("Authorization", auth(b)))
-                .andExpect(jsonPath("$[?(@.author.displayName == 'priv-a')]")
+                .andExpect(jsonPath("$.items[?(@.author.displayName == 'priv-a')]")
                         .value(org.hamcrest.Matchers.hasSize(0)));
         mockMvc.perform(get("/api/v1/users/search").param("q", "priv-a").header("Authorization", auth(b)))
                 .andExpect(jsonPath("$.length()").value(0));

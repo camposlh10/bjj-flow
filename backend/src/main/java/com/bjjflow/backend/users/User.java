@@ -35,9 +35,23 @@ public class User {
     @Column(name = "display_name")
     private String displayName;
 
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
     private String username;
 
     private Integer age;
+
+    private String gender;
+
+    @Column(name = "favorite_art")
+    private String favoriteArt;
+
+    @Column(name = "training_start_year")
+    private Integer trainingStartYear;
 
     @Column(name = "weight_kg", precision = 5, scale = 2)
     private BigDecimal weightKg;
@@ -89,6 +103,9 @@ public class User {
 
     @Column(name = "notify_promotions")
     private Boolean notifyPromotions = true;
+
+    @Column(name = "gym_belt_sync")
+    private Boolean gymBeltSync = true;
 
     @Column(name = "mfa_enabled")
     private Boolean mfaEnabled = false;

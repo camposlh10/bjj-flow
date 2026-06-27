@@ -21,6 +21,7 @@ import com.bjjflow.backend.common.ApiException;
 import com.bjjflow.backend.feed.CommunityFeedDtos.FeedAuthorDto;
 import com.bjjflow.backend.feed.CommunityFeedDtos.FeedCommentDto;
 import com.bjjflow.backend.feed.CommunityFeedDtos.FeedItemDto;
+import com.bjjflow.backend.feed.CommunityFeedDtos.FeedPage;
 import com.bjjflow.backend.feed.CommunityFeedDtos.FeedSubmissionDto;
 import com.bjjflow.backend.feed.CommunityFeedDtos.LikeResponse;
 import com.bjjflow.backend.feed.CommunityFeedDtos.ShareResponse;
@@ -48,11 +49,12 @@ public class CommunityFeedService {
     private final com.bjjflow.backend.notifications.NotificationService notificationService;
 
     @Transactional(readOnly = true)
-    public List<FeedItemDto> feed(Long requesterId, int limit) {
-        List<CheckIn> checkIns = checkInRepository
-                .findByVisibilityOrderByCreatedAtDesc("PUBLIC", PageRequest.of(0, limit));
+    public FeedPage feed(Long requesterId, Long cursor, int limit) {
+        List<CheckIn> checkIns = cursor == null
+                ? checkInRepository.findByVisibilityOrderByIdDesc("PUBLIC", PageRequest.of(0, limit))
+                : checkInRepository.findByVisibilityAndIdLessThanOrderByIdDesc("PUBLIC", cursor, PageRequest.of(0, limit));
         if (checkIns.isEmpty()) {
-            return List.of();
+            return new FeedPage(List.of(), null);
         }
 
         Set<Long> userIds = checkIns.stream().map(CheckIn::getUserId).collect(Collectors.toSet());
@@ -98,7 +100,10 @@ public class CommunityFeedService {
                     c.getShareCount() == null ? 0 : c.getShareCount(),
                     liked.contains(c.getId())));
         }
-        return items;
+        // Continue the next page from the OLDEST fetched id (not the last shown one)
+        // so private-author rows we filtered out are never skipped or duplicated.
+        Long nextCursor = checkIns.size() == limit ? checkIns.get(checkIns.size() - 1).getId() : null;
+        return new FeedPage(items, nextCursor);
     }
 
     @Transactional

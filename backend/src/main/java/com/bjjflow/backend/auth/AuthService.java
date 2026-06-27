@@ -48,10 +48,16 @@ public class AuthService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setDisplayName(request.displayName().trim());
+        user.setFirstName(blankToNull(request.firstName()));
+        user.setLastName(blankToNull(request.lastName()));
+        user.setGender(blankToNull(request.gender()));
+        user.setCity(blankToNull(request.city()));
+        user.setFavoriteArt(blankToNull(request.favoriteArt()));
+        user.setTrainingStartYear(request.trainingStartYear());
         user.setAge(request.age());
         user.setWeightKg(request.weightKg());
         user.setHeightCm(request.heightCm());
-        user.setUsername(generateUsername(request.displayName()));
+        user.setUsername(resolveUsername(request.username(), request.displayName()));
         user = userRepository.save(user);
 
         UserBeltProgress progress = new UserBeltProgress();
@@ -115,6 +121,26 @@ public class AuthService {
 
     private UserBeltProgress findProgress(Long userId) {
         return beltProgressRepository.findByUserId(userId).orElse(null);
+    }
+
+    /** Use the requested @handle (validated + unique) or auto-generate one from the name. */
+    private String resolveUsername(String requested, String displayName) {
+        if (requested == null || requested.isBlank()) {
+            return generateUsername(displayName);
+        }
+        String uname = requested.trim().toLowerCase(Locale.ROOT);
+        if (!Usernames.isValid(uname)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_USERNAME",
+                    "Username must be 3-30 chars: letters, numbers or underscore");
+        }
+        if (userRepository.existsByUsernameIgnoreCase(uname)) {
+            throw new ApiException(HttpStatus.CONFLICT, "USERNAME_TAKEN", "Username is already taken");
+        }
+        return uname;
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
     }
 
     /** A friendly unique @handle from the display name; appends a counter on collision. */

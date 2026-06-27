@@ -64,7 +64,7 @@ public class ProfileService {
         return new ProfileDtos.SettingsDto(u.getEmail(), u.getUsername(), Boolean.TRUE.equals(u.getPro()),
                 Boolean.TRUE.equals(u.getPrivateAccount()), Boolean.TRUE.equals(u.getNotifyCommunity()),
                 Boolean.TRUE.equals(u.getNotifyMessages()), Boolean.TRUE.equals(u.getNotifyPromotions()),
-                Boolean.TRUE.equals(u.getMfaEnabled()));
+                Boolean.TRUE.equals(u.getMfaEnabled()), !Boolean.FALSE.equals(u.getGymBeltSync()));
     }
 
     @Transactional
@@ -81,6 +81,9 @@ public class ProfileService {
         }
         if (req.notifyPromotions() != null) {
             u.setNotifyPromotions(req.notifyPromotions());
+        }
+        if (req.gymBeltSync() != null) {
+            u.setGymBeltSync(req.gymBeltSync());
         }
         userRepository.save(u);
         return settings(userId);
@@ -193,7 +196,13 @@ public class ProfileService {
                 followRepository.countByFollowingId(targetId),
                 followRepository.countByFollowerId(targetId),
                 !viewerId.equals(targetId) && followRepository.existsByFollowerIdAndFollowingId(viewerId, targetId),
-                viewerId.equals(targetId));
+                viewerId.equals(targetId),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getGender(),
+                user.getFavoriteArt(),
+                user.getTrainingStartYear(),
+                user.getAge());
     }
 
     private GymSummaryDto gymSummary(com.bjjflow.backend.gyms.Gym g, String role) {

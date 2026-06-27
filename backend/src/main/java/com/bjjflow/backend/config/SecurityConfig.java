@@ -38,6 +38,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/health").permitAll()
+                        // The error dispatch must be reachable, else any unhandled exception
+                        // surfaces as a misleading 401 instead of its real status.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/belt-systems/**").permitAll()
                         // Local media files (dev). Cloud storage uses signed URLs instead.

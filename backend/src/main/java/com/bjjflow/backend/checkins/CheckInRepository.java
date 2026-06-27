@@ -12,8 +12,12 @@ public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
 
     List<CheckIn> findAllByUserIdAndCheckDateBetweenOrderByCheckDateAsc(Long userId, LocalDate from, LocalDate to);
 
-    /** Newest public training sessions across all users, for the global Comunidade feed. */
-    List<CheckIn> findByVisibilityOrderByCreatedAtDesc(String visibility, Pageable pageable);
+    /** First page of the global Comunidade feed: newest public sessions (id desc ==
+     *  insertion order == newest first, and gives a clean integer cursor). */
+    List<CheckIn> findByVisibilityOrderByIdDesc(String visibility, Pageable pageable);
+
+    /** Next page: public sessions older than the given check-in id (cursor pagination). */
+    List<CheckIn> findByVisibilityAndIdLessThanOrderByIdDesc(String visibility, Long id, Pageable pageable);
 
     long countByUserId(Long userId);
 

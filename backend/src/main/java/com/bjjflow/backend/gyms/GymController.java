@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class GymController {
 
     private final GymService gymService;
+    private final com.bjjflow.backend.common.DevTools devTools;
 
     private static Long userId(Authentication auth) {
         return Long.parseLong(auth.getName());
@@ -52,6 +53,7 @@ public class GymController {
     // TEMP testing aid — see GymService.setMyRole
     @PostMapping("/me/role")
     public GymDto setRole(Authentication auth, @Valid @RequestBody SetRoleRequest request) {
+        devTools.require();
         return gymService.setMyRole(userId(auth), request.role());
     }
 
@@ -87,6 +89,7 @@ public class GymController {
     // TEMP testing aid — see GymService.toggleVerified
     @PostMapping("/me/verify")
     public GymDto toggleVerified(Authentication auth) {
+        devTools.require();
         return gymService.toggleVerified(userId(auth));
     }
 

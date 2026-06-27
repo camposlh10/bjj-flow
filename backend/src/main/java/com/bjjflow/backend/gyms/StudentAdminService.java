@@ -54,7 +54,15 @@ public class StudentAdminService {
         User student = userRepository.findById(studentUserId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "User not found"));
 
-        BeltDto belt = beltProgressRepository.findByUserId(studentUserId).map(StudentAdminService::beltOf).orElse(null);
+        // Prefer the belt this gym assigned the student; fall back to their profile
+        // belt when the gym hasn't graded them yet (or when belt sync is on, both match).
+        BeltDto belt;
+        if (membership.getBeltRankId() != null) {
+            BeltRank r = beltRankRepository.findById(membership.getBeltRankId()).orElse(null);
+            belt = r == null ? null : beltOf(r, membership.getStripes() == null ? 0 : membership.getStripes());
+        } else {
+            belt = beltProgressRepository.findByUserId(studentUserId).map(StudentAdminService::beltOf).orElse(null);
+        }
 
         // Graduation counter: PRESENT class attendances since the last promotion (or ever).
         BeltPromotion lastPromo = beltPromotionRepository.findFirstByUserIdOrderByCreatedAtDesc(studentUserId)
@@ -176,7 +184,10 @@ public class StudentAdminService {
     }
 
     private static BeltDto beltOf(UserBeltProgress p) {
-        BeltRank r = p.getBeltRank();
-        return new BeltDto(r.getSlug(), r.getName(), r.getNamePt(), r.getColorHex(), p.getStripes());
+        return beltOf(p.getBeltRank(), p.getStripes());
+    }
+
+    private static BeltDto beltOf(BeltRank r, int stripes) {
+        return new BeltDto(r.getSlug(), r.getName(), r.getNamePt(), r.getColorHex(), stripes);
     }
 }

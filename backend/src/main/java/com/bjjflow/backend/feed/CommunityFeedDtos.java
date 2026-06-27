@@ -37,6 +37,10 @@ public class CommunityFeedDtos {
             boolean likedByMe) {
     }
 
+    /** A page of the feed plus the cursor to fetch the next (older) page (null = end). */
+    public record FeedPage(List<FeedItemDto> items, Long nextCursor) {
+    }
+
     public record FeedCommentDto(Long id, FeedAuthorDto author, String content, Instant createdAt) {
     }
 

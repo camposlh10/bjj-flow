@@ -124,7 +124,7 @@ class NotificationFlowTest {
         // B likes + comments on it -> A gets SOCIAL notifications
         String feed = mockMvc.perform(get("/api/v1/feed").header("Authorization", auth(b[0])))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        int ciId = JsonPath.read(feed, "$[0].checkInId");
+        int ciId = JsonPath.read(feed, "$.items[0].checkInId");
         mockMvc.perform(post("/api/v1/feed/" + ciId + "/like").header("Authorization", auth(b[0])))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/v1/feed/" + ciId + "/comments").header("Authorization", auth(b[0]))

@@ -60,7 +60,7 @@ class DevBotFlowTest {
 
         // bot's public trainings show on the global feed
         mockMvc.perform(get("/api/v1/feed").header("Authorization", auth(owner)))
-                .andExpect(jsonPath("$[?(@.author.id == %s)]".formatted(botId))
+                .andExpect(jsonPath("$.items[?(@.author.id == %s)]".formatted(botId))
                         .value(org.hamcrest.Matchers.hasSize(org.hamcrest.Matchers.greaterThanOrEqualTo(1))));
 
         // the instructor sees seeded class attendance for the bot

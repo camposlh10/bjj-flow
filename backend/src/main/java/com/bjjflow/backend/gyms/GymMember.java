@@ -35,6 +35,14 @@ public class GymMember {
     @Enumerated(EnumType.STRING)
     private GymRole role = GymRole.MEMBER;
 
+    // Belt this gym has assigned the member. Null until the gym first grades them,
+    // in which case displays fall back to the member's profile belt.
+    @Column(name = "belt_rank_id")
+    private Long beltRankId;
+
+    @Column(name = "stripes")
+    private Integer stripes = 0;
+
     @Column(name = "joined_at")
     private Instant joinedAt;
 

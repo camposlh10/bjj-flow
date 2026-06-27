@@ -20,11 +20,12 @@ public class ProfileDtos {
     }
 
     public record SettingsDto(String email, String username, boolean pro, boolean privateAccount,
-            boolean notifyCommunity, boolean notifyMessages, boolean notifyPromotions, boolean mfaEnabled) {
+            boolean notifyCommunity, boolean notifyMessages, boolean notifyPromotions, boolean mfaEnabled,
+            boolean gymBeltSync) {
     }
 
     public record UpdateSettingsRequest(Boolean privateAccount, Boolean notifyCommunity, Boolean notifyMessages,
-            Boolean notifyPromotions) {
+            Boolean notifyPromotions, Boolean gymBeltSync) {
     }
 
     public record ChangePasswordRequest(
@@ -72,7 +73,13 @@ public class ProfileDtos {
             long followers,
             long following,
             boolean isFollowing,
-            boolean isMe) {
+            boolean isMe,
+            String firstName,
+            String lastName,
+            String gender,
+            String favoriteArt,
+            Integer trainingStartYear,
+            Integer age) {
     }
 
     public record UpdateProfileRequest(

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bjjflow.backend.feed.CommunityFeedDtos.CreateCommentRequest;
 import com.bjjflow.backend.feed.CommunityFeedDtos.FeedCommentDto;
-import com.bjjflow.backend.feed.CommunityFeedDtos.FeedItemDto;
+import com.bjjflow.backend.feed.CommunityFeedDtos.FeedPage;
 import com.bjjflow.backend.feed.CommunityFeedDtos.LikeResponse;
 import com.bjjflow.backend.feed.CommunityFeedDtos.ShareResponse;
 
@@ -31,11 +31,14 @@ public class CommunityFeedController {
         return Long.parseLong(auth.getName());
     }
 
-    /** Global Comunidade feed: newest public training sessions across all users. */
+    /** Global Comunidade feed: newest public sessions, cursor-paginated (pass the
+     *  previous page's nextCursor to load older items). */
     @GetMapping
-    public List<FeedItemDto> feed(Authentication auth, @RequestParam(defaultValue = "30") int limit) {
+    public FeedPage feed(Authentication auth,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int limit) {
         int capped = Math.min(Math.max(limit, 1), 50);
-        return feedService.feed(userId(auth), capped);
+        return feedService.feed(userId(auth), cursor, capped);
     }
 
     @PostMapping("/{id}/like")

@@ -71,13 +71,13 @@ class CommunityFeedFlowTest {
         // Feed shows exactly the public session, Strava-style fields populated
         mockMvc.perform(get("/api/v1/feed").header("Authorization", auth(lurker)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].sessionType").value("NOGI"))
-                .andExpect(jsonPath("$[0].durationMinutes").value(90))
-                .andExpect(jsonPath("$[0].landed").value(2))
-                .andExpect(jsonPath("$[0].conceded").value(1))
-                .andExpect(jsonPath("$[0].author.displayName").value("feedshare"))
-                .andExpect(jsonPath("$[0].author.belt.slug").value("adult-blue"));
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].sessionType").value("NOGI"))
+                .andExpect(jsonPath("$.items[0].durationMinutes").value(90))
+                .andExpect(jsonPath("$.items[0].landed").value(2))
+                .andExpect(jsonPath("$.items[0].conceded").value(1))
+                .andExpect(jsonPath("$.items[0].author.displayName").value("feedshare"))
+                .andExpect(jsonPath("$.items[0].author.belt.slug").value("adult-blue"));
     }
 
     @Test
@@ -119,10 +119,10 @@ class CommunityFeedFlowTest {
 
         // feed reflects counts + likedByMe for the viewer
         mockMvc.perform(get("/api/v1/feed").header("Authorization", auth(viewer)))
-                .andExpect(jsonPath("$[0].likeCount").value(1))
-                .andExpect(jsonPath("$[0].commentCount").value(1))
-                .andExpect(jsonPath("$[0].shareCount").value(1))
-                .andExpect(jsonPath("$[0].likedByMe").value(true));
+                .andExpect(jsonPath("$.items[0].likeCount").value(1))
+                .andExpect(jsonPath("$.items[0].commentCount").value(1))
+                .andExpect(jsonPath("$.items[0].shareCount").value(1))
+                .andExpect(jsonPath("$.items[0].likedByMe").value(true));
 
         // unliking returns to zero
         mockMvc.perform(post("/api/v1/feed/" + checkInId + "/like").header("Authorization", auth(viewer)))
@@ -159,6 +159,33 @@ class CommunityFeedFlowTest {
 
         mockMvc.perform(get("/api/v1/feed").header("Authorization", auth(u)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.items.length()").value(0));
+    }
+
+    @Test
+    void feedPaginatesWithCursor() throws Exception {
+        String today = LocalDate.now().toString();
+        String u = register("feedpage@bjjflow.com");
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(post("/api/v1/checkins")
+                    .header("Authorization", auth(u))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"date\": \"%s\", \"durationMinutes\": 60, \"visibility\": \"PUBLIC\"}".formatted(today)))
+                    .andExpect(status().isOk());
+        }
+
+        // Page 1: 2 of 3, with a cursor to continue.
+        String page1 = mockMvc.perform(get("/api/v1/feed?limit=2").header("Authorization", auth(u)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.nextCursor").isNumber())
+                .andReturn().getResponse().getContentAsString();
+        long cursor = ((Number) JsonPath.read(page1, "$.nextCursor")).longValue();
+
+        // Page 2: the remaining 1, no further cursor.
+        mockMvc.perform(get("/api/v1/feed?limit=2&cursor=" + cursor).header("Authorization", auth(u)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.nextCursor").isEmpty());
     }
 }

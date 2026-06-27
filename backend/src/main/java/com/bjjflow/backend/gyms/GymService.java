@@ -130,7 +130,7 @@ public class GymService {
         List<GymMember> members = gymMemberRepository.findAllByGymId(mine.getGymId());
         List<Long> ids = members.stream().map(GymMember::getUserId).toList();
         java.util.Map<Long, String> names = batchNames(ids);
-        java.util.Map<Long, BeltSummary> belts = batchBelts(ids);
+        java.util.Map<Long, BeltSummary> belts = batchBelts(members);
         java.util.Map<Long, java.time.Instant> lastPromos = batchLastPromotions(ids);
         java.util.Map<Long, Long> attended = new java.util.HashMap<>();
         for (Object[] row : classAttendanceRepository.attendanceTimesForGym(mine.getGymId())) {
@@ -159,12 +159,40 @@ public class GymService {
         return map;
     }
 
-    private java.util.Map<Long, BeltSummary> batchBelts(List<Long> ids) {
-        java.util.Map<Long, BeltSummary> map = new java.util.HashMap<>();
+    private java.util.Map<Long, BeltSummary> batchBelts(List<GymMember> members) {
+        // The gym's local belt where it has graded the member; otherwise the
+        // member's profile belt (user_belt_progress). Batched to a fixed query count.
+        List<Long> rankIds = members.stream()
+                .map(GymMember::getBeltRankId).filter(java.util.Objects::nonNull).distinct().toList();
+        java.util.Map<Long, BeltRank> ranks = new java.util.HashMap<>();
+        for (BeltRank r : beltRankRepository.findAllById(rankIds)) {
+            ranks.put(r.getId(), r);
+        }
+        List<Long> ids = members.stream().map(GymMember::getUserId).toList();
+        java.util.Map<Long, BeltSummary> profileBelts = new java.util.HashMap<>();
         for (UserBeltProgress p : beltProgressRepository.findAllByUserIdIn(ids)) {
-            map.put(p.getUserId(), toBeltSummary(p));
+            profileBelts.put(p.getUserId(), toBeltSummary(p));
+        }
+        java.util.Map<Long, BeltSummary> map = new java.util.HashMap<>();
+        for (GymMember m : members) {
+            BeltSummary belt = gymLocalBelt(m, ranks.get(m.getBeltRankId()));
+            if (belt == null) {
+                belt = profileBelts.get(m.getUserId());
+            }
+            if (belt != null) {
+                map.put(m.getUserId(), belt);
+            }
         }
         return map;
+    }
+
+    /** Belt the gym assigned this member, or null if it hasn't graded them yet. */
+    private BeltSummary gymLocalBelt(GymMember m, BeltRank rank) {
+        if (m.getBeltRankId() == null || rank == null) {
+            return null;
+        }
+        int stripes = m.getStripes() == null ? 0 : m.getStripes();
+        return new BeltSummary(rank.getSlug(), rank.getNamePt(), rank.getColorHex(), stripes);
     }
 
     private java.util.Map<Long, java.time.Instant> batchLastPromotions(List<Long> ids) {
@@ -195,15 +223,26 @@ public class GymService {
                     "This belt allows at most " + rank.getMaxStripes() + " stripes");
         }
 
-        UserBeltProgress progress = beltProgressRepository.findByUserId(targetUserId)
-                .orElseGet(() -> {
-                    UserBeltProgress p = new UserBeltProgress();
-                    p.setUserId(targetUserId);
-                    return p;
-                });
-        progress.setBeltRank(rank);
-        progress.setStripes(newStripes);
-        beltProgressRepository.save(progress);
+        // The gym's local belt for this member always updates.
+        target.setBeltRankId(rank.getId());
+        target.setStripes(newStripes);
+        gymMemberRepository.save(target);
+
+        // The member's public profile belt updates only if they allow gym sync.
+        boolean syncToProfile = userRepository.findById(targetUserId)
+                .map(u -> !Boolean.FALSE.equals(u.getGymBeltSync()))
+                .orElse(true);
+        if (syncToProfile) {
+            UserBeltProgress progress = beltProgressRepository.findByUserId(targetUserId)
+                    .orElseGet(() -> {
+                        UserBeltProgress p = new UserBeltProgress();
+                        p.setUserId(targetUserId);
+                        return p;
+                    });
+            progress.setBeltRank(rank);
+            progress.setStripes(newStripes);
+            beltProgressRepository.save(progress);
+        }
 
         BeltPromotion promotion = new BeltPromotion();
         promotion.setUserId(targetUserId);
@@ -444,7 +483,7 @@ public class GymService {
         List<Long> ids = members.stream().map(GymMember::getUserId).toList();
 
         java.util.Map<Long, String> names = batchNames(ids);
-        java.util.Map<Long, BeltSummary> belts = batchBelts(ids);
+        java.util.Map<Long, BeltSummary> belts = batchBelts(members);
         java.util.Map<Long, Long> counts = new java.util.HashMap<>();
         for (Object[] row : classAttendanceRepository.attendanceTimesForGym(mine.getGymId())) {
             counts.merge((Long) row[0], 1L, Long::sum);
@@ -528,9 +567,14 @@ public class GymService {
         String displayName = userRepository.findById(member.getUserId())
                 .map(User::getDisplayName)
                 .orElse("—");
-        BeltSummary belt = beltProgressRepository.findByUserId(member.getUserId())
-                .map(this::toBeltSummary)
-                .orElse(null);
+        BeltSummary belt = member.getBeltRankId() != null
+                ? gymLocalBelt(member, beltRankRepository.findById(member.getBeltRankId()).orElse(null))
+                : null;
+        if (belt == null) {
+            belt = beltProgressRepository.findByUserId(member.getUserId())
+                    .map(this::toBeltSummary)
+                    .orElse(null);
+        }
         // Graduation counter: verified class attendances since the last promotion
         java.time.Instant since = beltPromotionRepository
                 .findFirstByUserIdOrderByCreatedAtDesc(member.getUserId())

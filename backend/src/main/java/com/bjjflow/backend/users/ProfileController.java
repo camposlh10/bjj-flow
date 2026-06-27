@@ -39,6 +39,7 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final FeedService feedService;
+    private final com.bjjflow.backend.common.DevTools devTools;
 
     private static Long userId(Authentication auth) {
         return Long.parseLong(auth.getName());
@@ -82,6 +83,7 @@ public class ProfileController {
     // TEMP testing aid — preview the PRO badge before subscriptions exist.
     @PostMapping("/me/pro")
     public UserProfileDto togglePro(Authentication auth) {
+        devTools.require();
         return profileService.togglePro(userId(auth));
     }
 

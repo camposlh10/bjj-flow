@@ -1,4 +1,5 @@
 app:
+  dev-tools: true
   media:
     local-dir: ./target/test-media
 
