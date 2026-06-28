@@ -9,8 +9,7 @@ import { todayLocalDate } from '../api/checkins';
 import { SubmissionDirection, getUserSubmissions } from '../api/submissions';
 import CheckInSheet from '../components/CheckInSheet';
 import Skeleton from '../components/Skeleton';
-import SubmissionRadar from '../components/SubmissionRadar';
-import { SUBMISSIONS, submissionStyle } from '../constants/submissions';
+import { submissionStyle } from '../constants/submissions';
 import { t } from '../i18n';
 import { useAuthStore } from '../store/authStore';
 import { makeStyles, palette } from '../theme/theme';
@@ -39,8 +38,6 @@ export default function SubmissionsScreen() {
   });
 
   const items = stats.data?.items ?? [];
-  const countMap = new Map(items.map((i) => [i.submission, i.count]));
-  const axes = SUBMISSIONS.map((s) => ({ label: s.label, value: countMap.get(s.key) ?? 0 }));
   const maxCount = items[0]?.count ?? 1;
   const canNext = month < thisMonth;
 
@@ -76,15 +73,13 @@ export default function SubmissionsScreen() {
 
         {stats.isLoading ? (
           <View style={styles.loading}>
-            <Skeleton width={220} height={220} radius={110} style={{ alignSelf: 'center' }} />
-            <Skeleton height={14} style={{ marginTop: 20 }} />
-            <Skeleton width="70%" height={14} style={{ marginTop: 10 }} />
-            <Skeleton width="85%" height={14} style={{ marginTop: 10 }} />
+            <Skeleton height={16} style={{ marginTop: 8 }} />
+            <Skeleton width="80%" height={16} style={{ marginTop: 12 }} />
+            <Skeleton width="65%" height={16} style={{ marginTop: 12 }} />
+            <Skeleton width="50%" height={16} style={{ marginTop: 12 }} />
           </View>
         ) : (
           <>
-            <SubmissionRadar axes={axes} color={direction === 'HIT' ? palette.primary : '#E0A82E'} />
-
             {items.length === 0 ? (
               <Text style={styles.empty}>{t('submissions.empty')}</Text>
             ) : (

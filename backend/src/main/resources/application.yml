@@ -33,12 +33,29 @@ app:
     local-dir: ./data/media
   # Comma-separated emails allowed to approve/reject gym verifications.
   admin-emails: ${APP_ADMIN_EMAILS:}
+  email:
+    # Sender for transactional email (password reset). Use a Resend-verified domain
+    # in production; the resend.dev sandbox sender only delivers to your own account.
+    from: ${APP_EMAIL_FROM:BJJ Flow <onboarding@resend.dev>}
 
 # AI verification (gym certificate triage). When anthropic.api-key is UNSET the
 # app uses a stub that routes every submission to manual review. Set via env:
 #   ANTHROPIC_API_KEY=sk-ant-...   (optional ANTHROPIC_MODEL, default claude-sonnet-4-6)
 anthropic:
   model: ${ANTHROPIC_MODEL:claude-sonnet-4-6}
+
+# Transactional email (password reset). When resend.api-key is UNSET the app logs
+# the email instead of sending it. Set via env: RESEND_API_KEY=re_...
+# (resend.api-key is intentionally NOT declared here so it stays absent by default.)
+
+# Social sign-in (Google/Apple). Each list holds the allowed token audiences
+# (Google OAuth client IDs / Apple bundle or services IDs). Leave a provider unset
+# to disable it — verification fails closed. Comma-separated.
+oauth:
+  google:
+    client-ids: ${GOOGLE_OAUTH_CLIENT_IDS:}
+  apple:
+    client-ids: ${APPLE_OAUTH_CLIENT_IDS:}
 
 ---
 # --- dev profile: embedded H2 in PostgreSQL compatibility mode ---

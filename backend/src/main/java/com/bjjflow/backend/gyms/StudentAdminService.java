@@ -24,6 +24,9 @@ import com.bjjflow.backend.gyms.StudentAdminDtos.GraduationDto;
 import com.bjjflow.backend.gyms.StudentAdminDtos.NoteDto;
 import com.bjjflow.backend.gyms.StudentAdminDtos.PromotionDto;
 import com.bjjflow.backend.gyms.StudentAdminDtos.StudentAdminDto;
+import com.bjjflow.backend.pain.PainAssessmentDtos.AssessmentDto;
+import com.bjjflow.backend.pain.PainAssessmentDtos.AssessmentSummaryDto;
+import com.bjjflow.backend.pain.PainAssessmentService;
 import com.bjjflow.backend.storage.MediaStorage;
 import com.bjjflow.backend.users.User;
 import com.bjjflow.backend.users.UserBeltProgress;
@@ -44,6 +47,7 @@ public class StudentAdminService {
     private final BeltRankRepository beltRankRepository;
     private final ClassAttendanceRepository classAttendanceRepository;
     private final GymStudentNoteRepository noteRepository;
+    private final PainAssessmentService painAssessmentService;
     private final MediaStorage mediaStorage;
 
     @Transactional(readOnly = true)
@@ -139,6 +143,22 @@ public class StudentAdminService {
                 .map(n -> new NoteDto(n.getId(), authors.getOrDefault(n.getAuthorUserId(), "—"), n.getContent(),
                         n.getCreatedAt()))
                 .toList();
+    }
+
+    /** Staff-only: a student's 5 most recent pain assessments (for graduation decisions). */
+    @Transactional(readOnly = true)
+    public List<AssessmentSummaryDto> painAssessments(Long callerId, Long studentUserId) {
+        GymMember caller = requireStaff(callerId);
+        requireMember(caller.getGymId(), studentUserId);
+        return painAssessmentService.list(studentUserId, 5);
+    }
+
+    /** Staff-only: full detail of one of a student's pain assessments. */
+    @Transactional(readOnly = true)
+    public AssessmentDto painAssessment(Long callerId, Long studentUserId, Long assessmentId) {
+        GymMember caller = requireStaff(callerId);
+        requireMember(caller.getGymId(), studentUserId);
+        return painAssessmentService.get(studentUserId, assessmentId);
     }
 
     @Transactional

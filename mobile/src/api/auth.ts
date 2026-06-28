@@ -22,6 +22,8 @@ export type RegisterPayload = {
   username?: string;
   gender?: string;
   city?: string;
+  country?: string;
+  state?: string;
   favoriteArt?: string;
   trainingStartYear?: number;
   age: number;
@@ -45,6 +47,28 @@ export async function login(email: string, password: string): Promise<AuthRespon
 export async function completeMfa(mfaToken: string, code: string): Promise<AuthResponse> {
   const { data } = await api.post<AuthResponse>('/auth/mfa', { mfaToken, code });
   return data;
+}
+
+export type OAuthProvider = 'GOOGLE' | 'APPLE';
+
+/** Sign in or sign up with a verified Google/Apple ID token. */
+export async function oauthLogin(
+  provider: OAuthProvider,
+  idToken: string,
+  displayName?: string,
+): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>('/auth/oauth', { provider, idToken, displayName });
+  return data;
+}
+
+/** Request a password-reset code by email. Always succeeds (no account enumeration). */
+export async function forgotPassword(email: string): Promise<void> {
+  await api.post('/auth/forgot-password', { email: email.trim().toLowerCase() });
+}
+
+/** Complete a password reset with the emailed code + a new password. */
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+  await api.post('/auth/reset-password', { email: email.trim().toLowerCase(), code: code.trim(), newPassword });
 }
 
 /** Converte erros da API em mensagens pt-BR para exibir ao usuário. */
@@ -87,6 +111,12 @@ export function apiErrorMessage(error: unknown): string {
         return t('errors.INVALID_MFA_TOKEN');
       case 'MFA_NOT_ENROLLED':
         return t('errors.MFA_NOT_ENROLLED');
+      case 'INVALID_RESET_CODE':
+        return t('errors.INVALID_RESET_CODE');
+      case 'OAUTH_INVALID':
+        return t('errors.OAUTH_INVALID');
+      case 'OAUTH_NO_EMAIL':
+        return t('errors.OAUTH_NO_EMAIL');
     }
   }
   return t('errors.UNKNOWN');

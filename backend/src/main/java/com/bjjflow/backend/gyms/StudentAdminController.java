@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bjjflow.backend.gyms.StudentAdminDtos.CreateNoteRequest;
 import com.bjjflow.backend.gyms.StudentAdminDtos.NoteDto;
 import com.bjjflow.backend.gyms.StudentAdminDtos.StudentAdminDto;
+import com.bjjflow.backend.pain.PainAssessmentDtos.AssessmentDto;
+import com.bjjflow.backend.pain.PainAssessmentDtos.AssessmentSummaryDto;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,17 @@ public class StudentAdminController {
     @GetMapping("/{userId}/notes")
     public List<NoteDto> notes(Authentication auth, @PathVariable("userId") Long studentUserId) {
         return studentAdminService.notes(userId(auth), studentUserId);
+    }
+
+    @GetMapping("/{userId}/pain-assessments")
+    public List<AssessmentSummaryDto> painAssessments(Authentication auth, @PathVariable("userId") Long studentUserId) {
+        return studentAdminService.painAssessments(userId(auth), studentUserId);
+    }
+
+    @GetMapping("/{userId}/pain-assessments/{assessmentId}")
+    public AssessmentDto painAssessment(Authentication auth, @PathVariable("userId") Long studentUserId,
+            @PathVariable Long assessmentId) {
+        return studentAdminService.painAssessment(userId(auth), studentUserId, assessmentId);
     }
 
     @PostMapping("/{userId}/notes")

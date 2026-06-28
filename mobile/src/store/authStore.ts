@@ -31,6 +31,8 @@ export type OnboardingAnswers = {
   age?: number;
   gender?: string;
   city?: string;
+  country?: string;
+  state?: string;
   favoriteArt?: string;
   trainingStartYear?: number;
   beltSlug?: string;

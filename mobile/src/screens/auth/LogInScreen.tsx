@@ -7,6 +7,7 @@ import Animated, { FadeInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { apiErrorMessage, completeMfa, login } from '../../api/auth';
+import SocialAuthButtons from '../../components/SocialAuthButtons';
 import { t } from '../../i18n';
 import { AuthStackParamList } from '../../navigation/RootNavigator';
 import { useAuthStore } from '../../store/authStore';
@@ -150,6 +151,13 @@ export default function LogInScreen({ navigation }: Props) {
                 style={styles.submit}>
                 {t('login.submit')}
               </Button>
+              <Button
+                mode="text"
+                textColor={palette.textSecondary}
+                onPress={() => navigation.navigate('ForgotPassword')}>
+                {t('login.forgot')}
+              </Button>
+              <SocialAuthButtons />
               <Button
                 mode="text"
                 textColor={palette.textSecondary}

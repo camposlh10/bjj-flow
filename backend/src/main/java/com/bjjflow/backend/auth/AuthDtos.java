@@ -11,6 +11,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import com.bjjflow.backend.oauth.OAuthProvider;
+
 public class AuthDtos {
 
     public record RegisterRequest(
@@ -22,6 +24,8 @@ public class AuthDtos {
             @Size(max = 30) String username,
             @Size(max = 20) String gender,
             @Size(max = 120) String city,
+            @Size(max = 80) String country,
+            @Size(max = 80) String state,
             @Size(max = 40) String favoriteArt,
             @Min(1900) @Max(2100) Integer trainingStartYear,
             @NotNull @Min(4) @Max(100) Integer age,
@@ -37,6 +41,21 @@ public class AuthDtos {
     }
 
     public record RefreshRequest(@NotBlank String refreshToken) {
+    }
+
+    public record OAuthRequest(
+            @NotNull OAuthProvider provider,
+            @NotBlank String idToken,
+            @Size(max = 100) String displayName) {
+    }
+
+    public record ForgotPasswordRequest(@NotBlank @Email String email) {
+    }
+
+    public record ResetPasswordRequest(
+            @NotBlank @Email String email,
+            @NotBlank String code,
+            @NotBlank @Size(min = 8, max = 72) String newPassword) {
     }
 
     public record BeltDto(String slug, String name, String namePt, String colorHex, Integer stripes) {

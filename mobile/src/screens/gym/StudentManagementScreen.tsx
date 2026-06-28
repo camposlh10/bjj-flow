@@ -15,10 +15,14 @@ import {
   deleteStudentNote,
   getStudentAdmin,
   getStudentNotes,
+  getStudentPainAssessment,
+  getStudentPainAssessments,
 } from '../../api/students';
 import BeltVisual from '../../components/BeltVisual';
 import Skeleton from '../../components/Skeleton';
 import { ADULT_BELTS, KIDS_BELTS, maxStripesFor, rankBarColorFor } from '../../constants/belts';
+import { bodyRegionLabel, intensityColor } from '../../constants/body';
+import { frequencyLabel, painTypeLabel, trendLabel } from '../../constants/painTypes';
 import { t, tf } from '../../i18n';
 import { makeStyles, palette } from '../../theme/theme';
 
@@ -62,8 +66,10 @@ function Body({ s }: { s: StudentAdmin }) {
   const queryClient = useQueryClient();
   const [gradOpen, setGradOpen] = useState(false);
   const [note, setNote] = useState('');
+  const [painId, setPainId] = useState<number | null>(null);
 
   const notes = useQuery({ queryKey: ['studentNotes', s.userId], queryFn: () => getStudentNotes(s.userId) });
+  const pain = useQuery({ queryKey: ['studentPain', s.userId], queryFn: () => getStudentPainAssessments(s.userId) });
 
   const addNote = useMutation({
     mutationFn: () => addStudentNote(s.userId, note.trim()),
@@ -85,7 +91,11 @@ function Body({ s }: { s: StudentAdmin }) {
   const progress = g.graduationTarget > 0 ? Math.min(1, g.classesSincePromotion / g.graduationTarget) : 0;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets>
       {/* Header */}
       <View style={styles.header}>
         {s.avatarUrl ? (
@@ -177,6 +187,29 @@ function Body({ s }: { s: StudentAdmin }) {
         </View>
       </View>
 
+      {/* Relatório de dor — student's 5 most recent pain assessments */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>{t('student.pain')}</Text>
+        {pain.isLoading ? (
+          <Text style={styles.empty}>{t('picker.loading')}</Text>
+        ) : (pain.data ?? []).length === 0 ? (
+          <Text style={styles.empty}>{t('student.pain.empty')}</Text>
+        ) : (
+          (pain.data ?? []).map((a) => (
+            <Pressable key={a.id} style={styles.painRow} onPress={() => setPainId(a.id)}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.painDate}>{fmtDate(a.assessedOn)}</Text>
+                <Text style={styles.painSub}>
+                  {tf('student.pain.areas', { n: a.areaCount })} · {tf('student.pain.avg', { v: a.avgIntensity })}
+                  {a.trend ? ` · ${trendLabel(a.trend)}` : ''}
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={18} color={palette.textSecondary} />
+            </Pressable>
+          ))
+        )}
+      </View>
+
       {/* Histórico de graduações */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{t('student.history')}</Text>
@@ -264,7 +297,59 @@ function Body({ s }: { s: StudentAdmin }) {
           queryClient.invalidateQueries({ queryKey: ['userProfile', s.userId] });
         }}
       />
+
+      {painId != null && <PainDetail userId={s.userId} assessmentId={painId} onClose={() => setPainId(null)} />}
     </ScrollView>
+  );
+}
+
+function PainDetail({ userId, assessmentId, onClose }: { userId: number; assessmentId: number; onClose: () => void }) {
+  const q = useQuery({
+    queryKey: ['studentPainDetail', userId, assessmentId],
+    queryFn: () => getStudentPainAssessment(userId, assessmentId),
+  });
+  const a = q.data;
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose}>
+        <Pressable style={styles.sheet} onPress={() => undefined}>
+          <View style={styles.sheetHandle} />
+          {!a ? (
+            <Text style={styles.empty}>{t('picker.loading')}</Text>
+          ) : (
+            <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
+              <Text style={styles.sheetTitle}>{fmtDate(a.assessedOn)}</Text>
+              {a.areas.map((ar, i) => (
+                <View key={i} style={styles.painArea}>
+                  <View style={[styles.painDot, { backgroundColor: intensityColor(ar.intensity) }]} />
+                  <Text style={styles.painAreaName}>{bodyRegionLabel(ar.region)}</Text>
+                  <Text style={styles.painAreaMeta}>
+                    {ar.painType ? `${painTypeLabel(ar.painType)} · ` : ''}
+                    {ar.intensity}/10
+                  </Text>
+                </View>
+              ))}
+              {a.onsetDate ? <PainCtx label={t('pain.assess.onset')} value={fmtDate(a.onsetDate)} /> : null}
+              {a.trend ? <PainCtx label={t('pain.assess.trend')} value={trendLabel(a.trend)} /> : null}
+              {a.frequency ? <PainCtx label={t('pain.assess.frequency')} value={frequencyLabel(a.frequency)} /> : null}
+              {a.relieves ? <PainCtx label={t('pain.assess.relieves')} value={a.relieves} /> : null}
+              {a.worsens ? <PainCtx label={t('pain.assess.worsens')} value={a.worsens} /> : null}
+              {a.notes ? <PainCtx label={t('pain.assess.notes')} value={a.notes} /> : null}
+            </ScrollView>
+          )}
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function PainCtx({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.painCtx}>
+      <Text style={styles.painCtxLabel}>{label}</Text>
+      <Text style={styles.painCtxValue}>{value}</Text>
+    </View>
   );
 }
 
@@ -417,4 +502,15 @@ const styles = makeStyles(() => ({
   stripeRow: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   stripeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: palette.surfaceVariant, alignItems: 'center', justifyContent: 'center' },
   stripeNum: { color: palette.textPrimary, fontSize: 20, fontWeight: 'bold', minWidth: 24, textAlign: 'center' },
+
+  painRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: palette.surfaceVariant },
+  painDate: { color: palette.textPrimary, fontSize: 14, fontWeight: '600' },
+  painSub: { color: palette.textSecondary, fontSize: 12, marginTop: 2 },
+  painArea: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: palette.surfaceVariant },
+  painDot: { width: 12, height: 12, borderRadius: 6 },
+  painAreaName: { color: palette.textPrimary, fontSize: 14, flex: 1 },
+  painAreaMeta: { color: palette.textSecondary, fontSize: 12 },
+  painCtx: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 6, marginTop: 2 },
+  painCtxLabel: { color: palette.textSecondary, fontSize: 12 },
+  painCtxValue: { color: palette.textPrimary, fontSize: 12, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
 }));

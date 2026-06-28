@@ -13,7 +13,6 @@ import { getGymMembers, getMyGym, promoteMember } from '../api/gyms';
 import { resolveMediaUrl } from '../api/posts';
 import { todayLocalDate } from '../api/checkins';
 import { getUserSubmissions } from '../api/submissions';
-import SubmissionRadar from '../components/SubmissionRadar';
 import {
   UserProfile,
   followUser,
@@ -21,7 +20,7 @@ import {
   getUserProfile,
   unfollowUser,
 } from '../api/users';
-import { SUBMISSIONS, submissionStyle } from '../constants/submissions';
+import { submissionStyle } from '../constants/submissions';
 import BeltVisual, { formatStripes } from '../components/BeltVisual';
 import ImageLightbox from '../components/ImageLightbox';
 import Skeleton from '../components/Skeleton';
@@ -156,9 +155,9 @@ export default function UserProfileScreen() {
     navigation.setOptions({
       headerLeft: () => (
         <IconButton
-          icon="home-outline"
+          icon="home-variant-outline"
           iconColor={palette.textPrimary}
-          size={22}
+          size={24}
           onPress={() => navigation.navigate('Home')}
           accessibilityLabel={t('tabs.home')}
         />
@@ -251,7 +250,7 @@ export default function UserProfileScreen() {
           )}
           <Text style={styles.since}>{tf('profile.since', { date: formatMonthYear(p.joinedAt) })}</Text>
         </View>
-        {(p.favoriteArt || p.city || p.trainingStartYear) && (
+        {(p.favoriteArt || p.city || p.country || p.trainingStartYear) && (
           <View style={styles.metaChips}>
             {p.favoriteArt && (
               <View style={styles.metaChip}>
@@ -259,10 +258,16 @@ export default function UserProfileScreen() {
                 <Text style={styles.metaChipText}>{martialArtLabel(p.favoriteArt)}</Text>
               </View>
             )}
-            {p.city && (
+            {(p.city || p.state) && (
               <View style={styles.metaChip}>
                 <MaterialCommunityIcons name="map-marker-outline" size={13} color={palette.textSecondary} />
-                <Text style={styles.metaChipText}>{p.city}</Text>
+                <Text style={styles.metaChipText}>{[p.city, p.state].filter(Boolean).join(', ')}</Text>
+              </View>
+            )}
+            {p.country && (
+              <View style={styles.metaChip}>
+                <MaterialCommunityIcons name="earth" size={13} color={palette.textSecondary} />
+                <Text style={styles.metaChipText}>{p.country}</Text>
               </View>
             )}
             {p.trainingStartYear && (
@@ -368,16 +373,7 @@ export default function UserProfileScreen() {
               <Text style={styles.muted}>{t('submissions.empty')}</Text>
             ) : (
               <>
-                <View style={{ alignItems: 'center', marginBottom: 8 }}>
-                  <SubmissionRadar
-                    axes={SUBMISSIONS.map((sb) => ({
-                      label: sb.label,
-                      value: submissions.data!.items.find((i) => i.submission === sb.key)?.count ?? 0,
-                    }))}
-                    color={palette.primary}
-                  />
-                </View>
-                {submissions.data!.items.slice(0, 3).map((it) => {
+                {submissions.data!.items.slice(0, 5).map((it) => {
                 const s = submissionStyle(it.submission);
                 const maxC = submissions.data!.items[0].count || 1;
                 return (
@@ -406,7 +402,7 @@ export default function UserProfileScreen() {
           <View style={styles.photoGrid}>
             {(photosExpanded ? p.photos : p.photos.slice(0, 6)).map((ph, i) => (
               <Pressable key={ph.id} onPress={() => setPhotoIndex(i)} style={styles.photoTileWrap}>
-                <Image source={{ uri: resolveMediaUrl(ph.url) }} style={styles.photoTile} resizeMode="cover" />
+                <Image source={{ uri: resolveMediaUrl(ph.url) }} style={styles.photoTile} resizeMode="contain" />
               </Pressable>
             ))}
           </View>
@@ -699,9 +695,9 @@ const styles = makeStyles(() => ({
   snapTrack: { flex: 1, height: 6, borderRadius: 999, backgroundColor: palette.surfaceVariant, overflow: 'hidden' },
   snapFill: { height: '100%', borderRadius: 999 },
   snapCount: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold', minWidth: 18, textAlign: 'right' },
-  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 16 },
-  photoTileWrap: { width: '32.6%', aspectRatio: 1 },
-  photoTile: { width: '100%', height: '100%', borderRadius: 6, backgroundColor: palette.surfaceVariant },
+  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
+  photoTileWrap: { width: '48.6%', aspectRatio: 3 / 4 },
+  photoTile: { width: '100%', height: '100%', borderRadius: 8, backgroundColor: palette.surfaceVariant },
   gymRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
   gymLogo: { width: 52, height: 52, borderRadius: 14, backgroundColor: palette.surfaceVariant },
   gymLogoFallback: { alignItems: 'center', justifyContent: 'center' },

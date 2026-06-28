@@ -23,14 +23,18 @@ import {
   ProfilePhoto,
   UserProfile,
   addMyPhoto,
+  completeProfile,
   deleteMyPhoto,
   getUserProfile,
   togglePro,
   updateMyMedals,
   updateMyProfile,
 } from '../api/users';
+import LocationFields from '../components/LocationFields';
 import MedalVisual from '../components/MedalVisual';
+import { ADULT_BELTS, KIDS_BELTS, maxStripesFor } from '../constants/belts';
 import { COMPETITIONS } from '../constants/competitions';
+import { countryCodeByName, countryName } from '../constants/locations';
 import { t } from '../i18n';
 import { useAuthStore } from '../store/authStore';
 import { makeStyles, palette } from '../theme/theme';
@@ -42,6 +46,7 @@ const TIERS: { key: MedalTier; color: string }[] = [
 ];
 
 const ACCENT_COLORS = ['#E63946', '#2563EB', '#16A34A', '#7C3AED', '#F59E0B', '#06B6D4'];
+const ALL_BELTS = [...ADULT_BELTS, ...KIDS_BELTS];
 
 type MedalEntry = { count: number; tier: MedalTier };
 type Pic = { key?: string; uri: string };
@@ -87,7 +92,16 @@ function Form({ profile }: { profile: UserProfile }) {
   const queryClient = useQueryClient();
   const headerHeight = useHeaderHeight();
   const me = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
+
+  // Profile basics (belt/age/location) — lets social-login accounts complete their profile.
+  const [beltSlug, setBeltSlug] = useState<string | null>(profile.belt?.slug ?? null);
+  const [stripes, setStripes] = useState(profile.belt?.stripes ?? 0);
+  const [ageText, setAgeText] = useState(profile.age != null ? String(profile.age) : '');
+  const [country, setCountry] = useState(countryCodeByName(profile.country) ?? 'BR');
+  const [region, setRegion] = useState(profile.state ?? '');
+  const [city, setCity] = useState(profile.city ?? '');
 
   const [username, setUsername] = useState(profile.username ?? '');
   const [bio, setBio] = useState(profile.bio ?? '');
@@ -130,8 +144,18 @@ function Form({ profile }: { profile: UserProfile }) {
         .filter(([, e]) => e.count > 0)
         .map(([competition, e]) => ({ competition, tier: e.tier, count: e.count }));
       await updateMyMedals(medals);
+      return completeProfile({
+        beltSlug: beltSlug ?? undefined,
+        stripes,
+        age: ageText ? parseInt(ageText, 10) : undefined,
+        country: country ? countryName(country) : undefined,
+        state: region.trim() || undefined,
+        city: city.trim() || undefined,
+      });
     },
-    onSuccess: () => {
+    onSuccess: (updated) => {
+      // Keep the auth user's belt/age in sync so the home screen reflects the change.
+      if (updated && me) setUser({ ...me, belt: updated.belt, age: updated.age });
       invalidate();
       Alert.alert(t('profile.edit.saved'));
       navigation.goBack();
@@ -266,6 +290,55 @@ function Form({ profile }: { profile: UserProfile }) {
           numberOfLines={3}
           style={styles.input}
         />
+
+        {/* Basics: belt, age, location */}
+        <Text style={styles.sectionTitle}>{t('profile.edit.basics')}</Text>
+        <Text style={styles.fieldLabel}>{t('profile.edit.belt')}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.beltRow}>
+          {ALL_BELTS.map((b) => {
+            const on = beltSlug === b.slug;
+            return (
+              <Pressable
+                key={b.slug}
+                onPress={() => {
+                  setBeltSlug(b.slug);
+                  setStripes((s) => Math.min(s, maxStripesFor(b.slug)));
+                }}
+                style={[styles.beltChip, on && styles.beltChipOn]}>
+                <View style={[styles.beltSwatch, { backgroundColor: b.color }]} />
+                <Text style={[styles.beltChipText, on && styles.beltChipTextOn]}>{b.namePt}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        {beltSlug && (
+          <View style={styles.stripeRow}>
+            <Text style={styles.fieldLabel}>{t('profile.edit.stripes')}</Text>
+            <View style={styles.counter}>
+              <Pressable onPress={() => setStripes((s) => Math.max(0, s - 1))} hitSlop={6} style={styles.counterBtn}>
+                <MaterialCommunityIcons name="minus" size={16} color={palette.textPrimary} />
+              </Pressable>
+              <Text style={styles.counterValue}>{stripes}</Text>
+              <Pressable onPress={() => setStripes((s) => Math.min(maxStripesFor(beltSlug), s + 1))} hitSlop={6} style={styles.counterBtn}>
+                <MaterialCommunityIcons name="plus" size={16} color={palette.textPrimary} />
+              </Pressable>
+            </View>
+          </View>
+        )}
+
+        <TextInput
+          mode="outlined"
+          label={t('profile.edit.age')}
+          value={ageText}
+          onChangeText={(v) => setAgeText(v.replace(/[^0-9]/g, ''))}
+          keyboardType="number-pad"
+          maxLength={3}
+          style={[styles.input, { marginTop: 12 }]}
+        />
+
+        <Text style={styles.fieldLabel}>{t('profile.edit.location')}</Text>
+        <LocationFields country={country} setCountry={setCountry} region={region} setRegion={setRegion} city={city} setCity={setCity} />
 
         {/* Accent color */}
         <Text style={styles.sectionTitle}>{t('profile.edit.color')}</Text>
@@ -443,6 +516,24 @@ const styles = makeStyles(() => ({
   bannerAddText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
   input: { marginBottom: 16 },
   sectionTitle: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold', marginTop: 4, marginBottom: 10 },
+  fieldLabel: { color: palette.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 },
+  beltRow: { gap: 8, paddingVertical: 2, paddingRight: 8, marginBottom: 4 },
+  beltChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: palette.surface,
+    borderWidth: 1,
+    borderColor: palette.outline,
+  },
+  beltChipOn: { borderColor: palette.primary, backgroundColor: `${palette.primary}1A` },
+  beltSwatch: { width: 16, height: 16, borderRadius: 4, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.2)' },
+  beltChipText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
+  beltChipTextOn: { color: palette.textPrimary },
+  stripeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 8 },
   proRow: {
     flexDirection: 'row',
     alignItems: 'center',

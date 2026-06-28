@@ -4,6 +4,7 @@ import { Button, Text } from 'react-native-paper';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import SocialAuthButtons from '../../components/SocialAuthButtons';
 import { t } from '../../i18n';
 import { AuthStackParamList } from '../../navigation/RootNavigator';
 import { makeStyles, palette } from '../../theme/theme';
@@ -35,6 +36,7 @@ export default function WelcomeScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('Onboarding')}>
           {t('welcome.start')}
         </Button>
+        <SocialAuthButtons />
         <Button
           mode="text"
           textColor={palette.textSecondary}

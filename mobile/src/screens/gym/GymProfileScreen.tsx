@@ -111,7 +111,7 @@ function MediaStrip({ photos, onOpen }: { photos: Gym['photos']; onOpen: (i: num
       contentContainerStyle={styles.mediaStripContent}>
       {photos.map((p, i) => (
         <Pressable key={p.id} onPress={() => onOpen(i)}>
-          <Image source={{ uri: resolveMediaUrl(p.url) }} style={styles.mediaTile} resizeMode="cover" />
+          <Image source={{ uri: resolveMediaUrl(p.url) }} style={styles.mediaTile} resizeMode="contain" />
         </Pressable>
       ))}
     </ScrollView>
@@ -530,7 +530,7 @@ const styles = makeStyles(() => ({
   statLabel: { color: palette.textSecondary, fontSize: 11, marginTop: 2 },
   mediaStrip: { marginHorizontal: -20, marginBottom: 18 },
   mediaStripContent: { paddingHorizontal: 20, gap: 8 },
-  mediaTile: { width: 108, height: 108, borderRadius: 12, backgroundColor: palette.surfaceVariant },
+  mediaTile: { width: 150, height: 200, borderRadius: 12, backgroundColor: palette.surfaceVariant },
   bio: { color: '#E4E4E7', fontSize: 13, lineHeight: 19, marginBottom: 16 },
   messageBtn: { marginBottom: 16 },
   socialRow: { flexDirection: 'row', gap: 14, marginBottom: 16 },

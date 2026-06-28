@@ -44,6 +44,8 @@ export default function SignUpScreen({ navigation }: Props) {
         username: onboarding.username,
         gender: onboarding.gender,
         city: onboarding.city,
+        country: onboarding.country,
+        state: onboarding.state,
         favoriteArt: onboarding.favoriteArt,
         trainingStartYear: onboarding.trainingStartYear,
         age: onboarding.age!,

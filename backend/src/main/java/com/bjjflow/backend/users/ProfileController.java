@@ -20,6 +20,7 @@ import com.bjjflow.backend.gyms.GymDtos.AddPhotoRequest;
 import com.bjjflow.backend.gyms.GymDtos.UpdateMedalsRequest;
 import com.bjjflow.backend.users.ProfileDtos.ChangeEmailRequest;
 import com.bjjflow.backend.users.ProfileDtos.ChangePasswordRequest;
+import com.bjjflow.backend.users.ProfileDtos.CompleteProfileRequest;
 import com.bjjflow.backend.users.ProfileDtos.FeedbackRequest;
 import com.bjjflow.backend.users.ProfileDtos.SearchUserDto;
 import com.bjjflow.backend.users.ProfileDtos.SettingsDto;
@@ -68,6 +69,12 @@ public class ProfileController {
     @PutMapping("/me/medals")
     public UserProfileDto updateMedals(Authentication auth, @Valid @RequestBody UpdateMedalsRequest request) {
         return profileService.replaceMedals(userId(auth), request.medals());
+    }
+
+    /** Fill in / edit profile basics (belt, age, location, etc.) after signup. */
+    @PutMapping("/me/onboarding")
+    public UserProfileDto completeProfile(Authentication auth, @Valid @RequestBody CompleteProfileRequest request) {
+        return profileService.completeProfile(userId(auth), request);
     }
 
     @PostMapping("/me/photos")

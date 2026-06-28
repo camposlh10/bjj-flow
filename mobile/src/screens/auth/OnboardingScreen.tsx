@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -23,7 +23,10 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BeltVisual, { formatStripes } from '../../components/BeltVisual';
+import LocationFields from '../../components/LocationFields';
+import SearchablePicker from '../../components/SearchablePicker';
 import { beltBySlug, beltOptionsForAge, rankBarColorFor } from '../../constants/belts';
+import { countryName } from '../../constants/locations';
 import { GENDERS, MARTIAL_ARTS, genderLabel, martialArtLabel } from '../../constants/profile';
 import { t } from '../../i18n';
 import { AuthStackParamList } from '../../navigation/RootNavigator';
@@ -48,6 +51,8 @@ export default function OnboardingScreen({ navigation }: Props) {
   const [username, setUsername] = useState('');
   const [ageText, setAgeText] = useState('');
   const [gender, setGender] = useState<string | null>(null);
+  const [country, setCountry] = useState('BR');
+  const [region, setRegion] = useState(''); // UF sigla for Brazil, free text otherwise
   const [city, setCity] = useState('');
   // BJJ
   const [beltSlug, setBeltSlug] = useState<string | null>(null);
@@ -68,7 +73,19 @@ export default function OnboardingScreen({ navigation }: Props) {
 
   const age = parseInt(ageText, 10);
   const ageValid = !Number.isNaN(age) && age >= 4 && age <= 100;
-  const aboutValid = firstName.trim().length > 0 && lastName.trim().length > 0 && USERNAME_RE.test(username) && ageValid;
+  const locationValid = country.length > 0 && region.trim().length > 0 && city.trim().length > 0;
+  const aboutValid =
+    firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    USERNAME_RE.test(username) &&
+    ageValid &&
+    locationValid;
+
+  const yearOptions = useMemo(() => {
+    const out: { key: string; label: string }[] = [];
+    for (let y = CURRENT_YEAR; y >= 1960; y--) out.push({ key: String(y), label: String(y) });
+    return out;
+  }, []);
 
   const goBack = () => {
     setError(null);
@@ -91,7 +108,9 @@ export default function OnboardingScreen({ navigation }: Props) {
       username: username.trim(),
       age,
       gender: gender ?? undefined,
-      city: city.trim() || undefined,
+      city: city.trim(),
+      country: countryName(country),
+      state: region.trim(),
     });
     setStep('belt');
   };
@@ -200,7 +219,16 @@ export default function OnboardingScreen({ navigation }: Props) {
               })}
             </View>
 
-            <TextInput mode="outlined" label={t('onboarding.city')} value={city} onChangeText={setCity} autoCapitalize="words" placeholder={t('onboarding.city.ph')} style={[styles.input, { marginTop: 12 }]} />
+            <View style={{ marginTop: 12 }}>
+              <LocationFields
+                country={country}
+                setCountry={setCountry}
+                region={region}
+                setRegion={setRegion}
+                city={city}
+                setCity={setCity}
+              />
+            </View>
 
             {error && <Text variant="bodyMedium" style={styles.error}>{error}</Text>}
             <Button mode="contained" onPress={submitAbout} disabled={!aboutValid} contentStyle={styles.buttonContent} style={styles.continueButton}>
@@ -264,15 +292,13 @@ export default function OnboardingScreen({ navigation }: Props) {
               })}
             </View>
 
-            <Text style={[styles.label, { marginTop: 18 }]}>{t('onboarding.trainingSince')}</Text>
-            <TextInput
-              mode="outlined"
-              value={trainingYearText}
-              onChangeText={(v) => setTrainingYearText(v.replace(/[^0-9]/g, ''))}
-              keyboardType="number-pad"
-              maxLength={4}
-              placeholder={t('onboarding.trainingSince.ph')}
-              style={styles.input}
+            <SearchablePicker
+              label={t('onboarding.trainingSince')}
+              placeholder={t('onboarding.trainingSince.select')}
+              searchPlaceholder={t('onboarding.trainingSince.select')}
+              value={trainingYearText || null}
+              options={yearOptions}
+              onSelect={setTrainingYearText}
             />
 
             {error && <Text variant="bodyMedium" style={styles.error}>{error}</Text>}

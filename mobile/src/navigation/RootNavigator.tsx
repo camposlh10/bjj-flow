@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet, View } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import LogInScreen from '../screens/auth/LogInScreen';
 import OnboardingScreen from '../screens/auth/OnboardingScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
@@ -15,6 +16,7 @@ export type AuthStackParamList = {
   Onboarding: undefined;
   SignUp: undefined;
   LogIn: undefined;
+  ForgotPassword: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -39,6 +41,7 @@ export default function RootNavigator() {
         <AuthStack.Screen name="Onboarding" component={OnboardingScreen} />
         <AuthStack.Screen name="SignUp" component={SignUpScreen} />
         <AuthStack.Screen name="LogIn" component={LogInScreen} />
+        <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       </AuthStack.Navigator>
     );
   }

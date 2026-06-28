@@ -17,6 +17,7 @@ import {
   listAssessments,
 } from '../api/pain';
 import BodyMap from '../components/BodyMap';
+import DateField from '../components/DateField';
 import { BodyView, bodyRegionLabel, intensityColor } from '../constants/body';
 import {
   FREQUENCIES,
@@ -48,6 +49,10 @@ function formatDay(iso: string): string {
   return d && m && y ? `${d}/${m}/${y}` : iso;
 }
 
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const toISODate = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const parseISODate = (iso: string): Date => new Date(`${iso}T00:00:00`);
+
 function summarize(areas: AreaMap) {
   const entries = Object.entries(areas);
   const count = entries.length;
@@ -72,7 +77,7 @@ export default function BodyMapScreen() {
   const [detailId, setDetailId] = useState<number | null>(null);
 
   // Assessment-level context.
-  const [onset, setOnset] = useState('');
+  const [onset, setOnset] = useState<Date | null>(null);
   const [trend, setTrend] = useState<string | null>(null);
   const [frequency, setFrequency] = useState<string | null>(null);
   const [relieves, setRelieves] = useState('');
@@ -89,7 +94,7 @@ export default function BodyMapScreen() {
 
   const resetForm = () => {
     setAreas({});
-    setOnset('');
+    setOnset(null);
     setTrend(null);
     setFrequency(null);
     setRelieves('');
@@ -100,7 +105,7 @@ export default function BodyMapScreen() {
   const save = useMutation({
     mutationFn: () => {
       const body: CreateAssessmentBody = {
-        onsetDate: onset.trim() || null,
+        onsetDate: onset ? toISODate(onset) : null,
         trend,
         frequency,
         relieves: relieves.trim() || null,
@@ -138,7 +143,7 @@ export default function BodyMapScreen() {
     const next: AreaMap = {};
     a.areas.forEach((x) => (next[x.region] = { painType: x.painType, intensity: x.intensity, note: x.note ?? '' }));
     setAreas(next);
-    setOnset(a.onsetDate ?? '');
+    setOnset(a.onsetDate ? parseISODate(a.onsetDate) : null);
     setTrend(a.trend);
     setFrequency(a.frequency);
     setRelieves(a.relieves ?? '');
@@ -256,7 +261,24 @@ export default function BodyMapScreen() {
           <Text style={[styles.section, { marginTop: 18 }]}>{t('pain.assess.details')}</Text>
           <View style={styles.card}>
             <Text style={styles.label}>{t('pain.assess.onset')}</Text>
-            <TextInput mode="outlined" dense value={onset} onChangeText={setOnset} placeholder={t('pain.assess.onset.ph')} autoCapitalize="none" style={styles.input} />
+            {onset ? (
+              <View style={styles.onsetRow}>
+                <View style={{ flex: 1 }}>
+                  <DateField value={onset} onChange={setOnset} maximumDate={new Date()} />
+                </View>
+                <Pressable
+                  onPress={() => setOnset(null)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('a11y.remove')}>
+                  <MaterialCommunityIcons name="close-circle" size={22} color={palette.textSecondary} />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable style={styles.onsetAdd} onPress={() => setOnset(new Date())} accessibilityRole="button">
+                <MaterialCommunityIcons name="calendar-plus" size={18} color={palette.textSecondary} />
+                <Text style={styles.onsetAddText}>{t('pain.assess.onset.add')}</Text>
+              </Pressable>
+            )}
 
             <Text style={styles.label}>{t('pain.assess.trend')}</Text>
             <View style={styles.trendRow}>
@@ -635,6 +657,9 @@ const styles = makeStyles(() => ({
   card: { backgroundColor: palette.surface, borderRadius: 14, padding: 14 },
   label: { color: palette.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 6, marginTop: 10 },
   input: { backgroundColor: palette.surface },
+  onsetRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  onsetAdd: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: palette.surfaceVariant, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, alignSelf: 'flex-start' },
+  onsetAddText: { color: palette.textSecondary, fontSize: 14 },
   trendRow: { flexDirection: 'row', gap: 8 },
   trendBtn: { flex: 1, paddingVertical: 9, borderRadius: 10, backgroundColor: palette.surfaceVariant, alignItems: 'center' },
   trendText: { color: palette.textSecondary, fontWeight: '700', fontSize: 13 },

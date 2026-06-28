@@ -6,9 +6,19 @@ import { Button, Text, TextInput } from 'react-native-paper';
 
 import { apiErrorMessage } from '../../api/auth';
 import { RestrictionMode, SESSION_LABEL, SessionType, createClass } from '../../api/classes';
+import DateField from '../../components/DateField';
 import { ADULT_BELTS, KIDS_BELTS } from '../../constants/belts';
 import { t } from '../../i18n';
 import { makeStyles, palette } from '../../theme/theme';
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const toTimeLabel = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+function parseTime(s: string): Date {
+  const [h, m] = s.split(':').map((x) => parseInt(x, 10));
+  const d = new Date();
+  d.setHours(Number.isFinite(h) ? h : 19, Number.isFinite(m) ? m : 0, 0, 0);
+  return d;
+}
 
 const DAYS: { label: string; dow: number }[] = [
   { label: 'S', dow: 1 },
@@ -29,8 +39,8 @@ export default function CreateClassScreen({ navigation }: { navigation: { goBack
 
   const [name, setName] = useState('');
   const [days, setDays] = useState<number[]>([]);
-  const [start, setStart] = useState('');
-  const [end, setEnd] = useState('');
+  const [start, setStart] = useState('19:00');
+  const [end, setEnd] = useState('20:30');
   const [sessionType, setSessionType] = useState<SessionType>('GI');
   const [mode, setMode] = useState<RestrictionMode>('ALL');
   const [belts, setBelts] = useState<string[]>([]);
@@ -94,11 +104,11 @@ export default function CreateClassScreen({ navigation }: { navigation: { goBack
         <View style={styles.timeRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>{t('agenda.class.start')}</Text>
-            <TextInput mode="outlined" value={start} onChangeText={setStart} placeholder="19:00" maxLength={5} />
+            <DateField mode="time" value={parseTime(start)} onChange={(d) => setStart(toTimeLabel(d))} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>{t('agenda.class.end')}</Text>
-            <TextInput mode="outlined" value={end} onChangeText={setEnd} placeholder="20:30" maxLength={5} />
+            <DateField mode="time" value={parseTime(end)} onChange={(d) => setEnd(toTimeLabel(d))} />
           </View>
         </View>
 

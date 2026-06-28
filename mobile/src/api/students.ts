@@ -1,3 +1,4 @@
+import { AssessmentSummary, PainAssessment } from './pain';
 import { api } from './client';
 
 export type AdminBelt = { slug: string; name: string; namePt: string; colorHex: string; stripes: number };
@@ -60,4 +61,16 @@ export async function addStudentNote(userId: number, content: string): Promise<S
 
 export async function deleteStudentNote(userId: number, noteId: number): Promise<void> {
   await api.delete(`/gyms/me/students/${userId}/notes/${noteId}`);
+}
+
+/** Staff-only: a student's 5 most recent pain assessments (for graduation decisions). */
+export async function getStudentPainAssessments(userId: number): Promise<AssessmentSummary[]> {
+  const { data } = await api.get<AssessmentSummary[]>(`/gyms/me/students/${userId}/pain-assessments`);
+  return data;
+}
+
+/** Staff-only: full detail of one of a student's pain assessments. */
+export async function getStudentPainAssessment(userId: number, assessmentId: number): Promise<PainAssessment> {
+  const { data } = await api.get<PainAssessment>(`/gyms/me/students/${userId}/pain-assessments/${assessmentId}`);
+  return data;
 }

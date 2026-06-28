@@ -45,6 +45,8 @@ export type UserProfile = {
   pro: boolean;
   bio: string | null;
   city: string | null;
+  country: string | null;
+  state: string | null;
   avatarUrl: string | null;
   certificateUrl: string | null;
   accentColor: string | null;
@@ -113,6 +115,24 @@ export type UpdateProfilePayload = {
 
 export async function updateMyProfile(payload: UpdateProfilePayload): Promise<UserProfile> {
   const { data } = await api.put<UserProfile>('/users/me/profile', payload);
+  return data;
+}
+
+export type CompleteProfilePayload = {
+  beltSlug?: string;
+  stripes?: number;
+  age?: number;
+  gender?: string;
+  city?: string;
+  country?: string;
+  state?: string;
+  favoriteArt?: string;
+  trainingStartYear?: number;
+};
+
+/** Fill in / edit profile basics (belt, age, location) — e.g. for social-login accounts. */
+export async function completeProfile(payload: CompleteProfilePayload): Promise<UserProfile> {
+  const { data } = await api.put<UserProfile>('/users/me/onboarding', payload);
   return data;
 }
 

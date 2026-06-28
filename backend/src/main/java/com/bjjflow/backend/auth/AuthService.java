@@ -7,14 +7,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 import com.bjjflow.backend.auth.AuthDtos.AuthResponse;
 import com.bjjflow.backend.auth.AuthDtos.BeltDto;
 import com.bjjflow.backend.auth.AuthDtos.LoginRequest;
+import com.bjjflow.backend.auth.AuthDtos.OAuthRequest;
 import com.bjjflow.backend.auth.AuthDtos.RegisterRequest;
 import com.bjjflow.backend.auth.AuthDtos.UserDto;
 import com.bjjflow.backend.belts.BeltRank;
 import com.bjjflow.backend.belts.BeltRankRepository;
 import com.bjjflow.backend.common.ApiException;
+import com.bjjflow.backend.oauth.OAuthAccount;
+import com.bjjflow.backend.oauth.OAuthAccountRepository;
+import com.bjjflow.backend.oauth.OAuthUserInfo;
+import com.bjjflow.backend.oauth.OAuthVerifier;
 import com.bjjflow.backend.users.User;
 import com.bjjflow.backend.users.UserBeltProgress;
 import com.bjjflow.backend.users.UserBeltProgressRepository;
@@ -34,6 +41,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final MfaService mfaService;
     private final com.bjjflow.backend.common.AdminAccess adminAccess;
+    private final OAuthVerifier oauthVerifier;
+    private final OAuthAccountRepository oauthAccountRepository;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -52,6 +61,8 @@ public class AuthService {
         user.setLastName(blankToNull(request.lastName()));
         user.setGender(blankToNull(request.gender()));
         user.setCity(blankToNull(request.city()));
+        user.setCountry(blankToNull(request.country()));
+        user.setState(blankToNull(request.state()));
         user.setFavoriteArt(blankToNull(request.favoriteArt()));
         user.setTrainingStartYear(request.trainingStartYear());
         user.setAge(request.age());
@@ -67,6 +78,52 @@ public class AuthService {
         beltProgressRepository.save(progress);
 
         return buildAuthResponse(user, progress);
+    }
+
+    /**
+     * Sign in (or sign up) via a verified Google/Apple token. Matches an existing
+     * OAuth link, else links to an account with the same email, else creates a new
+     * account (no belt/age yet — completed later). Provider auth bypasses MFA.
+     */
+    @Transactional
+    public AuthResponse oauthLogin(OAuthRequest request) {
+        OAuthUserInfo info = oauthVerifier.verify(request.provider(), request.idToken());
+        OAuthAccount account = oauthAccountRepository
+                .findByProviderAndSubject(info.provider(), info.subject())
+                .orElse(null);
+
+        User user;
+        if (account != null) {
+            user = userRepository.findById(account.getUserId())
+                    .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "USER_NOT_FOUND", "User not found"));
+        } else {
+            String email = info.email() == null ? null : info.email().trim().toLowerCase(Locale.ROOT);
+            if (email == null || email.isBlank()) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "OAUTH_NO_EMAIL", "Provider did not share an email");
+            }
+            user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                String name = blankToNull(request.displayName());
+                if (name == null) {
+                    name = blankToNull(info.name());
+                }
+                if (name == null) {
+                    name = email.substring(0, email.indexOf('@'));
+                }
+                user = new User();
+                user.setEmail(email);
+                user.setDisplayName(name);
+                user.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+                user.setUsername(generateUsername(name));
+                user = userRepository.save(user);
+            }
+            OAuthAccount link = new OAuthAccount();
+            link.setUserId(user.getId());
+            link.setProvider(info.provider());
+            link.setSubject(info.subject());
+            oauthAccountRepository.save(link);
+        }
+        return buildAuthResponse(user, findProgress(user.getId()));
     }
 
     @Transactional(readOnly = true)

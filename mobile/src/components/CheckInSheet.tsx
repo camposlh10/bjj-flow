@@ -28,9 +28,11 @@ import { SUBMISSIONS } from '../constants/submissions';
 import { t, tf } from '../i18n';
 import { useAuthStore } from '../store/authStore';
 import { makeStyles, palette } from '../theme/theme';
+import DateField from './DateField';
 
 type Direction = 'HIT' | 'CONCEDED';
 const DURATIONS = [60, 90, 120, 180];
+const localDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function CheckInSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
@@ -54,9 +56,11 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
   const [uploading, setUploading] = useState(false);
   const [pain, setPain] = useState<Record<string, number>>({});
   const [painRegion, setPainRegion] = useState<string | null>(null);
+  const [date, setDate] = useState(new Date());
 
   const reset = () => {
     setSessionType('GI');
+    setDate(new Date());
     setDuration(60);
     setSubDir('HIT');
     setHit({});
@@ -99,7 +103,7 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
         ...Object.entries(conceded).filter(([, n]) => n > 0).map(([submission, n]) => ({ submission, direction: 'CONCEDED' as const, count: n })),
       ];
       const result = await createCheckIn({
-        date: todayLocalDate(),
+        date: localDate(date),
         sessionType,
         durationMinutes: duration,
         notes: notes.trim() || undefined,
@@ -153,7 +157,15 @@ export default function CheckInSheet({ visible, onClose }: { visible: boolean; o
               showsVerticalScrollIndicator
               style={[styles.scroll, { maxHeight: height * 0.7 }]}
               keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag">
+              keyboardDismissMode="on-drag"
+              automaticallyAdjustKeyboardInsets
+              contentContainerStyle={{ paddingBottom: 24 }}>
+            {/* Workout date */}
+            <Text style={styles.label}>{t('checkin.sheet.date')}</Text>
+            <View style={{ marginBottom: 8 }}>
+              <DateField value={date} onChange={setDate} maximumDate={new Date()} />
+            </View>
+
             {/* Session type */}
             <Text style={styles.label}>{t('checkin.sheet.type')}</Text>
             <View style={styles.chips}>

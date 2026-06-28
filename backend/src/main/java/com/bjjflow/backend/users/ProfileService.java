@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bjjflow.backend.auth.AuthDtos.BeltDto;
+import com.bjjflow.backend.belts.BeltRank;
+import com.bjjflow.backend.belts.BeltRankRepository;
 import com.bjjflow.backend.checkins.CheckInRepository;
 import com.bjjflow.backend.common.ApiException;
 import com.bjjflow.backend.gyms.Gym;
@@ -46,6 +48,7 @@ public class ProfileService {
 
     private final UserRepository userRepository;
     private final UserBeltProgressRepository beltProgressRepository;
+    private final BeltRankRepository beltRankRepository;
     private final UserMedalRepository userMedalRepository;
     private final UserPhotoRepository userPhotoRepository;
     private final FollowRepository followRepository;
@@ -183,6 +186,8 @@ public class ProfileService {
                 Boolean.TRUE.equals(user.getPro()),
                 user.getBio(),
                 user.getCity(),
+                user.getCountry(),
+                user.getState(),
                 user.getAvatarKey() == null ? null : mediaStorage.urlFor(user.getAvatarKey()),
                 user.getCertificateKey() == null ? null : mediaStorage.urlFor(user.getCertificateKey()),
                 user.getAccentColor(),
@@ -266,6 +271,57 @@ public class ProfileService {
             u.setUsername(uname);
         }
         userRepository.save(u);
+        return profile(userId, userId);
+    }
+
+    /** Fill in profile basics (belt/age/location/etc) after signup — e.g. for social-login
+     *  accounts with no belt yet, and editable from the profile screen. Only sets provided fields. */
+    @Transactional
+    public UserProfileDto completeProfile(Long userId, ProfileDtos.CompleteProfileRequest req) {
+        User u = requireUser(userId);
+        if (req.age() != null) {
+            u.setAge(req.age());
+        }
+        if (req.weightKg() != null) {
+            u.setWeightKg(req.weightKg());
+        }
+        if (req.heightCm() != null) {
+            u.setHeightCm(req.heightCm());
+        }
+        if (req.gender() != null) {
+            u.setGender(blankToNull(req.gender()));
+        }
+        if (req.favoriteArt() != null) {
+            u.setFavoriteArt(blankToNull(req.favoriteArt()));
+        }
+        if (req.trainingStartYear() != null) {
+            u.setTrainingStartYear(req.trainingStartYear());
+        }
+        if (req.city() != null) {
+            u.setCity(blankToNull(req.city()));
+        }
+        if (req.country() != null) {
+            u.setCountry(blankToNull(req.country()));
+        }
+        if (req.state() != null) {
+            u.setState(blankToNull(req.state()));
+        }
+        userRepository.save(u);
+
+        if (req.beltSlug() != null && !req.beltSlug().isBlank()) {
+            BeltRank rank = beltRankRepository.findBySlug(req.beltSlug())
+                    .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "INVALID_BELT", "Unknown belt"));
+            int stripes = req.stripes() == null ? 0 : Math.max(0, Math.min(6, req.stripes()));
+            UserBeltProgress progress = beltProgressRepository.findByUserId(userId)
+                    .orElseGet(() -> {
+                        UserBeltProgress p = new UserBeltProgress();
+                        p.setUserId(userId);
+                        return p;
+                    });
+            progress.setBeltRank(rank);
+            progress.setStripes(stripes);
+            beltProgressRepository.save(progress);
+        }
         return profile(userId, userId);
     }
 

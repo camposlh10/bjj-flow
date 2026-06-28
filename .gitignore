@@ -33,4 +33,6 @@ build/
 .vscode/
 
 ### H2 dev database ###
-data/
+# Anchored so it only ignores the DB dirs, not bundled app data (mobile/src/data).
+/data/
+/backend/data/

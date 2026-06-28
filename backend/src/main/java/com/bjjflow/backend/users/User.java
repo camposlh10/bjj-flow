@@ -73,6 +73,10 @@ public class User {
 
     private String city;
 
+    private String country;
+
+    private String state;
+
     private Boolean pro = false;
 
     @Column(name = "avatar_key")

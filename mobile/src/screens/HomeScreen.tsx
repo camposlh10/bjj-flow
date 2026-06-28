@@ -19,7 +19,8 @@ import { getUserProfile } from '../api/users';
 import BeltVisual from '../components/BeltVisual';
 import Skeleton from '../components/Skeleton';
 import MilestoneBar from '../components/MilestoneBar';
-import SubmissionRadar from '../components/SubmissionRadar';
+import DateField from '../components/DateField';
+import SubmissionBars from '../components/SubmissionBars';
 import { rankBarColorFor } from '../constants/belts';
 import { SUBMISSIONS } from '../constants/submissions';
 import { STREAK_MILESTONES, TRAINING_MILESTONES, WEEK_MILESTONES, nextMilestone } from '../constants/milestones';
@@ -28,6 +29,7 @@ import { useAuthStore } from '../store/authStore';
 import { makeStyles, palette } from '../theme/theme';
 
 const WEEK_LETTERS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+const localDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 // Mirrors the profile "Métricas" rings so the evolution bars read the same.
@@ -326,13 +328,14 @@ export default function HomeScreen() {
               <Text style={styles.sectionTitle}>{t('profile.submissions')}</Text>
               <MaterialCommunityIcons name="chevron-right" size={18} color={palette.textSecondary} />
             </View>
-            <View style={{ alignItems: 'center', marginTop: 4 }}>
-              <SubmissionRadar
-                axes={SUBMISSIONS.map((sb) => ({
+            <View style={{ marginTop: 10 }}>
+              <SubmissionBars
+                items={SUBMISSIONS.map((sb) => ({
                   label: sb.label,
+                  color: sb.color,
                   value: submissions.data?.items.find((i) => i.submission === sb.key)?.count ?? 0,
                 }))}
-                color={palette.primary}
+                max={5}
               />
             </View>
           </Pressable>
@@ -450,17 +453,17 @@ function CompetitionModal({
 }) {
   const [name, setName] = useState('');
   const [placement, setPlacement] = useState('');
-  const [date, setDate] = useState(todayLocalDate());
+  const [date, setDate] = useState(new Date());
 
   const save = useMutation({
     mutationFn: () =>
-      logCompetition({ name: name.trim(), placement: placement ? Number(placement) : undefined, date }),
+      logCompetition({ name: name.trim(), placement: placement ? Number(placement) : undefined, date: localDate(date) }),
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onSaved();
       setName('');
       setPlacement('');
-      setDate(todayLocalDate());
+      setDate(new Date());
       onClose();
       Alert.alert(t('home.competition.saved'));
     },
@@ -473,7 +476,10 @@ function CompetitionModal({
           <Text style={styles.modalTitle}>{t('home.competition.title')}</Text>
           <TextInput mode="outlined" label={t('home.competition.name')} value={name} onChangeText={setName} style={styles.modalInput} />
           <TextInput mode="outlined" label={t('home.competition.placement')} value={placement} onChangeText={setPlacement} keyboardType="number-pad" style={styles.modalInput} />
-          <TextInput mode="outlined" label={t('home.competition.date')} value={date} onChangeText={setDate} autoCapitalize="none" style={styles.modalInput} />
+          <Text style={{ color: palette.textSecondary, fontSize: 12, marginBottom: 6, marginLeft: 2 }}>{t('home.competition.date')}</Text>
+          <View style={styles.modalInput}>
+            <DateField value={date} onChange={setDate} maximumDate={new Date()} />
+          </View>
           <View style={styles.modalActions}>
             <Button mode="text" textColor={palette.textSecondary} onPress={onClose}>
               {t('home.competition.cancel')}
