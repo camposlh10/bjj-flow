@@ -2,7 +2,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMutation } from '@tanstack/react-query';
@@ -27,9 +27,17 @@ export default function SocialAuthButtons() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const [appleAvailable, setAppleAvailable] = useState(false);
 
+  // Social login stays hidden until configured: Google needs a client ID, and Apple
+  // needs the Sign-in-with-Apple capability enabled on the build (set EXPO_PUBLIC_APPLE_SIGNIN=1
+  // once the App ID has the capability + a matching provisioning profile).
+  const googleConfigured = !!(GOOGLE_IDS.iosClientId || GOOGLE_IDS.androidClientId || GOOGLE_IDS.webClientId);
+  const appleEnabled = process.env.EXPO_PUBLIC_APPLE_SIGNIN === '1';
+
   useEffect(() => {
-    AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => setAppleAvailable(false));
-  }, []);
+    if (appleEnabled) {
+      AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => setAppleAvailable(false));
+    }
+  }, [appleEnabled]);
 
   const login = useMutation({
     mutationFn: (v: { provider: OAuthProvider; idToken: string; displayName?: string }) =>
@@ -79,6 +87,10 @@ export default function SocialAuthButtons() {
     }
   };
 
+  if (!googleConfigured && !appleAvailable) {
+    return null;
+  }
+
   return (
     <View style={styles.wrap}>
       <View style={styles.divider}>
@@ -91,12 +103,14 @@ export default function SocialAuthButtons() {
         <ActivityIndicator color={palette.primary} style={{ marginVertical: 12 }} />
       ) : (
         <>
-          <Pressable style={styles.btn} onPress={onGoogle} accessibilityRole="button">
-            <MaterialCommunityIcons name="google" size={20} color={palette.textPrimary} />
-            <Text style={styles.btnText}>{t('social.google')}</Text>
-          </Pressable>
+          {googleConfigured && (
+            <Pressable style={styles.btn} onPress={onGoogle} accessibilityRole="button">
+              <MaterialCommunityIcons name="google" size={20} color={palette.textPrimary} />
+              <Text style={styles.btnText}>{t('social.google')}</Text>
+            </Pressable>
+          )}
 
-          {Platform.OS === 'ios' && appleAvailable && (
+          {appleAvailable && (
             <Pressable style={styles.btn} onPress={onApple} accessibilityRole="button">
               <MaterialCommunityIcons name="apple" size={22} color={palette.textPrimary} />
               <Text style={styles.btnText}>{t('social.apple')}</Text>
