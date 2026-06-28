@@ -13,19 +13,27 @@ import { makeStyles, palette } from '../theme/theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Configure in .env.local (gitignored). Without these, the button is hidden.
+// Configure in .env.local (gitignored). Without these, nothing renders and the
+// Google hook never runs (it throws on iOS when iosClientId is missing).
 const GOOGLE_IDS = {
   iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 };
+const GOOGLE_CONFIGURED = !!(GOOGLE_IDS.iosClientId || GOOGLE_IDS.androidClientId || GOOGLE_IDS.webClientId);
 
-/** "Continue with Google" button (browser flow). Hidden until OAuth client IDs are
- *  configured. Apple Sign-In is deferred — the backend supports it, but the native
- *  button needs the Apple "Sign in with Apple" capability + expo-apple-authentication. */
+/** Renders social-login buttons only when configured. The Google auth hook lives in a
+ *  child mounted only when client IDs exist — calling it unconfigured throws on iOS.
+ *  Apple Sign-In is deferred (backend supports it; native button needs the capability). */
 export default function SocialAuthButtons() {
+  if (!GOOGLE_CONFIGURED) {
+    return null;
+  }
+  return <GoogleAuth />;
+}
+
+function GoogleAuth() {
   const setAuth = useAuthStore((s) => s.setAuth);
-  const googleConfigured = !!(GOOGLE_IDS.iosClientId || GOOGLE_IDS.androidClientId || GOOGLE_IDS.webClientId);
 
   const login = useMutation({
     mutationFn: (v: { provider: OAuthProvider; idToken: string; displayName?: string }) =>
@@ -53,10 +61,6 @@ export default function SocialAuthButtons() {
     }
     promptAsync();
   };
-
-  if (!googleConfigured) {
-    return null;
-  }
 
   return (
     <View style={styles.wrap}>
