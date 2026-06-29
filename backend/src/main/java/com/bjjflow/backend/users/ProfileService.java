@@ -279,6 +279,20 @@ public class ProfileService {
     @Transactional
     public UserProfileDto completeProfile(Long userId, ProfileDtos.CompleteProfileRequest req) {
         User u = requireUser(userId);
+        if (req.firstName() != null) {
+            u.setFirstName(blankToNull(req.firstName()));
+        }
+        if (req.lastName() != null) {
+            u.setLastName(blankToNull(req.lastName()));
+        }
+        if (req.firstName() != null || req.lastName() != null) {
+            // displayName is derived from first + last; keep it in sync when either changes.
+            String dn = ((u.getFirstName() == null ? "" : u.getFirstName()) + " "
+                    + (u.getLastName() == null ? "" : u.getLastName())).trim();
+            if (!dn.isEmpty()) {
+                u.setDisplayName(dn);
+            }
+        }
         if (req.age() != null) {
             u.setAge(req.age());
         }

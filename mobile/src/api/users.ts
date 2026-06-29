@@ -119,6 +119,8 @@ export async function updateMyProfile(payload: UpdateProfilePayload): Promise<Us
 }
 
 export type CompleteProfilePayload = {
+  firstName?: string;
+  lastName?: string;
   beltSlug?: string;
   stripes?: number;
   age?: number;

@@ -43,6 +43,8 @@ public class ProfileDtos {
 
     /** Fill in profile basics after signup (e.g. for social-login accounts with no belt/age yet). All optional. */
     public record CompleteProfileRequest(
+            @Size(max = 60) String firstName,
+            @Size(max = 60) String lastName,
             String beltSlug,
             @jakarta.validation.constraints.Min(0) @jakarta.validation.constraints.Max(6) Integer stripes,
             @jakarta.validation.constraints.Min(4) @jakarta.validation.constraints.Max(100) Integer age,

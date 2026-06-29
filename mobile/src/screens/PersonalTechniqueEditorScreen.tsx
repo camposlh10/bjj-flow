@@ -1,9 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Text, TextInput } from 'react-native-paper';
 
 import { uploadMedia } from '../api/posts';
@@ -22,6 +23,7 @@ const LIBRARY_COLORS = ['#E63946', '#E0A82E', '#2DB6A3', '#3E63DD', '#8E4EC6', '
 export default function PersonalTechniqueEditorScreen() {
   const route = useRoute<RouteProp<HomeStackParamList, 'PersonalTechniqueEditor'>>();
   const navigation = useNavigation();
+  const headerHeight = useHeaderHeight();
   const qc = useQueryClient();
   const existing = route.params?.technique;
 
@@ -75,7 +77,15 @@ export default function PersonalTechniqueEditorScreen() {
     ]);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={headerHeight}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive">
       <Field label={t('techniques.field.name')} value={name} onChange={setName} />
       <Field label={t('techniques.field.category')} value={category} onChange={setCategory} />
 
@@ -133,7 +143,8 @@ export default function PersonalTechniqueEditorScreen() {
           {t('techniques.delete')}
         </Button>
       )}
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

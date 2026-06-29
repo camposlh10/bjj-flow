@@ -95,7 +95,9 @@ function Form({ profile }: { profile: UserProfile }) {
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
 
-  // Profile basics (belt/age/location) — lets social-login accounts complete their profile.
+  // Profile basics (name/belt/age/location) — lets social-login accounts complete their profile.
+  const [firstName, setFirstName] = useState(profile.firstName ?? '');
+  const [lastName, setLastName] = useState(profile.lastName ?? '');
   const [beltSlug, setBeltSlug] = useState<string | null>(profile.belt?.slug ?? null);
   const [stripes, setStripes] = useState(profile.belt?.stripes ?? 0);
   const [ageText, setAgeText] = useState(profile.age != null ? String(profile.age) : '');
@@ -145,6 +147,8 @@ function Form({ profile }: { profile: UserProfile }) {
         .map(([competition, e]) => ({ competition, tier: e.tier, count: e.count }));
       await updateMyMedals(medals);
       return completeProfile({
+        firstName: firstName.trim() || undefined,
+        lastName: lastName.trim() || undefined,
         beltSlug: beltSlug ?? undefined,
         stripes,
         age: ageText ? parseInt(ageText, 10) : undefined,
@@ -154,8 +158,8 @@ function Form({ profile }: { profile: UserProfile }) {
       });
     },
     onSuccess: (updated) => {
-      // Keep the auth user's belt/age in sync so the home screen reflects the change.
-      if (updated && me) setUser({ ...me, belt: updated.belt, age: updated.age });
+      // Keep the auth user's name/belt/age in sync so the rest of the app reflects the change.
+      if (updated && me) setUser({ ...me, displayName: updated.displayName, belt: updated.belt, age: updated.age });
       invalidate();
       Alert.alert(t('profile.edit.saved'));
       navigation.goBack();
@@ -291,8 +295,26 @@ function Form({ profile }: { profile: UserProfile }) {
           style={styles.input}
         />
 
-        {/* Basics: belt, age, location */}
+        {/* Basics: name, belt, age, location */}
         <Text style={styles.sectionTitle}>{t('profile.edit.basics')}</Text>
+        <View style={styles.nameRow}>
+          <TextInput
+            mode="outlined"
+            label={t('profile.edit.firstName')}
+            value={firstName}
+            onChangeText={setFirstName}
+            autoCapitalize="words"
+            style={[styles.input, styles.nameInput]}
+          />
+          <TextInput
+            mode="outlined"
+            label={t('profile.edit.lastName')}
+            value={lastName}
+            onChangeText={setLastName}
+            autoCapitalize="words"
+            style={[styles.input, styles.nameInput]}
+          />
+        </View>
         <Text style={styles.fieldLabel}>{t('profile.edit.belt')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.beltRow}>
           {ALL_BELTS.map((b) => {
@@ -517,6 +539,8 @@ const styles = makeStyles(() => ({
   input: { marginBottom: 16 },
   sectionTitle: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold', marginTop: 4, marginBottom: 10 },
   fieldLabel: { color: palette.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 },
+  nameRow: { flexDirection: 'row', gap: 10 },
+  nameInput: { flex: 1 },
   beltRow: { gap: 8, paddingVertical: 2, paddingRight: 8, marginBottom: 4 },
   beltChip: {
     flexDirection: 'row',

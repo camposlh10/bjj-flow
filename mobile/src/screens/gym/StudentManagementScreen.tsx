@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Text, TextInput } from 'react-native-paper';
 
@@ -19,9 +19,10 @@ import {
   getStudentPainAssessments,
 } from '../../api/students';
 import BeltVisual from '../../components/BeltVisual';
+import BodyMap from '../../components/BodyMap';
 import Skeleton from '../../components/Skeleton';
 import { ADULT_BELTS, KIDS_BELTS, maxStripesFor, rankBarColorFor } from '../../constants/belts';
-import { bodyRegionLabel, intensityColor } from '../../constants/body';
+import { BodyView, bodyRegionLabel, intensityColor } from '../../constants/body';
 import { frequencyLabel, painTypeLabel, trendLabel } from '../../constants/painTypes';
 import { t, tf } from '../../i18n';
 import { makeStyles, palette } from '../../theme/theme';
@@ -304,11 +305,17 @@ function Body({ s }: { s: StudentAdmin }) {
 }
 
 function PainDetail({ userId, assessmentId, onClose }: { userId: number; assessmentId: number; onClose: () => void }) {
+  const [view, setView] = useState<BodyView>('front');
   const q = useQuery({
     queryKey: ['studentPainDetail', userId, assessmentId],
     queryFn: () => getStudentPainAssessment(userId, assessmentId),
   });
   const a = q.data;
+  const painMap = useMemo(() => {
+    const m: Record<string, number> = {};
+    (a?.areas ?? []).forEach((ar) => (m[ar.region] = ar.intensity));
+    return m;
+  }, [a]);
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
@@ -318,8 +325,23 @@ function PainDetail({ userId, assessmentId, onClose }: { userId: number; assessm
           {!a ? (
             <Text style={styles.empty}>{t('picker.loading')}</Text>
           ) : (
-            <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
               <Text style={styles.sheetTitle}>{fmtDate(a.assessedOn)}</Text>
+
+              {/* Body map — same mannequin view the student sees */}
+              <View style={styles.bodyToggle}>
+                {(['front', 'back'] as const).map((v) => (
+                  <Pressable key={v} style={[styles.bodyToggleBtn, view === v && styles.bodyToggleOn]} onPress={() => setView(v)}>
+                    <Text style={[styles.bodyToggleText, view === v && styles.bodyToggleTextOn]}>
+                      {t(v === 'front' ? 'body.front' : 'body.back')}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              <View style={{ alignItems: 'center', marginBottom: 12 }}>
+                <BodyMap view={view} pain={painMap} onRegionPress={() => undefined} width={230} />
+              </View>
+
               {a.areas.map((ar, i) => (
                 <View key={i} style={styles.painArea}>
                   <View style={[styles.painDot, { backgroundColor: intensityColor(ar.intensity) }]} />
@@ -513,4 +535,9 @@ const styles = makeStyles(() => ({
   painCtx: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 6, marginTop: 2 },
   painCtxLabel: { color: palette.textSecondary, fontSize: 12 },
   painCtxValue: { color: palette.textPrimary, fontSize: 12, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
+  bodyToggle: { flexDirection: 'row', alignSelf: 'center', backgroundColor: palette.surfaceVariant, borderRadius: 10, padding: 3, marginVertical: 12 },
+  bodyToggleBtn: { paddingHorizontal: 22, paddingVertical: 7, borderRadius: 8 },
+  bodyToggleOn: { backgroundColor: palette.surface },
+  bodyToggleText: { color: palette.textSecondary, fontSize: 13, fontWeight: '600' },
+  bodyToggleTextOn: { color: palette.textPrimary },
 }));

@@ -687,6 +687,8 @@ export const pt = {
   'profile.edit.banner.hint': 'Sem capa, mostramos o gradiente da sua cor.',
   'profile.edit.bio': 'Bio',
   'profile.edit.basics': 'Faixa e dados',
+  'profile.edit.firstName': 'Nome',
+  'profile.edit.lastName': 'Sobrenome',
   'profile.edit.belt': 'Faixa',
   'profile.edit.stripes': 'Graus',
   'profile.edit.age': 'Idade',

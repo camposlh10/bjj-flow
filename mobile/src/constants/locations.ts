@@ -38,6 +38,13 @@ export function countryCodeByName(name?: string | null): string | undefined {
   return COUNTRIES.find((c) => c.name.toLowerCase() === n || c.enName.toLowerCase() === n)?.code;
 }
 
+/** Emoji flag for a stored country display name (pt or en); '' if unknown. */
+export function countryFlag(name?: string | null): string {
+  if (!name) return '';
+  const n = name.trim().toLowerCase();
+  return COUNTRIES.find((c) => c.name.toLowerCase() === n || c.enName.toLowerCase() === n)?.flag ?? '';
+}
+
 /** Cities of a Brazilian state (UF sigla); empty for unknown UFs. */
 export function citiesForUf(uf?: string | null): string[] {
   return (uf && brazil.cities[uf]) || [];

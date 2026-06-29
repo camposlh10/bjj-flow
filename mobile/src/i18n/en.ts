@@ -689,6 +689,8 @@ export const en: Record<TranslationKey, string> = {
   'profile.edit.banner.hint': 'Without a banner, we show your color gradient.',
   'profile.edit.bio': 'Bio',
   'profile.edit.basics': 'Belt & basics',
+  'profile.edit.firstName': 'First name',
+  'profile.edit.lastName': 'Last name',
   'profile.edit.belt': 'Belt',
   'profile.edit.stripes': 'Stripes',
   'profile.edit.age': 'Age',

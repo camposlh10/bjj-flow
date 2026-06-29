@@ -9,6 +9,7 @@ import { todayLocalDate } from '../api/checkins';
 import { SubmissionDirection, getUserSubmissions } from '../api/submissions';
 import CheckInSheet from '../components/CheckInSheet';
 import Skeleton from '../components/Skeleton';
+import SubmissionColumns from '../components/SubmissionColumns';
 import { submissionStyle } from '../constants/submissions';
 import { t } from '../i18n';
 import { useAuthStore } from '../store/authStore';
@@ -80,6 +81,14 @@ export default function SubmissionsScreen() {
           </View>
         ) : (
           <>
+            <SubmissionColumns
+              items={items.map((it) => ({
+                label: submissionStyle(it.submission).label,
+                value: it.count,
+                color: submissionStyle(it.submission).color,
+              }))}
+            />
+
             {items.length === 0 ? (
               <Text style={styles.empty}>{t('submissions.empty')}</Text>
             ) : (

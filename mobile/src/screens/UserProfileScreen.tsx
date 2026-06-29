@@ -27,6 +27,7 @@ import Skeleton from '../components/Skeleton';
 import MedalVisual from '../components/MedalVisual';
 import MetricRing from '../components/MetricRing';
 import { ADULT_BELTS, KIDS_BELTS, beltBySlug, maxStripesFor, rankBarColorFor } from '../constants/belts';
+import { countryFlag } from '../constants/locations';
 import { martialArtIcon, martialArtLabel } from '../constants/profile';
 import { competitionStyle } from '../constants/competitions';
 import { TRAINING_MILESTONES, WEEK_MILESTONES, milestoneProgress, nextMilestone } from '../constants/milestones';
@@ -241,7 +242,12 @@ export default function UserProfileScreen() {
           </Text>
           {p.pro && <ProBadge />}
         </View>
-        {p.username ? <Text style={styles.handle}>@{p.username}</Text> : null}
+        {p.username ? (
+          <Text style={styles.handle}>
+            @{p.username}
+            {countryFlag(p.country) ? `  ${countryFlag(p.country)}` : ''}
+          </Text>
+        ) : null}
         <View style={styles.subRow}>
           {p.belt && (
             <View style={styles.beltMini}>
@@ -250,7 +256,7 @@ export default function UserProfileScreen() {
           )}
           <Text style={styles.since}>{tf('profile.since', { date: formatMonthYear(p.joinedAt) })}</Text>
         </View>
-        {(p.favoriteArt || p.city || p.country || p.trainingStartYear) && (
+        {(p.favoriteArt || p.city || p.state) && (
           <View style={styles.metaChips}>
             {p.favoriteArt && (
               <View style={styles.metaChip}>
@@ -262,18 +268,6 @@ export default function UserProfileScreen() {
               <View style={styles.metaChip}>
                 <MaterialCommunityIcons name="map-marker-outline" size={13} color={palette.textSecondary} />
                 <Text style={styles.metaChipText}>{[p.city, p.state].filter(Boolean).join(', ')}</Text>
-              </View>
-            )}
-            {p.country && (
-              <View style={styles.metaChip}>
-                <MaterialCommunityIcons name="earth" size={13} color={palette.textSecondary} />
-                <Text style={styles.metaChipText}>{p.country}</Text>
-              </View>
-            )}
-            {p.trainingStartYear && (
-              <View style={styles.metaChip}>
-                <MaterialCommunityIcons name="calendar-check-outline" size={13} color={palette.textSecondary} />
-                <Text style={styles.metaChipText}>{tf('profile.trainingSince', { y: p.trainingStartYear })}</Text>
               </View>
             )}
           </View>
@@ -395,17 +389,17 @@ export default function UserProfileScreen() {
         </>
       )}
 
-      {/* Photos — first 6, rest behind "Ver mais" */}
+      {/* Photos — horizontal feed (cover-cropped), first 6 then "Ver mais" reveals the rest */}
       {p.photos.length > 0 && (
         <>
           <Text style={styles.sectionTitle}>{t('profile.photos')}</Text>
-          <View style={styles.photoGrid}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photoRow}>
             {(photosExpanded ? p.photos : p.photos.slice(0, 6)).map((ph, i) => (
               <Pressable key={ph.id} onPress={() => setPhotoIndex(i)} style={styles.photoTileWrap}>
-                <Image source={{ uri: resolveMediaUrl(ph.url) }} style={styles.photoTile} resizeMode="contain" />
+                <Image source={{ uri: resolveMediaUrl(ph.url) }} style={styles.photoTile} resizeMode="cover" />
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
           {p.photos.length > 6 && (
             <Pressable style={styles.seeMore} onPress={() => setPhotosExpanded((v) => !v)}>
               <Text style={styles.seeMoreText}>{photosExpanded ? t('profile.seeLess') : t('profile.seeMore')}</Text>
@@ -695,9 +689,9 @@ const styles = makeStyles(() => ({
   snapTrack: { flex: 1, height: 6, borderRadius: 999, backgroundColor: palette.surfaceVariant, overflow: 'hidden' },
   snapFill: { height: '100%', borderRadius: 999 },
   snapCount: { color: palette.textPrimary, fontSize: 13, fontWeight: 'bold', minWidth: 18, textAlign: 'right' },
-  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
-  photoTileWrap: { width: '48.6%', aspectRatio: 3 / 4 },
-  photoTile: { width: '100%', height: '100%', borderRadius: 8, backgroundColor: palette.surfaceVariant },
+  photoRow: { gap: 8, paddingVertical: 2, paddingRight: 8, marginBottom: 12 },
+  photoTileWrap: { width: 124, height: 165 },
+  photoTile: { width: '100%', height: '100%', borderRadius: 10, backgroundColor: palette.surfaceVariant },
   gymRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
   gymLogo: { width: 52, height: 52, borderRadius: 14, backgroundColor: palette.surfaceVariant },
   gymLogoFallback: { alignItems: 'center', justifyContent: 'center' },
